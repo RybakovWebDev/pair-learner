@@ -1,0 +1,19 @@
+.mainWrapper {
+  margin: 1rem 0;
+  height: 4rem;
+  width: 10rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* font-weight: 600; */
+  font-size: 14px;
+  border: 1px solid var(--color-text);
+  border-bottom: 3px solid var(--color-text);
+  border-radius: 20px;
+  background-color: var(--color-background-highlight);
+  user-select: none;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+  /* touch-action: none; */
+}
