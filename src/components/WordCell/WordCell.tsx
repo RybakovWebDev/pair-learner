@@ -41,7 +41,7 @@ function WordCell({
       ? "var(--color-border-failure)"
       : "var(--color-text)";
 
-  const opacity = isGameRunning ? 1 : 0.5;
+  const opacity = isMatched ? 0.2 : isGameRunning ? 1 : 0.5;
 
   return (
     <m.div

@@ -1,6 +1,6 @@
 import { CSSProperties } from "react";
 
-interface Pair {
+export interface Pair {
   word1: string;
   word2: string;
   category?: string;
@@ -73,11 +73,18 @@ export const testUser: User = {
   ],
 };
 
+export const MENU_ITEMS = [
+  { title: "Play", slug: "play" },
+  { title: "Edit words", slug: "words" },
+  { title: "Logout", slug: "logout" },
+];
+
 export const rowCountOptions = [3, 4, 5];
 
 interface ThemeColors extends CSSProperties {
   "--color-text": string;
   "--color-text-secondary": string;
+  "--color-text-danger": string;
   "--color-underline": string;
   "--color-background": string;
   "--color-background-highlight": string;
@@ -92,6 +99,7 @@ interface ThemeColors extends CSSProperties {
 export const LIGHT_COLORS: ThemeColors = {
   "--color-text": "hsl(0 0% 0%)",
   "--color-text-secondary": "hsl(0 0% 0%)",
+  "--color-text-danger": "hsl(0, 100%, 52%)",
   "--color-underline": "0, 0, 0",
   "--color-background": "hsl(0 0% 92%)",
   "--color-background-highlight": "hsl(0 0% 60%)",
@@ -106,11 +114,12 @@ export const LIGHT_COLORS: ThemeColors = {
 export const DARK_COLORS: ThemeColors = {
   "--color-text": "hsl(0 0% 92%)",
   "--color-text-secondary": "hsl(0 0% 0%)",
+  "--color-text-danger": "hsl(0, 100%, 40%)",
   "--color-underline": "250, 250, 250",
   "--color-background": "hsl(186, 69%, 9%)",
   "--color-background-highlight": "hsl(186, 69%, 22%)",
-  "--color-background-highlight-win": "hsl(186, 69%, 22%)",
-  "--color-background-highlight-fail": "hsl(186, 69%, 22%)",
+  "--color-background-highlight-win": "hsl(186, 69%, 35%)",
+  "--color-background-highlight-fail": "hsl(0, 50%, 22%)",
   "--color-background-secondary": "hsla(0, 0%, 80%, 0.4)",
   "--color-gradient-lightness": "8%",
   "--color-border-success": "hsl(120, 73%, 63%)",

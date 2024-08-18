@@ -1,5 +1,5 @@
 "use client";
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 
 import styles from "./Game.module.css";
@@ -9,6 +9,7 @@ import { Check, ChevronDown } from "react-feather";
 import PairList from "../PairList";
 
 import { rowCountOptions, testUser } from "@/constants";
+import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -45,81 +46,117 @@ const startVariants: Variants = {
   },
 };
 
+// New variants for fading out controls
+const controlsVariants: Variants = {
+  enabled: {
+    opacity: 1,
+    pointerEvents: "auto" as const,
+  },
+  disabled: {
+    opacity: 0.5,
+    pointerEvents: "none" as const,
+  },
+};
+
 function Game() {
   const [rowCount, setRowCount] = useState(5);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [enabledCategories, setEnabledCategories] = useState<String[]>(categories);
   const [roundLength, setRoundLength] = useState(210);
   const [isGameRunning, setIsGameRunning] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(210);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const id = useId();
 
   const categoriesEqual = categories.length === enabledCategories.length;
 
+  useEffect(() => {
+    if (isGameRunning && roundLength !== 210) {
+      timerRef.current = setInterval(() => {
+        setTimeRemaining((prevTime) => {
+          if (prevTime <= 1) {
+            clearInterval(timerRef.current!);
+            setIsGameRunning(false);
+            return 0;
+          }
+          return prevTime - 1;
+        });
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current!);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [isGameRunning, roundLength]);
+
+  useEffect(() => {
+    setTimeRemaining(roundLength);
+  }, [roundLength]);
+
   const handleRowCountChange = (rows: number) => {
-    setRowCount(rows);
+    if (!isGameRunning) {
+      setRowCount(rows);
+    }
   };
 
   const handleCategoriesOpen = () => {
-    setCategoriesOpen(!categoriesOpen);
+    if (!isGameRunning) {
+      setCategoriesOpen(!categoriesOpen);
+    }
   };
 
   const handleCategoriesChange = (category: string) => {
-    setEnabledCategories((prevCategories) => {
-      if (prevCategories.includes(category)) {
-        if (prevCategories.length === 1) {
-          return prevCategories;
+    if (!isGameRunning) {
+      setEnabledCategories((prevCategories) => {
+        if (prevCategories.includes(category)) {
+          if (prevCategories.length === 1) {
+            return prevCategories;
+          }
+          return prevCategories.filter((c) => c !== category);
+        } else {
+          return [...prevCategories, category];
         }
-        return prevCategories.filter((c) => c !== category);
-      } else {
-        return [...prevCategories, category];
-      }
-    });
+      });
+    }
   };
 
   const handleRoundLengthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRoundLength(Number(event.target.value));
+    if (!isGameRunning) {
+      const newLength = Number(event.target.value);
+      setRoundLength(newLength);
+      setTimeRemaining(newLength);
+    }
   };
 
   const handleStart = () => {
     setIsGameRunning(!isGameRunning);
   };
 
+  const handleRefresh = () => {
+    if (!isGameRunning) {
+      setRefreshTrigger((prev) => prev + 1);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+  };
+
   return (
     <LazyMotion features={loadFeatures}>
       <section className={styles.wrapperMain}>
         <m.div className={styles.controlsWrapper} initial='hidden' animate='show' variants={simpleVariants}>
-          <div className={styles.rowCountWrapper}>
-            <label htmlFor='row-count-select'>Number of rows:</label>
-
-            <div className={styles.rowsSelector}>
-              {rowCountOptions.map((r) => {
-                return (
-                  <button key={r} onClick={() => handleRowCountChange(r)}>
-                    <h3>{r}</h3>
-                    <AnimatePresence>
-                      {rowCount === r ? (
-                        <m.div
-                          className={styles.hovered}
-                          layoutId={id}
-                          initial={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                          animate={{
-                            opacity: 1,
-                            borderTopLeftRadius: rowCount === 3 ? 15 : 0,
-                            borderTopRightRadius: rowCount === 5 ? 15 : 0,
-                          }}
-                          exit={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                          transition={{ type: "spring", damping: 70, stiffness: 1000 }}
-                        />
-                      ) : null}
-                    </AnimatePresence>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className={styles.categoriesWrapper}>
+          <m.div
+            className={styles.categoriesWrapper}
+            variants={controlsVariants}
+            animate={isGameRunning ? "disabled" : "enabled"}
+          >
             <div className={styles.categoriesLabelWrapper} onClick={handleCategoriesOpen}>
               <p>Words to use:</p>
               <AnimatePresence mode='wait'>
@@ -161,9 +198,47 @@ function Game() {
                 </m.ul>
               )}
             </AnimatePresence>
-          </div>
+          </m.div>
 
-          <div className={styles.roundLengthWrapper}>
+          <m.div
+            className={styles.rowCountWrapper}
+            variants={controlsVariants}
+            animate={isGameRunning ? "disabled" : "enabled"}
+          >
+            <label htmlFor='row-count-select'>Number of rows:</label>
+
+            <div className={styles.rowsSelector}>
+              {rowCountOptions.map((r) => {
+                return (
+                  <button key={r} onClick={() => handleRowCountChange(r)}>
+                    <h3>{r}</h3>
+                    <AnimatePresence>
+                      {rowCount === r ? (
+                        <m.div
+                          className={styles.hovered}
+                          layoutId={id}
+                          initial={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
+                          animate={{
+                            opacity: 1,
+                            borderTopLeftRadius: rowCount === 3 ? 15 : 0,
+                            borderTopRightRadius: rowCount === 5 ? 15 : 0,
+                          }}
+                          exit={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
+                          transition={{ type: "spring", damping: 70, stiffness: 1000 }}
+                        />
+                      ) : null}
+                    </AnimatePresence>
+                  </button>
+                );
+              })}
+            </div>
+          </m.div>
+
+          <m.div
+            className={styles.roundLengthWrapper}
+            variants={controlsVariants}
+            animate={isGameRunning ? "disabled" : "enabled"}
+          >
             <label htmlFor='length'>Round length:</label>
 
             <div className={styles.roundLengthSecondsWrapper}>
@@ -217,7 +292,7 @@ function Game() {
               value={roundLength}
               onChange={handleRoundLengthChange}
             />
-          </div>
+          </m.div>
 
           <div className={styles.startWrapper}>
             <m.button
@@ -241,7 +316,31 @@ function Game() {
           </div>
         </m.div>
 
-        <PairList numPairs={rowCount} isGameRunning={isGameRunning} />
+        <AnimateChangeInHeight className={styles.timerWrapper}>
+          <AnimatePresence>
+            {roundLength !== 210 && (
+              <m.div key={"timer"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <m.p>{formatTime(timeRemaining)}</m.p>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </AnimateChangeInHeight>
+
+        <PairList
+          numPairs={rowCount}
+          isGameRunning={isGameRunning}
+          enabledCategories={enabledCategories}
+          refreshTrigger={refreshTrigger}
+        />
+
+        <m.button
+          className={styles.resetButton}
+          onClick={handleRefresh}
+          variants={controlsVariants}
+          animate={isGameRunning ? "disabled" : "enabled"}
+        >
+          Refresh list
+        </m.button>
       </section>
     </LazyMotion>
   );

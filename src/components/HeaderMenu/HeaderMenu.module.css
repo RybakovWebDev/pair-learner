@@ -1,0 +1,72 @@
+.wrapperMain {
+}
+
+.menuButton {
+  display: flex;
+  background: none;
+  border: none;
+  color: var(--color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.listWrapper {
+  position: fixed;
+  top: 3.5rem;
+  right: 0;
+  /* padding: 0 1rem; */
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  /* justify-content: space-evenly; */
+  list-style: none;
+  text-align: right;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-left: none;
+  border-right: none;
+  /* border-radius: 0 0 20px 20px; */
+  z-index: 100;
+  touch-action: none;
+  overflow-y: hidden;
+}
+
+.listWrapper li {
+  padding: 0 1rem;
+  /* margin: 1rem 0; */
+  /* flex-grow: 1; */
+  height: 5rem;
+
+  font-size: 30px;
+}
+
+.listWrapper li:nth-child(2) {
+  border-top: 1px solid var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-background-secondary);
+}
+
+.iconWrapper {
+  padding: 0.5rem;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 10px;
+}
+
+.listWrapper li a {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2rem;
+  color: var(--color-text);
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+
+@media (max-width: 1080px) {
+  .listWrapper {
+    top: 3.5rem;
+  }
+}

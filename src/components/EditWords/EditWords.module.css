@@ -1,0 +1,90 @@
+.wrapperMain {
+  padding: 0 1rem;
+  width: 100%;
+}
+
+.introWrapper {
+  margin: 2rem 0 0 0;
+  padding: 0.5rem 4rem 0.5rem 0rem;
+}
+
+.introWrapper h3 {
+  font-size: 28px;
+  font-weight: 400;
+}
+
+.introWrapper p {
+  margin: 2rem 0;
+}
+
+.introWrapper p:last-child {
+  margin: 1rem 0;
+}
+
+.list {
+  width: 100%;
+  list-style: none;
+}
+
+.list li {
+  padding: 1rem 0;
+  margin: 1rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 14px;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+}
+
+.wordDetailsWrapper {
+  padding-bottom: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-bottom: 1px solid var(--color-background-secondary);
+}
+
+.wordWrapperOuter,
+.categoryWrapperOuter {
+  /* margin: 0.5rem 0; */
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  /* border-top: 1px solid var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-background-secondary); */
+}
+
+.wordWrapper1,
+.wordWrapper2,
+.categoryWrapper {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+}
+
+.wordAttribute {
+  width: 4.5rem;
+}
+
+.deleteButton {
+  margin: 1rem 0 0 0;
+  padding: 0.5rem;
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text);
+  background-color: transparent;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  text-wrap: nowrap;
+  overflow: hidden;
+}
+
+.deleteButton p {
+  font-size: 15px;
+  color: var(--color-text-danger);
+}

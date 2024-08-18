@@ -6,7 +6,7 @@ import styles from "./PairList.module.css";
 
 import WordCell from "../WordCell";
 
-import { testUser } from "@/constants";
+import { Pair, testUser } from "@/constants";
 import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
@@ -14,6 +14,8 @@ const loadFeatures = () => import("../../featuresMax").then((res) => res.default
 interface PairListProps {
   numPairs?: number;
   isGameRunning: boolean;
+  enabledCategories: String[];
+  refreshTrigger: number;
 }
 
 interface WordState {
@@ -31,7 +33,7 @@ interface SelectedPair {
   matchResult: "correct" | "incorrect" | null;
 }
 
-function PairList({ numPairs = 5, isGameRunning }: PairListProps) {
+function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigger }: PairListProps) {
   const [listKey, setListKey] = useState(0);
   const [leftColumn, setLeftColumn] = useState<WordState[]>([]);
   const [rightColumn, setRightColumn] = useState<WordState[]>([]);
@@ -40,7 +42,9 @@ function PairList({ numPairs = 5, isGameRunning }: PairListProps) {
   const [isAnyCorrectAnimating, setIsAnyCorrectAnimating] = useState(false);
   const matchQueue = useRef<SelectedPair[]>([]);
   const isProcessingQueue = useRef(false);
-  const allPairs = useRef<Array<{ word1: string; word2: string }>>(testUser.pairsTesting);
+  const allPairs = useRef<Pair[]>(
+    testUser.pairs.filter((pair) => pair.category && enabledCategories.includes(pair.category))
+  );
   const pendingSelections = useRef<{
     left: string | null;
     right: string | null;
@@ -80,16 +84,25 @@ function PairList({ numPairs = 5, isGameRunning }: PairListProps) {
   }, [numPairs, getRandomPair]);
 
   useEffect(() => {
+    allPairs.current = testUser.pairs.filter((pair) => pair.category && enabledCategories.includes(pair.category));
     initializeColumns();
-  }, [initializeColumns]);
+  }, [enabledCategories, initializeColumns, refreshTrigger]);
 
-  const getNewPair = useCallback(() => {
-    const newPair = getRandomPair();
-    return {
-      left: { word: newPair.word1, isMatched: false, isAnimating: false, id: makeid(15) },
-      right: { word: newPair.word2, isMatched: false, isAnimating: false, id: makeid(15) },
-    };
-  }, [getRandomPair]);
+  useEffect(() => {
+    if (!isGameRunning) {
+      // Clear any unmatched selections when the game stops
+      setSelectedPairs((prevPairs) => prevPairs.filter((pair) => pair.matchResult === "correct"));
+      pendingSelections.current = { left: null, right: null, leftId: null, rightId: null };
+    }
+  }, [isGameRunning]);
+
+  // const getNewPair = useCallback(() => {
+  //   const newPair = getRandomPair();
+  //   return {
+  //     left: { word: newPair.word1, isMatched: false, isAnimating: false, id: makeid(15) },
+  //     right: { word: newPair.word2, isMatched: false, isAnimating: false, id: makeid(15) },
+  //   };
+  // }, [getRandomPair]);
 
   const handleSelectWord = useCallback(
     (word: string, id: string, column: "left" | "right") => {
@@ -178,49 +191,30 @@ function PairList({ numPairs = 5, isGameRunning }: PairListProps) {
     setRightColumn((prev) => prev.map((w) => (w.id === pair.rightId ? { ...w, isAnimating: true } : w)));
 
     const exitAnimationDuration = 500;
-    const delayBeforeReplacement = 100;
 
     setTimeout(
       () => {
         if (isMatch) {
-          setLeftColumn((prev) => prev.map((w) => (w.id === pair.leftId ? { ...w, isMatched: true } : w)));
-          setRightColumn((prev) => prev.map((w) => (w.id === pair.rightId ? { ...w, isMatched: true } : w)));
-
-          setTimeout(() => {
-            const newPair = getNewPair();
-            setLeftColumn((prev) =>
-              prev.map((w) => {
-                if (w.id === pair.leftId) {
-                  return newPair.left;
-                }
-                return w;
-              })
+          setLeftColumn((prev) => {
+            const newColumn = prev.map((w) =>
+              w.id === pair.leftId ? { ...w, isMatched: true, isAnimating: false } : w
             );
-            setRightColumn((prev) =>
-              prev.map((w) => {
-                if (w.id === pair.rightId) {
-                  return newPair.right;
-                }
-                return w;
-              })
-            );
-
-            // Handle pending selections after replacing the matched pair
-            if (pendingSelections.current.left || pendingSelections.current.right) {
-              setSelectedPairs((prevPairs) => {
-                const newSelection = {
-                  left: pendingSelections.current.left || "",
-                  right: pendingSelections.current.right || "",
-                  leftId: pendingSelections.current.leftId || "",
-                  rightId: pendingSelections.current.rightId || "",
-                  matchResult: null,
-                };
-                return [...prevPairs, newSelection];
-              });
-              pendingSelections.current = { left: null, right: null, leftId: null, rightId: null };
+            if (newColumn.every((w) => w.isMatched)) {
+              setTimeout(() => {
+                setListKey((prevKey) => prevKey + 1);
+                initializeColumns();
+              }, 500);
             }
-            setIsAnyCorrectAnimating(false);
-          }, delayBeforeReplacement);
+            return newColumn;
+          });
+          setRightColumn((prev) => {
+            const newColumn = prev.map((w) =>
+              w.id === pair.rightId ? { ...w, isMatched: true, isAnimating: false } : w
+            );
+            return newColumn;
+          });
+
+          setIsAnyCorrectAnimating(false);
         } else {
           setLeftColumn((prev) => prev.map((w) => (w.id === pair.leftId ? { ...w, isAnimating: false } : w)));
           setRightColumn((prev) => prev.map((w) => (w.id === pair.rightId ? { ...w, isAnimating: false } : w)));
@@ -230,12 +224,13 @@ function PairList({ numPairs = 5, isGameRunning }: PairListProps) {
         setSelectedPairs((prevPairs) =>
           prevPairs.filter((p) => p.leftId !== pair.leftId || p.rightId !== pair.rightId || p.matchResult === "correct")
         );
+
         matchQueue.current.shift();
         processMatchQueue();
       },
       isMatch ? exitAnimationDuration : 700
     );
-  }, [getNewPair]);
+  }, [initializeColumns]);
 
   useEffect(() => {
     const completePairs = selectedPairs.filter((pair) => pair.left && pair.right && pair.matchResult === null);
