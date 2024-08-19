@@ -25,7 +25,7 @@ function EditWords() {
         <div className={styles.introWrapper}>
           <h3>Word Editor</h3>
           <p>Here you can add, edit and remove your word pairs.</p>
-          <p>Each pair also has a "Category" field that can be used for all kinds of purposes.</p>
+          <p>Each pair also has a Category field that can be used for all kinds of purposes.</p>
           <p>
             For example, you can create categories for different languages (English, German, Japanese), or sort the
             words by type (Family, Food, Animals) if you are only learning a single language.
