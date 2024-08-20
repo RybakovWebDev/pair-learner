@@ -1,15 +1,16 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 import styles from "./EditWords.module.css";
 
 import { Check, Edit, Plus, Search, Trash2, X } from "react-feather";
-
-import { Pair, UserCategory } from "@/constants";
 import Spinner from "../Spinner";
+
 import { useUserContext } from "@/contexts/UserContext";
-import { supabase } from "@/lib/supabase";
+import { Pair, UserCategory } from "@/constants";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
@@ -33,6 +34,13 @@ function EditWords() {
   const [confirmDelete, setConfirmDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editedPair, setEditedPair] = useState<Pair | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
   const fetchWordPairs = useCallback(async () => {
     if (!user) return;
@@ -252,6 +260,10 @@ function EditWords() {
     })
     .reverse();
 
+  if (!user) {
+    return <Spinner />;
+  }
+
   return (
     <LazyMotion features={loadFeatures}>
       <section className={styles.wrapperMain}>
@@ -309,6 +321,7 @@ function EditWords() {
 
           <m.button
             className={styles.addButton}
+            initial={{ backgroundColor: "var(--color-background)" }}
             whileTap={user ? { backgroundColor: "var(--color-background-highlight)" } : {}}
             onClick={handleAdd}
             disabled={!user || categoriesLoading}

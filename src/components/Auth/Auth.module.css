@@ -74,7 +74,7 @@
 
 .hovered {
   position: absolute;
-  height: 100%;
+  height: 101%;
   width: 101%;
   background-color: var(--color-background-highlight);
 }

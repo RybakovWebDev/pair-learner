@@ -11,7 +11,11 @@ const loadFeatures = () => import("../../featuresMax").then((res) => res.default
 
 const authOptions = ["Login", "Register"];
 
-function Auth() {
+interface AuthProps {
+  openButtonFontSize?: string;
+}
+
+function Auth({ openButtonFontSize = "16px" }: AuthProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [authOption, setAuthOption] = useState("Login");
   const [showPassword, setShowPassword] = useState(false);
@@ -46,9 +50,6 @@ function Auth() {
       });
 
       if (error) throw error;
-
-      console.log("User logged in:", data);
-      // Handle successful login (e.g., redirect to dashboard)
     } catch (error) {
       setError((error as Error).message);
     }
@@ -62,9 +63,6 @@ function Auth() {
       });
 
       if (error) throw error;
-
-      console.log("User registered:", data);
-      // Handle successful registration (e.g., show verification message)
     } catch (error) {
       setError((error as Error).message);
     }
@@ -84,6 +82,7 @@ function Auth() {
     <LazyMotion features={loadFeatures}>
       <div className={styles.mainWrapper}>
         <m.button
+          style={{ fontSize: openButtonFontSize }}
           className={styles.openButton}
           initial={{ backgroundColor: "var(--color-background)" }}
           whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
@@ -163,10 +162,6 @@ function Auth() {
                     </div>
                   </div>
 
-                  <div className={styles.errorWrapper}>
-                    <p>{error}</p>
-                  </div>
-
                   <m.button
                     type='submit'
                     className={styles.authButton}
@@ -175,6 +170,9 @@ function Auth() {
                   >
                     {authOption}
                   </m.button>
+                  <div className={styles.errorWrapper}>
+                    <p>{error}</p>
+                  </div>
                 </form>
               </m.div>
             </m.div>

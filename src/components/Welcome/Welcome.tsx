@@ -1,6 +1,13 @@
+"use client";
+
 import styles from "./Welcome.module.css";
 
+import Auth from "../Auth";
+
+import { useUserContext } from "@/contexts/UserContext";
+
 function Welcome() {
+  const { user, loading } = useUserContext();
   return (
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
@@ -11,9 +18,6 @@ function Welcome() {
         <p>
           Create, edit, and learn word pairs <br /> in any language
         </p>
-        {/* <Link href='/signup' className={styles.ctaButton}>
-          Get Started
-        </Link> */}
       </section>
 
       <section className={styles.features}>
@@ -27,9 +31,11 @@ function Welcome() {
         </div>
         <div className={styles.feature}>
           <h3>Play Matching Game</h3>
-          <p>Test your memory with our interactive game</p>
+          <p>Memorize the words by matching randomized columns</p>
         </div>
       </section>
+
+      {!user && !loading && <Auth openButtonFontSize='24px' />}
     </section>
   );
 }

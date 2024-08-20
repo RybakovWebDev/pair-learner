@@ -1,18 +1,18 @@
 "use client";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 import styles from "./Game.module.css";
 
 import { Check, ChevronDown } from "react-feather";
-
 import PairList from "../PairList";
 
+import { useUserContext } from "@/contexts/UserContext";
 import { Pair, rowCountOptions, UserCategory } from "@/constants";
 import { AnimateChangeInHeight } from "@/helpers";
-import { supabase } from "@/lib/supabase";
-import { useUserContext } from "@/contexts/UserContext";
-import Link from "next/link";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -59,7 +59,7 @@ const controlsVariants: Variants = {
 };
 
 function Game() {
-  const { user } = useUserContext();
+  const { user, loading } = useUserContext();
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [rowCount, setRowCount] = useState(5);
@@ -71,6 +71,13 @@ function Game() {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [notEnoughPairs, setNotEnoughPairs] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
   const id = useId();
 

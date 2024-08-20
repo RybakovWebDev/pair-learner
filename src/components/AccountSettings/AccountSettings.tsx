@@ -1,6 +1,7 @@
 "use client";
 import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
 import styles from "./AccountSettings.module.css";
@@ -13,13 +14,20 @@ import Spinner from "../Spinner";
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
 function AccountSettings() {
-  const { user, setUser } = useUserContext();
+  const { user, loading, setUser } = useUserContext();
   const [editing, setEditing] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (user) {
