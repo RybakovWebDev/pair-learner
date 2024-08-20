@@ -9,6 +9,7 @@ import { RefsProvider } from "@/contexts/RefsContext";
 import Header from "@/components/Header";
 
 import { LIGHT_COLORS, DARK_COLORS } from "@/constants";
+import { UserProvider } from "@/contexts/UserContext";
 
 const inter = Inter({ weight: "400", subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -25,10 +26,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang='en' data-color-theme={theme} style={themeColors}>
       <body className={inter.className}>
-        <RefsProvider>
-          <Header initialTheme={theme} />
-          {children}
-        </RefsProvider>
+        <UserProvider>
+          <RefsProvider>
+            <Header initialTheme={theme} />
+            {children}
+          </RefsProvider>
+        </UserProvider>
       </body>
     </html>
   );

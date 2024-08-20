@@ -1,14 +1,21 @@
 .wrapperMain {
   padding: 0 1rem;
+  min-height: 90vh;
   width: 100%;
+  max-width: 50rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: center; */
 }
 
 .introWrapper {
   margin: 2rem 0 0 0;
-  padding: 0.5rem 4rem 0.5rem 0rem;
+  padding: 0.5rem 3rem 0.5rem 3rem;
 }
 
 .introWrapper h3 {
+  text-align: center;
   font-size: 28px;
   font-weight: 400;
 }
@@ -19,6 +26,123 @@
 
 .introWrapper p:last-child {
   margin: 1rem 0;
+}
+
+.mainControlsWrapper {
+  width: 100%;
+}
+
+.searchWrapper {
+  position: relative;
+
+  /* padding: 0 0 0 1rem; */
+  height: 5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.searchWrapper svg {
+  position: absolute;
+  left: 1rem;
+}
+
+.search {
+  padding: 0 0 0 3.5rem;
+  height: 4.5rem;
+  width: 100%;
+  appearance: none;
+  font-size: 14px;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+}
+
+.search::-webkit-search-decoration,
+.search::-webkit-search-cancel-button,
+.search::-webkit-search-results-button,
+.search::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+}
+
+.categoriesWrapper {
+  margin: 1rem 0 0 0;
+  padding: 1rem;
+  min-height: 10rem;
+  max-height: 20rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  appearance: none;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+}
+
+.categoriesLabelWrapper {
+  padding: 1rem 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.categoriesSelection {
+  letter-spacing: 2px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.categoriesWrapper ul {
+  padding: 0 1rem;
+  width: 100%;
+  list-style: none;
+  overflow-x: hidden;
+}
+
+.categoriesWrapper li {
+  margin: 0.5rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.categoriesWrapper ul li:last-child {
+  margin-bottom: 2rem;
+}
+
+.checkWrapperOuter {
+  border: 1px solid var(--color-text);
+  cursor: pointer;
+}
+
+.categoriesWrapper li p {
+  margin: 0 0 0 1rem;
+}
+
+.addButton {
+  margin: 1rem 0 0 0;
+  height: 5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+  overflow: hidden;
 }
 
 .list {
@@ -35,6 +159,7 @@
   font-size: 14px;
   border: 1px solid var(--color-background-secondary);
   border-radius: 20px;
+  /* box-shadow: 0 0px 5px var(--color-background-secondary); */
 }
 
 .wordDetailsWrapper {
@@ -48,25 +173,80 @@
 
 .wordWrapperOuter,
 .categoryWrapperOuter {
-  /* margin: 0.5rem 0; */
-  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  padding: 0.5rem 1rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  /* border-top: 1px solid var(--color-background-secondary);
-  border-bottom: 1px solid var(--color-background-secondary); */
 }
 
-.wordWrapper1,
-.wordWrapper2,
-.categoryWrapper {
-  padding: 0.5rem 1rem;
+.wordDetailsWrapper input {
+  padding: 1rem;
+  height: 100%;
+  width: 100%;
+  color: var(--color-text);
+  background: transparent;
   border: 1px solid var(--color-background-secondary);
-  border-radius: 20px;
+  border-radius: 10px;
 }
 
 .wordAttribute {
   width: 4.5rem;
+}
+
+.controlsWrapper {
+  position: relative;
+  margin: 1rem 0 0 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+.controlsWrapper button {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  overflow: hidden;
+}
+
+.pairControlButton {
+  height: 2.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-text);
+  background-color: transparent;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  text-wrap: nowrap;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.pairControlButtonWrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pairControlButtonWrapper span {
+  height: 100%;
+  border-right: 1px solid var(--color-background-secondary);
+}
+
+.pairControlButtonWrapper button,
+.pairControlButton button {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text);
+  background: transparent;
+  border: transparent;
+  cursor: pointer;
 }
 
 .deleteButton {
@@ -81,10 +261,16 @@
   border: 1px solid var(--color-background-secondary);
   border-radius: 20px;
   text-wrap: nowrap;
-  overflow: hidden;
+  cursor: pointer;
 }
 
 .deleteButton p {
   font-size: 15px;
   color: var(--color-text-danger);
+}
+
+.pairCount {
+  position: absolute;
+  right: 2rem;
+  /* bottom: 0; */
 }

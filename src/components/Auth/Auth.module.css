@@ -1,0 +1,156 @@
+.mainWrapper {
+}
+
+.openButton {
+  padding: 0.5rem 1rem;
+  color: var(--color-text);
+  font-size: 16px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.backdrop {
+  position: fixed;
+  top: 3.5rem;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgb(0, 0, 0, 0.8);
+  /* filter: blur(1px); */
+  z-index: 1;
+}
+
+.modalWrapper {
+  position: fixed;
+  height: 70vh;
+  width: 100vw;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: var(--color-background);
+  /* border-top: 1px solid var(--color-text); */
+  touch-action: none;
+  z-index: 100;
+}
+
+.authOptionSelector {
+  margin: 0 0 0 0;
+  height: 3rem;
+  width: 100%;
+  display: flex;
+  border: 1px solid var(--color-background-highlight);
+  /* border-radius: 20px; */
+  overflow: hidden;
+}
+
+.authOptionSelector button:nth-child(2) {
+  border-left: 1px solid var(--color-background-highlight);
+  border-right: 1px solid var(--color-background-highlight);
+}
+
+.authOptionSelector button {
+  position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  background-color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.authOptionSelector button h3 {
+  color: var(--color-text);
+  font-size: 20px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.hovered {
+  position: absolute;
+  height: 100%;
+  width: 101%;
+  background-color: var(--color-background-highlight);
+}
+
+.bottomWrapper {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* justify-content: center; */
+}
+
+.inputsWrapper {
+  margin: 2rem 0 0 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.usernameInput,
+.passwordInput {
+  padding: 1rem;
+  height: 3.5rem;
+  width: 20rem;
+  font-size: 14px;
+  color: var(--color-text);
+  background: transparent;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 10px;
+}
+
+.usernameInput {
+  margin: 1rem;
+}
+
+.passwordInput {
+  padding: 1rem 3rem 1rem 1rem;
+}
+
+.passwordInputWrapper {
+  position: relative;
+  margin: 1rem;
+  /* padding: 1rem; */
+  height: 3.5rem;
+  width: 20rem;
+  display: flex;
+  align-items: center;
+}
+
+.passwordVisibilityWrapper {
+  position: absolute;
+  right: 1rem;
+  color: var(--color-background-secondary);
+  background-color: var(--color-background);
+  border: none;
+  cursor: pointer;
+}
+
+.errorWrapper {
+  margin: 1rem 0;
+  padding: 0 1rem;
+  height: 5rem;
+  width: 20rem;
+  display: flex;
+  justify-content: center;
+}
+
+.authButton {
+  padding: 0.5rem 1rem;
+  color: var(--color-text);
+  font-size: 16px;
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+  user-select: none;
+}

@@ -15,6 +15,8 @@ interface WordCellProps {
   children: string;
 }
 
+// TODO 15 characters break to next
+
 function WordCell({
   isSelected,
   matchResult,

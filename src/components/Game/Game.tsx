@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 
 import styles from "./Game.module.css";
@@ -8,12 +8,13 @@ import { Check, ChevronDown } from "react-feather";
 
 import PairList from "../PairList";
 
-import { rowCountOptions, testUser } from "@/constants";
+import { Pair, rowCountOptions, UserCategory } from "@/constants";
 import { AnimateChangeInHeight } from "@/helpers";
+import { supabase } from "@/lib/supabase";
+import { useUserContext } from "@/contexts/UserContext";
+import Link from "next/link";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
-
-const categories = testUser.categories;
 
 const simpleVariants: Variants = {
   hidden: { opacity: 0 },
@@ -46,7 +47,6 @@ const startVariants: Variants = {
   },
 };
 
-// New variants for fading out controls
 const controlsVariants: Variants = {
   enabled: {
     opacity: 1,
@@ -59,18 +59,69 @@ const controlsVariants: Variants = {
 };
 
 function Game() {
+  const { user } = useUserContext();
+  const [pairs, setPairs] = useState<Pair[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [rowCount, setRowCount] = useState(5);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [enabledCategories, setEnabledCategories] = useState<String[]>(categories);
+  const [enabledCategories, setEnabledCategories] = useState<string[]>([]);
   const [roundLength, setRoundLength] = useState(210);
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(210);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [notEnoughPairs, setNotEnoughPairs] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const id = useId();
 
-  const categoriesEqual = categories.length === enabledCategories.length;
+  const fetchWordPairs = useCallback(async () => {
+    if (!user) return;
+
+    const localPairs = localStorage.getItem("pairs");
+    if (localPairs) {
+      setPairs(JSON.parse(localPairs));
+    } else {
+      try {
+        const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
+        if (error) {
+          console.error("Error fetching word pairs:", error);
+        } else {
+          setPairs(data as Pair[]);
+          localStorage.setItem("pairs", JSON.stringify(data));
+        }
+      } catch (error) {
+        console.error("Unexpected error:", error);
+      }
+    }
+  }, [user]);
+
+  const fetchUserCategories = useCallback(async () => {
+    if (!user) return;
+
+    const localCategories = localStorage.getItem("categories");
+    if (localCategories) {
+      const parsedCategories = JSON.parse(localCategories);
+      setCategories([...parsedCategories.map((c: UserCategory) => c.category), "None"]);
+      setEnabledCategories([...parsedCategories.map((c: UserCategory) => c.category), "None"]);
+    } else {
+      const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
+      if (error) {
+        console.error("Error fetching user categories:", error);
+      } else {
+        const categoryNames = [...data.map((c) => c.category), "None"];
+        setCategories(categoryNames);
+        setEnabledCategories(categoryNames);
+        localStorage.setItem("categories", JSON.stringify(data));
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (user) {
+      fetchWordPairs();
+      fetchUserCategories();
+    }
+  }, [user, fetchWordPairs, fetchUserCategories]);
 
   useEffect(() => {
     if (isGameRunning && roundLength !== 210) {
@@ -96,6 +147,23 @@ function Game() {
   useEffect(() => {
     setTimeRemaining(roundLength);
   }, [roundLength]);
+
+  const getFilteredPairs = useCallback(() => {
+    return pairs.filter((pair) => {
+      if (pair.category && enabledCategories.includes(pair.category)) {
+        return true;
+      }
+      if (!pair.category && enabledCategories.includes("None")) {
+        return true;
+      }
+      return false;
+    });
+  }, [pairs, enabledCategories]);
+
+  useEffect(() => {
+    const filteredPairs = getFilteredPairs();
+    setNotEnoughPairs(filteredPairs.length < 5);
+  }, [getFilteredPairs]);
 
   const handleRowCountChange = (rows: number) => {
     if (!isGameRunning) {
@@ -148,10 +216,12 @@ function Game() {
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
 
+  // const notEnoughPairs = false;
+
   return (
     <LazyMotion features={loadFeatures}>
-      <section className={styles.wrapperMain}>
-        <m.div className={styles.controlsWrapper} initial='hidden' animate='show' variants={simpleVariants}>
+      <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleVariants}>
+        <m.div className={styles.controlsWrapper}>
           <m.div
             className={styles.categoriesWrapper}
             variants={controlsVariants}
@@ -161,14 +231,14 @@ function Game() {
               <p>Words to use:</p>
               <AnimatePresence mode='wait'>
                 <m.p
-                  key={categoriesEqual ? "All" : "Custom"}
+                  key={categories.length === enabledCategories.length ? "All" : "Custom"}
                   className={styles.categoriesSelection}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {categoriesEqual ? "All" : "Custom"}
+                  {categories.length === enabledCategories.length ? "All" : "Custom"}
                 </m.p>
               </AnimatePresence>
               <m.div initial={{ rotate: 0 }} animate={{ rotate: categoriesOpen ? 180 : 0 }}>
@@ -326,12 +396,22 @@ function Game() {
           </AnimatePresence>
         </AnimateChangeInHeight>
 
-        <PairList
-          numPairs={rowCount}
-          isGameRunning={isGameRunning}
-          enabledCategories={enabledCategories}
-          refreshTrigger={refreshTrigger}
-        />
+        {notEnoughPairs ? (
+          <m.div
+            className={styles.minPairsMessage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <p>You need to add at least 5 word pairs to play the game.</p>
+            <Link href={"/edit"}>
+              <p>Add more?</p>
+              <span />
+            </Link>
+          </m.div>
+        ) : (
+          <PairList numPairs={rowCount} isGameRunning={isGameRunning} refreshTrigger={refreshTrigger} pairs={pairs} />
+        )}
 
         <m.button
           className={styles.resetButton}
@@ -341,7 +421,7 @@ function Game() {
         >
           Refresh list
         </m.button>
-      </section>
+      </m.section>
     </LazyMotion>
   );
 }

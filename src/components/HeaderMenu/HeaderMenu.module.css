@@ -10,7 +10,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.listWrapper {
+.list {
   position: fixed;
   top: 3.5rem;
   right: 0;
@@ -32,7 +32,7 @@
   overflow-y: hidden;
 }
 
-.listWrapper li {
+.list li {
   padding: 0 1rem;
   /* margin: 1rem 0; */
   /* flex-grow: 1; */
@@ -41,8 +41,12 @@
   font-size: 30px;
 }
 
-.listWrapper li:nth-child(2) {
+.list li:nth-child(2) {
   border-top: 1px solid var(--color-background-secondary);
+  border-bottom: 1px solid var(--color-background-secondary);
+}
+
+.list li:nth-child(3) {
   border-bottom: 1px solid var(--color-background-secondary);
 }
 
@@ -52,7 +56,8 @@
   border-radius: 10px;
 }
 
-.listWrapper li a {
+.list li a,
+.list li button {
   height: 100%;
   width: 100%;
   display: flex;
@@ -66,7 +71,7 @@
 }
 
 @media (max-width: 1080px) {
-  .listWrapper {
+  .list {
     top: 3.5rem;
   }
 }

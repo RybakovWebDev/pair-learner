@@ -1,21 +1,22 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { LazyMotion, m, AnimatePresence } from "framer-motion";
 
 import styles from "./PairList.module.css";
 
 import WordCell from "../WordCell";
 
-import { Pair, testUser } from "@/constants";
+import { Pair } from "@/constants";
 import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
+import Spinner from "../Spinner";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
 interface PairListProps {
   numPairs?: number;
   isGameRunning: boolean;
-  enabledCategories: String[];
   refreshTrigger: number;
+  pairs: Pair[];
 }
 
 interface WordState {
@@ -33,18 +34,17 @@ interface SelectedPair {
   matchResult: "correct" | "incorrect" | null;
 }
 
-function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigger }: PairListProps) {
+function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairListProps) {
   const [listKey, setListKey] = useState(0);
   const [leftColumn, setLeftColumn] = useState<WordState[]>([]);
   const [rightColumn, setRightColumn] = useState<WordState[]>([]);
   const [selectedPairs, setSelectedPairs] = useState<SelectedPair[]>([]);
   const [isAnyIncorrectAnimating, setIsAnyIncorrectAnimating] = useState(false);
   const [isAnyCorrectAnimating, setIsAnyCorrectAnimating] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const matchQueue = useRef<SelectedPair[]>([]);
   const isProcessingQueue = useRef(false);
-  const allPairs = useRef<Pair[]>(
-    testUser.pairs.filter((pair) => pair.category && enabledCategories.includes(pair.category))
-  );
+  const allPairs = useRef<Pair[]>([]);
   const pendingSelections = useRef<{
     left: string | null;
     right: string | null;
@@ -53,17 +53,27 @@ function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigg
   }>({ left: null, right: null, leftId: null, rightId: null });
 
   const getRandomPair = useCallback(() => {
+    if (allPairs.current.length === 0) {
+      console.error("No pairs available in getRandomPair");
+      return { word1: "", word2: "" };
+    }
     const randomIndex = Math.floor(Math.random() * allPairs.current.length);
     return allPairs.current[randomIndex];
   }, []);
 
   const initializeColumns = useCallback(() => {
+    if (allPairs.current.length < numPairs) {
+      console.error("Not enough pairs available");
+      setLeftColumn([]);
+      setRightColumn([]);
+      return;
+    }
+
     const newLeftColumn: WordState[] = [];
     const newRightColumn: WordState[] = [];
 
     for (let i = 0; i < numPairs; i++) {
       const pair = getRandomPair();
-
       newLeftColumn.push({
         word: pair.word1,
         isMatched: false,
@@ -80,29 +90,29 @@ function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigg
 
     setLeftColumn(shuffleArray(newLeftColumn));
     setRightColumn(shuffleArray(newRightColumn));
-    setListKey((prevKey) => prevKey + 1);
   }, [numPairs, getRandomPair]);
 
   useEffect(() => {
-    allPairs.current = testUser.pairs.filter((pair) => pair.category && enabledCategories.includes(pair.category));
-    initializeColumns();
-  }, [enabledCategories, initializeColumns, refreshTrigger]);
+    allPairs.current = pairs;
+    setIsLoading(true);
+
+    if (allPairs.current.length >= numPairs) {
+      initializeColumns();
+      setListKey((prevKey) => prevKey + 1);
+    } else {
+      setLeftColumn([]);
+      setRightColumn([]);
+    }
+
+    setIsLoading(false);
+  }, [pairs, initializeColumns, refreshTrigger, numPairs]);
 
   useEffect(() => {
     if (!isGameRunning) {
-      // Clear any unmatched selections when the game stops
       setSelectedPairs((prevPairs) => prevPairs.filter((pair) => pair.matchResult === "correct"));
       pendingSelections.current = { left: null, right: null, leftId: null, rightId: null };
     }
   }, [isGameRunning]);
-
-  // const getNewPair = useCallback(() => {
-  //   const newPair = getRandomPair();
-  //   return {
-  //     left: { word: newPair.word1, isMatched: false, isAnimating: false, id: makeid(15) },
-  //     right: { word: newPair.word2, isMatched: false, isAnimating: false, id: makeid(15) },
-  //   };
-  // }, [getRandomPair]);
 
   const handleSelectWord = useCallback(
     (word: string, id: string, column: "left" | "right") => {
@@ -113,7 +123,6 @@ function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigg
 
       if (wordState?.isMatched) return;
 
-      // Update pending selections
       pendingSelections.current[column] = word;
       pendingSelections.current[`${column}Id`] = id;
 
@@ -243,77 +252,102 @@ function PairList({ numPairs = 5, isGameRunning, enabledCategories, refreshTrigg
     }
   }, [selectedPairs, processMatchQueue]);
 
+  const memoizedLeftColumn = useMemo(() => leftColumn, [leftColumn]);
+  const memoizedRightColumn = useMemo(() => rightColumn, [rightColumn]);
+
+  if (isLoading) {
+    return (
+      <LazyMotion features={loadFeatures}>
+        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+          <Spinner marginTop='5vh' />
+        </m.div>
+      </LazyMotion>
+    );
+  }
+
+  const shouldRenderColumns = memoizedLeftColumn.length >= numPairs && memoizedRightColumn.length >= numPairs;
+
   return (
     <LazyMotion features={loadFeatures}>
       <AnimateChangeInHeight className={styles.ulWrapper} enterDuration={0.2} exitDuration={0.2}>
         <AnimatePresence mode='wait'>
-          <m.section
-            className={styles.mainWrapper}
-            key={listKey}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ul className={styles.leftColumn}>
-              {leftColumn.map((wordState, i) => (
-                <m.li key={i} onClick={() => handleSelectWord(wordState.word, wordState.id, "left")}>
-                  <AnimatePresence mode='wait' initial={false}>
-                    <m.div
-                      key={wordState.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 5 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <WordCell
-                        isSelected={selectedPairs.some(
-                          (pair) => pair.leftId === wordState.id && pair.matchResult === null
-                        )}
-                        matchResult={selectedPairs.find((pair) => pair.leftId === wordState.id)?.matchResult || null}
-                        isMatched={wordState.isMatched}
-                        isAnimating={wordState.isAnimating}
-                        isAnyIncorrectAnimating={isAnyIncorrectAnimating}
-                        isAnyCorrectAnimating={isAnyCorrectAnimating}
-                        isGameRunning={isGameRunning}
+          {shouldRenderColumns ? (
+            <m.section
+              className={styles.mainWrapper}
+              key={listKey}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <ul className={styles.leftColumn}>
+                {memoizedLeftColumn.map((wordState, i) => (
+                  <m.li key={i} onClick={() => handleSelectWord(wordState.word, wordState.id, "left")}>
+                    <AnimatePresence mode='wait' initial={false}>
+                      <m.div
+                        key={wordState.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        transition={{ duration: 0.5 }}
                       >
-                        {wordState.word}
-                      </WordCell>
-                    </m.div>
-                  </AnimatePresence>
-                </m.li>
-              ))}
-            </ul>
-            <ul className={styles.rightColumn}>
-              {rightColumn.map((wordState, i) => (
-                <m.li key={i} onClick={() => handleSelectWord(wordState.word, wordState.id, "right")}>
-                  <AnimatePresence mode='wait' initial={false}>
-                    <m.div
-                      key={wordState.id}
-                      initial={{ opacity: 0, y: 5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 5 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <WordCell
-                        isSelected={selectedPairs.some(
-                          (pair) => pair.rightId === wordState.id && pair.matchResult === null
-                        )}
-                        matchResult={selectedPairs.find((pair) => pair.rightId === wordState.id)?.matchResult || null}
-                        isMatched={wordState.isMatched}
-                        isAnimating={wordState.isAnimating}
-                        isAnyIncorrectAnimating={isAnyIncorrectAnimating}
-                        isAnyCorrectAnimating={isAnyCorrectAnimating}
-                        isGameRunning={isGameRunning}
+                        <WordCell
+                          isSelected={selectedPairs.some(
+                            (pair) => pair.leftId === wordState.id && pair.matchResult === null
+                          )}
+                          matchResult={selectedPairs.find((pair) => pair.leftId === wordState.id)?.matchResult || null}
+                          isMatched={wordState.isMatched}
+                          isAnimating={wordState.isAnimating}
+                          isAnyIncorrectAnimating={isAnyIncorrectAnimating}
+                          isAnyCorrectAnimating={isAnyCorrectAnimating}
+                          isGameRunning={isGameRunning}
+                        >
+                          {wordState.word}
+                        </WordCell>
+                      </m.div>
+                    </AnimatePresence>
+                  </m.li>
+                ))}
+              </ul>
+              <ul className={styles.rightColumn}>
+                {memoizedRightColumn.map((wordState, i) => (
+                  <m.li key={i} onClick={() => handleSelectWord(wordState.word, wordState.id, "right")}>
+                    <AnimatePresence mode='wait' initial={false}>
+                      <m.div
+                        key={wordState.id}
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 5 }}
+                        transition={{ duration: 0.5 }}
                       >
-                        {wordState.word}
-                      </WordCell>
-                    </m.div>
-                  </AnimatePresence>
-                </m.li>
-              ))}
-            </ul>
-          </m.section>
+                        <WordCell
+                          isSelected={selectedPairs.some(
+                            (pair) => pair.rightId === wordState.id && pair.matchResult === null
+                          )}
+                          matchResult={selectedPairs.find((pair) => pair.rightId === wordState.id)?.matchResult || null}
+                          isMatched={wordState.isMatched}
+                          isAnimating={wordState.isAnimating}
+                          isAnyIncorrectAnimating={isAnyIncorrectAnimating}
+                          isAnyCorrectAnimating={isAnyCorrectAnimating}
+                          isGameRunning={isGameRunning}
+                        >
+                          {wordState.word}
+                        </WordCell>
+                      </m.div>
+                    </AnimatePresence>
+                  </m.li>
+                ))}
+              </ul>
+            </m.section>
+          ) : (
+            <m.div key='no-pairs' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <p>Not enough pairs available. Please add more pairs or adjust your settings.</p>
+              <p>
+                Debug info: Pairs: {pairs.length}, Required pairs: {numPairs}, Left column: {leftColumn.length}, Right
+                column: {rightColumn.length}, All pairs: {allPairs.current.length}
+              </p>
+            </m.div>
+          )}
         </AnimatePresence>
       </AnimateChangeInHeight>
     </LazyMotion>

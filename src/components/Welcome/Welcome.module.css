@@ -1,0 +1,62 @@
+.mainWrapper {
+  margin: 5vh 0 0 0;
+  padding: 0 2rem;
+}
+
+.mainWrapper h2 {
+  font-size: 30px;
+}
+
+.hero {
+  text-align: center;
+  margin-bottom: 4rem;
+}
+
+.hero h2 {
+  font-size: 2rem;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  font-size: 1.2rem;
+  color: var(--color-text);
+  margin-bottom: 2rem;
+}
+
+.features {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+
+.feature {
+  flex-basis: calc(33% - 2rem);
+  min-width: 250px;
+  padding: 1.5rem;
+  border: 1px solid var(--color-text);
+  border-radius: 20px;
+  text-align: center;
+}
+
+.feature h3 {
+  font-size: 1.3rem;
+  color: var(--color-text);
+  margin-bottom: 1rem;
+}
+
+.feature p {
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .features {
+    flex-direction: column;
+  }
+
+  .feature {
+    flex-basis: 100%;
+  }
+}

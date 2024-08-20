@@ -1,11 +1,16 @@
 "use client";
 import { useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 import styles from "./HeaderMenu.module.css";
 
-import { Edit, LogOut, Menu, Play } from "react-feather";
+import { Edit, LogOut, Play } from "react-feather";
 import Link from "next/link";
+
+import { useUserContext } from "@/contexts/UserContext";
+import { MENU_ITEMS } from "@/constants";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
@@ -26,8 +31,21 @@ const liVariants: Variants = {
 
 function HeaderMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const router = useRouter();
+  const { setUser } = useUserContext();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setUser(null);
+      router.push("/");
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
+    setIsOpen(false);
+  };
+
+  const handleLinkClick = () => {
     setIsOpen(false);
   };
 
@@ -78,38 +96,34 @@ function HeaderMenu() {
             )}
           </AnimatePresence>
         </m.button>
+
         <AnimatePresence>
           {isOpen && (
             <m.ul
-              className={styles.listWrapper}
+              className={styles.list}
               initial={{ opacity: 1, x: "100%" }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 1, x: "100%" }}
               transition={{ duration: 0.3 }}
             >
-              <m.li key={"play"} initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                <Link href={"/play"} onClick={() => setIsOpen(false)}>
-                  <p>Play</p>
-                  <div className={styles.iconWrapper}>
-                    <Play size={22} />
-                  </div>
-                </Link>
-              </m.li>
-              <m.li key={"edit"} initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                <Link href={"/edit"} onClick={() => setIsOpen(false)}>
-                  <p>Edit Words</p>
-                  <div className={styles.iconWrapper}>
-                    <Edit size={22} />
-                  </div>
-                </Link>
-              </m.li>
+              {MENU_ITEMS.map((item) => {
+                return (
+                  <m.li key={item.slug} initial='hidden' animate='show' exit='exit' variants={liVariants}>
+                    <Link href={item.href} onClick={handleLinkClick}>
+                      <p>{item.title}</p>
+                      <div className={styles.iconWrapper}>{item.icon}</div>
+                    </Link>
+                  </m.li>
+                );
+              })}
+
               <m.li key={"logout"} initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                <Link href={"/"} onClick={handleLogout}>
+                <button onClick={handleLogout}>
                   <p>Logout</p>
                   <div className={styles.iconWrapper}>
                     <LogOut size={22} />
                   </div>
-                </Link>
+                </button>
               </m.li>
             </m.ul>
           )}
