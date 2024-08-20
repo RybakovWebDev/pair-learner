@@ -89,7 +89,7 @@ function AccountSettings() {
       <section className={styles.mainWrapper}>
         <h2>Update account information</h2>
         <p>
-          Leave password empty if you don't <br /> want to change it.
+          Leave password empty if you don&apos;t <br /> want to change it.
         </p>
 
         <m.form key={"authDataForm"} onSubmit={handleEditConfirm} className={styles.form}>
