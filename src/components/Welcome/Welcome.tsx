@@ -29,10 +29,13 @@ function Welcome() {
       <section className={styles.features}>
         <div className={styles.feature}>
           <h3>Create Word Pairs</h3>
-          <p>Add and organize your own word pairs</p>
+          <p>
+            Add and organize your own <br />
+            custom word pairs
+          </p>
         </div>
         <div className={styles.feature}>
-          <h3>Customize Categories</h3>
+          <h3>Customize Tags</h3>
           <p>Sort words by language, topic, or anything else</p>
         </div>
         <div className={styles.feature}>

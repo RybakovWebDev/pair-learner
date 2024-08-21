@@ -1,5 +1,5 @@
 .mainWrapper {
-  margin: 5vh 0 2rem 0;
+  margin: 5vh 0 09 0;
   padding: 0 2rem;
   display: flex;
   flex-direction: column;
@@ -64,7 +64,7 @@
 
 .hero p {
   margin: 2rem 0;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   /* font-weight: 600; */
   /* font-family: "Montserrat"; */
   text-transform: uppercase;
@@ -74,14 +74,16 @@
 .features {
   margin: 0 0 3rem 0;
   display: flex;
-  justify-content: space-around;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   flex-wrap: wrap;
   gap: 2rem;
 }
 
 .feature {
   padding: 1.5rem;
-  min-width: 250px;
+  width: 21rem;
   flex-basis: calc(33% - 2rem);
   border: 1px solid var(--color-text);
   border-radius: 20px;
@@ -100,10 +102,6 @@
 }
 
 @media (max-width: 768px) {
-  .features {
-    flex-direction: column;
-  }
-
   .feature {
     flex-basis: 100%;
   }

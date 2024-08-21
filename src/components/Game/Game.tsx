@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -167,10 +167,11 @@ function Game() {
     });
   }, [pairs, enabledCategories]);
 
+  const filteredPairs = useMemo(() => getFilteredPairs(), [getFilteredPairs]);
+
   useEffect(() => {
-    const filteredPairs = getFilteredPairs();
     setNotEnoughPairs(filteredPairs.length < 5);
-  }, [getFilteredPairs]);
+  }, [filteredPairs]);
 
   const handleRowCountChange = (rows: number) => {
     if (!isGameRunning) {
@@ -222,8 +223,6 @@ function Game() {
     const remainingSeconds = seconds % 60;
     return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
   };
-
-  // const notEnoughPairs = false;
 
   return (
     <LazyMotion features={loadFeatures}>
@@ -417,7 +416,12 @@ function Game() {
             </Link>
           </m.div>
         ) : (
-          <PairList numPairs={rowCount} isGameRunning={isGameRunning} refreshTrigger={refreshTrigger} pairs={pairs} />
+          <PairList
+            numPairs={rowCount}
+            isGameRunning={isGameRunning}
+            refreshTrigger={refreshTrigger}
+            pairs={filteredPairs}
+          />
         )}
 
         <m.button

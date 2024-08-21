@@ -147,10 +147,13 @@ const PairsDemo = () => {
       () => dispatch({ type: "RESET_ANIMATION" }),
     ];
 
+    const currentStep = state.animationStep % 4;
+    const delay = currentStep === 3 ? 400 : 1000;
+
     const timeoutId = setTimeout(() => {
-      animationSteps[state.animationStep % 4]();
+      animationSteps[currentStep]();
       dispatch({ type: "NEXT_STEP" });
-    }, 1000);
+    }, delay);
 
     return () => clearTimeout(timeoutId);
   }, [state.animationStep]);

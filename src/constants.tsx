@@ -119,7 +119,7 @@ export const LIGHT_COLORS: ThemeColors = {
   "--color-text-danger": "hsl(0, 100%, 52%)",
   "--color-underline": "0, 0, 0",
   "--color-background": "hsl(0 0% 92%)",
-  "--color-background-highlight": "hsl(0 0% 60%)",
+  "--color-background-highlight": "hsl(0 0% 65%)",
   "--color-background-highlight-win": "hsl(128, 100%, 70%)",
   "--color-background-highlight-fail": "hsl(0, 100%, 67%)",
   "--color-background-secondary": "hsla(0, 0%, 0%, 0.3)",
