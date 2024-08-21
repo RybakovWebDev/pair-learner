@@ -12,7 +12,6 @@ export default function Home() {
     <main className={styles.main}>
       <div className={styles.content}>
         <Welcome />
-        <PairsDemo />
       </div>
       <Footer />
     </main>

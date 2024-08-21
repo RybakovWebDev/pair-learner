@@ -5,6 +5,7 @@ import styles from "./Welcome.module.css";
 import Auth from "../Auth";
 
 import { useUserContext } from "@/contexts/UserContext";
+import PairsDemo from "../PairsDemo";
 
 function Welcome() {
   const { user, loading } = useUserContext();
@@ -12,19 +13,21 @@ function Welcome() {
   return (
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
-        <div className={styles.titleContainer}>
+        {/* <div className={styles.titleContainer}>
           <button className={styles.pushable}>
             <span className={styles.front}>Pair</span>
           </button>
           <button className={styles.pushable}>
             <span className={styles.front}>Learner</span>
           </button>
-        </div>
+        </div> */}
         <p>
           Create, edit, and learn <br />
           word pairs in any language
         </p>
       </section>
+
+      <PairsDemo />
 
       <section className={styles.features}>
         <div className={styles.feature}>

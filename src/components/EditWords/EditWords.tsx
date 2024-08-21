@@ -11,6 +11,7 @@ import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, UserCategory } from "@/constants";
+import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -30,11 +31,13 @@ function EditWords() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [userCategories, setUserCategories] = useState<UserCategory[]>([]);
   const [enabledCategories, setEnabledCategories] = useState<string[]>([]);
+  const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
   const [editing, setEditing] = useState("");
   const [confirmDelete, setConfirmDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editedPair, setEditedPair] = useState<Pair | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
+  const [dataLoaded, setDataLoaded] = useState(false);
   const router = useRouter();
 
   const clearAllErrors = useCallback(() => {
@@ -53,12 +56,13 @@ function EditWords() {
     const localPairs = localStorage.getItem("pairs");
     if (localPairs) {
       setPairs(JSON.parse(localPairs));
+      setDataLoaded(true);
       return;
     }
 
     try {
       const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
-      console.log("Fetching pairs");
+      console.log("Fetching pairs from database");
       if (error) {
         console.error("Error fetching word pairs:", error);
       } else {
@@ -68,6 +72,7 @@ function EditWords() {
     } catch (error) {
       console.error("Unexpected error:", error);
     }
+    setDataLoaded(true);
   }, [user]);
 
   const fetchUserCategories = useCallback(async () => {
@@ -82,7 +87,7 @@ function EditWords() {
       return;
     }
 
-    console.log("Fetching categories");
+    console.log("Fetching categories from database");
     setCategoriesLoading(true);
     const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
 
@@ -97,11 +102,11 @@ function EditWords() {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
+    if (user && !dataLoaded) {
       fetchWordPairs();
       fetchUserCategories();
     }
-  }, [user, fetchWordPairs, fetchUserCategories]);
+  }, [user, dataLoaded, fetchWordPairs, fetchUserCategories]);
 
   const updateCategories = useCallback(
     async (pairs: Pair[]) => {
@@ -193,6 +198,18 @@ function EditWords() {
     });
   };
 
+  const handleDisabledInputClick = useCallback(
+    (e: React.MouseEvent, pairId: string) => {
+      e.stopPropagation(); // Stop event propagation
+      if (editing !== pairId) {
+        console.log("clicked", pairId);
+        setShakeEditButton(pairId);
+        setTimeout(() => setShakeEditButton(null), 500);
+      }
+    },
+    [editing]
+  );
+
   const handleEditStart = (pair: Pair) => {
     setConfirmDelete("");
     clearAllErrors();
@@ -205,13 +222,20 @@ function EditWords() {
   const handleEditConfirm = async () => {
     if (!user || !editedPair) return;
 
-    const { error } = await supabase.from("word-pairs").update(editedPair).eq("id", editedPair.id);
+    const trimmedPair = {
+      ...editedPair,
+      word1: editedPair.word1.trim(),
+      word2: editedPair.word2.trim(),
+      category: editedPair.category ? editedPair.category.trim() : null,
+    };
+
+    const { error } = await supabase.from("word-pairs").update(trimmedPair).eq("id", trimmedPair.id);
 
     if (error) {
       console.error("Error updating pair:", error);
-      setErrors({ [editedPair.id]: { general: "Failed to update pair. Please try again." } });
+      setErrors({ [trimmedPair.id]: { general: "Failed to update pair. Please try again." } });
     } else {
-      const updatedPairs = pairs.map((p) => (p.id === editedPair.id ? editedPair : p));
+      const updatedPairs = pairs.map((p) => (p.id === trimmedPair.id ? trimmedPair : p));
       setPairs(updatedPairs);
       localStorage.setItem("pairs", JSON.stringify(updatedPairs));
       updateCategories(updatedPairs);
@@ -317,22 +341,26 @@ function EditWords() {
             {categoriesLoading ? (
               <Spinner marginTop='3vh' />
             ) : (
-              <m.ul>
-                {[...userCategories.map((uc) => uc.category), "None"].map((c) => (
-                  <li key={c} value={c}>
-                    <m.div className={styles.checkWrapperOuter}>
-                      <m.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: enabledCategories.includes(c) ? 1 : 0 }}
-                        onClick={() => user && handleCategoriesChange(c)}
-                      >
-                        <Check />
-                      </m.div>
-                    </m.div>
-                    <p>{c}</p>
-                  </li>
-                ))}
-              </m.ul>
+              <AnimateChangeInHeight className={styles.categoriesInnerHeightWrapper}>
+                <m.ul>
+                  <AnimatePresence>
+                    {[...userCategories.map((uc) => uc.category), "None"].map((c) => (
+                      <m.li key={c} value={c} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <m.div className={styles.checkWrapperOuter}>
+                          <m.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: enabledCategories.includes(c) ? 1 : 0 }}
+                            onClick={() => user && handleCategoriesChange(c)}
+                          >
+                            <Check />
+                          </m.div>
+                        </m.div>
+                        <p>{c}</p>
+                      </m.li>
+                    ))}
+                  </AnimatePresence>
+                </m.ul>
+              </AnimateChangeInHeight>
             )}
           </div>
 
@@ -358,13 +386,14 @@ function EditWords() {
                   key={p.id}
                   initial={{ opacity: 0, margin: "1rem 0 0 0" }}
                   animate={{ opacity: 1, margin: "1rem 0 0 0" }}
-                  exit={{ opacity: 0, height: 0, margin: "0" }}
+                  exit={{ opacity: 0, height: 0, margin: "1rem 0 0 0" }}
                   transition={{ duration: 0.3 }}
                 >
                   <m.div
                     className={styles.wordDetailsWrapper}
                     initial={{ opacity: 0.7 }}
                     animate={{ opacity: editing === p.id ? 1 : 0.7 }}
+                    onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
                   >
                     <div className={styles.wordWrapperOuter}>
                       <p className={styles.wordAttribute}>Word 1: </p>
@@ -375,6 +404,7 @@ function EditWords() {
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word1 : p.word1}
                           onChange={(e) => handleInputChange("word1", e.target.value)}
+                          style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
                       {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
@@ -389,6 +419,7 @@ function EditWords() {
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word2 : p.word2}
                           onChange={(e) => handleInputChange("word2", e.target.value)}
+                          style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
                       {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
@@ -400,6 +431,7 @@ function EditWords() {
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.category || "" : p.category || ""}
                           onChange={(e) => handleInputChange("category", e.target.value)}
+                          style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
                     </div>
@@ -412,7 +444,14 @@ function EditWords() {
                       className={styles.pairControlButton}
                       onClick={() => handleEditStart(p)}
                       initial={{ width: "4rem" }}
-                      animate={{ width: editing === p.id ? "8rem" : "4rem" }}
+                      animate={{
+                        width: editing === p.id ? "8rem" : "4rem",
+                        x: shakeEditButton === p.id ? [0, -5, 5, -5, 5, 0] : 0,
+                      }}
+                      transition={{
+                        width: { duration: 0.3 },
+                        x: { duration: 0.4, ease: "easeInOut" },
+                      }}
                     >
                       <AnimatePresence mode='wait'>
                         {editing === p.id ? (

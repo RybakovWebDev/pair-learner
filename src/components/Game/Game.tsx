@@ -73,6 +73,8 @@ function Game() {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const router = useRouter();
 
+  const isControlsDisabled = useMemo(() => isGameRunning || notEnoughPairs, [isGameRunning, notEnoughPairs]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/");
@@ -279,7 +281,7 @@ function Game() {
           <m.div
             className={styles.rowCountWrapper}
             variants={controlsVariants}
-            animate={isGameRunning ? "disabled" : "enabled"}
+            animate={isControlsDisabled ? "disabled" : "enabled"}
           >
             <label htmlFor='row-count-select'>Number of rows:</label>
 
@@ -313,7 +315,7 @@ function Game() {
           <m.div
             className={styles.roundLengthWrapper}
             variants={controlsVariants}
-            animate={isGameRunning ? "disabled" : "enabled"}
+            animate={isControlsDisabled ? "disabled" : "enabled"}
           >
             <label htmlFor='length'>Round length:</label>
 
@@ -370,13 +372,12 @@ function Game() {
             />
           </m.div>
 
-          <div className={styles.startWrapper}>
-            <m.button
-              onClick={handleStart}
-              initial={{ backgroundColor: "var(--color-background)" }}
-              animate={{ backgroundColor: "var(--color-background)" }}
-              whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
-            >
+          <m.div
+            className={styles.startWrapper}
+            variants={controlsVariants}
+            animate={notEnoughPairs ? "disabled" : "enabled"}
+          >
+            <button onClick={handleStart} disabled={notEnoughPairs || isGameRunning}>
               <AnimatePresence mode='wait' initial={false}>
                 {isGameRunning ? (
                   <m.p key={"stop"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
@@ -388,8 +389,8 @@ function Game() {
                   </m.p>
                 )}
               </AnimatePresence>
-            </m.button>
-          </div>
+            </button>
+          </m.div>
         </m.div>
 
         <AnimateChangeInHeight className={styles.timerWrapper}>
@@ -402,27 +403,29 @@ function Game() {
           </AnimatePresence>
         </AnimateChangeInHeight>
 
-        {notEnoughPairs ? (
-          <m.div
-            className={styles.minPairsMessage}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <p>You need to add at least 5 word pairs to play the game.</p>
-            <Link href={"/edit"}>
-              <p>Add more?</p>
-              <span />
-            </Link>
-          </m.div>
-        ) : (
-          <PairList
-            numPairs={rowCount}
-            isGameRunning={isGameRunning}
-            refreshTrigger={refreshTrigger}
-            pairs={filteredPairs}
-          />
-        )}
+        <AnimateChangeInHeight>
+          {notEnoughPairs ? (
+            <m.div
+              className={styles.minPairsMessage}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <p>You need to add at least 5 word pairs to play the game.</p>
+              <Link href={"/edit"}>
+                <p>Add more?</p>
+                <span />
+              </Link>
+            </m.div>
+          ) : (
+            <PairList
+              numPairs={rowCount}
+              isGameRunning={isGameRunning}
+              refreshTrigger={refreshTrigger}
+              pairs={filteredPairs}
+            />
+          )}
+        </AnimateChangeInHeight>
 
         <m.button
           className={styles.resetButton}

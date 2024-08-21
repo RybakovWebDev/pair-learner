@@ -52,9 +52,12 @@ function AccountSettings() {
     setSuccessMessage(null);
 
     try {
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
+
       const updates: { email?: string; password?: string } = {};
-      if (email !== user?.email) updates.email = email;
-      if (password) updates.password = password;
+      if (trimmedEmail !== user?.email) updates.email = trimmedEmail;
+      if (trimmedPassword) updates.password = trimmedPassword;
 
       if (Object.keys(updates).length === 0) {
         setSuccessMessage("No changes to update.");

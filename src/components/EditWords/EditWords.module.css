@@ -102,6 +102,10 @@
   text-transform: uppercase;
 }
 
+.categoriesInnerHeightWrapper {
+  width: 100%;
+}
+
 .categoriesWrapper ul {
   padding: 0 1rem;
   width: 100%;

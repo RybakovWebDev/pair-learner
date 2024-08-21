@@ -29,7 +29,7 @@ function Header({ initialTheme }: HeaderProps) {
     <header ref={headerRef} className={styles.header}>
       <div className={styles.leftWrapper}>
         <Link href={"/"}>
-          <h2 className={styles.initials}>PL</h2>
+          <h2 className={styles.initials}>Pair Learner</h2>
         </Link>
         <DarkmodeToggle initialTheme={initialTheme} />
       </div>

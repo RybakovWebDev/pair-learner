@@ -148,7 +148,7 @@ const PairsDemo = () => {
     ];
 
     const currentStep = state.animationStep % 4;
-    const delay = currentStep === 3 ? 400 : 1000;
+    const delay = currentStep === 2 ? 700 : currentStep === 3 ? 400 : 1000;
 
     const timeoutId = setTimeout(() => {
       animationSteps[currentStep]();

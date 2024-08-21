@@ -241,6 +241,7 @@
   background-color: var(--color-background);
   border: none;
   cursor: pointer;
+  user-select: none;
 }
 
 .startWrapper p {

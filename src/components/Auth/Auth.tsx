@@ -46,9 +46,11 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
 
   const handleLogin = async () => {
     try {
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
       const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
       if (error) throw error;
     } catch (error) {
@@ -58,9 +60,11 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
 
   const handleRegister = async () => {
     try {
+      const trimmedEmail = email.trim();
+      const trimmedPassword = password.trim();
       const { error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
+        email: trimmedEmail,
+        password: trimmedPassword,
       });
       if (error) throw error;
       setSuccessMessage("Registration successful! Please check your email to confirm your account.");
@@ -71,8 +75,9 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
 
   const handleMagicLink = async () => {
     try {
+      const trimmedEmail = email.trim();
       const { error } = await supabase.auth.signInWithOtp({
-        email: email,
+        email: trimmedEmail,
       });
       if (error) throw error;
       setSuccessMessage("Magic link sent! Please check your email to sign in.");
