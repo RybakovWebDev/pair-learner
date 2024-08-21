@@ -12,6 +12,7 @@ interface WordCellProps {
   isAnyIncorrectAnimating: boolean;
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
+  fontSize?: string;
   children: string;
 }
 
@@ -25,6 +26,7 @@ function WordCell({
   isAnyIncorrectAnimating,
   isAnyCorrectAnimating,
   isGameRunning,
+  fontSize = "14px",
   children,
 }: WordCellProps) {
   const backgroundColor =
@@ -47,6 +49,7 @@ function WordCell({
 
   return (
     <m.div
+      style={{ fontSize: fontSize }}
       className={styles.mainWrapper}
       animate={{
         backgroundColor,

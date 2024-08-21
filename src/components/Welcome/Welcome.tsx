@@ -8,15 +8,21 @@ import { useUserContext } from "@/contexts/UserContext";
 
 function Welcome() {
   const { user, loading } = useUserContext();
+
   return (
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
-        <h2>
-          Welcome to <br />
-          Pair Learner
-        </h2>
+        <div className={styles.titleContainer}>
+          <button className={styles.pushable}>
+            <span className={styles.front}>Pair</span>
+          </button>
+          <button className={styles.pushable}>
+            <span className={styles.front}>Learner</span>
+          </button>
+        </div>
         <p>
-          Create, edit, and learn word pairs <br /> in any language
+          Create, edit, and learn <br />
+          word pairs in any language
         </p>
       </section>
 
@@ -27,11 +33,11 @@ function Welcome() {
         </div>
         <div className={styles.feature}>
           <h3>Customize Categories</h3>
-          <p>Sort words by language or topic</p>
+          <p>Sort words by language, topic, or anything else</p>
         </div>
         <div className={styles.feature}>
-          <h3>Play Matching Game</h3>
-          <p>Memorize the words by matching randomized columns</p>
+          <h3>Interactive Learning</h3>
+          <p>Reinforce memory through dynamic word-pair matching</p>
         </div>
       </section>
 

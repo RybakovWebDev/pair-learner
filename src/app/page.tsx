@@ -3,13 +3,17 @@ import dynamic from "next/dynamic";
 import styles from "./page.module.css";
 
 import Welcome from "@/components/Welcome";
+import PairsDemo from "@/components/PairsDemo";
 
 const Footer = dynamic(() => import("@/components/Footer"));
 
 export default function Home() {
   return (
     <main className={styles.main}>
-      <Welcome />
+      <div className={styles.content}>
+        <Welcome />
+        <PairsDemo />
+      </div>
       <Footer />
     </main>
   );

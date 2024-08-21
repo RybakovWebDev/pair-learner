@@ -79,9 +79,20 @@ export interface UserCategory {
 //   ],
 // };
 
+export const DEMO_PAIRS = [
+  { word1: "Learn", word2: "Aprender", id: "5e1b0c34-7b93-4126-aed5-2d54a39d7e36" },
+  { word1: "Imparare", word2: "Oppia", id: "d9a9432c-299e-4d0c-9fbc-598c7dcf72d3" },
+  { word1: "Lernen", word2: "Apprendre", id: "6c2440f4-85d7-48e2-a739-d57f5cfb59e0" },
+  { word1: "Uczyć się", word2: "学ぶ", id: "3f75f316-5f9f-4a69-a81b-7e35aefd5d78" },
+  { word1: "学习", word2: "Lära sig", id: "7eaeac9f-0f1a-464b-b8de-0c64f0dcbb59" },
+  { word1: "Učiti", word2: "Învăța", id: "ae3bcbb2-2fd7-43af-94ff-7d32039542c6" },
+  { word1: "Вчитися", word2: "Μαθαίνω", id: "9f9c1c1e-2f27-44c5-9a8c-501781b45dbe" },
+  { word1: "Lære", word2: "Mācīties", id: "73ba4d0a-8c68-48ad-a2f3-e7b1f1e9e1d2" },
+];
+
 export const MENU_ITEMS = [
   { title: "Play", slug: "play", href: "/play", icon: <Play size={22} /> },
-  { title: "Edit words", slug: "words", href: "/edit", icon: <Edit size={22} /> },
+  { title: "Word Editor", slug: "words", href: "/edit", icon: <Edit size={22} /> },
   { title: "Account", slug: "account", href: "/account", icon: <User size={22} /> },
 ];
 

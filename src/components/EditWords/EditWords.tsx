@@ -12,7 +12,7 @@ import Spinner from "../Spinner";
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, UserCategory } from "@/constants";
 
-const loadFeatures = () => import("../../features").then((res) => res.default);
+const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
 const simpleVariants: Variants = {
   hidden: { opacity: 0 },
@@ -334,7 +334,14 @@ function EditWords() {
           <m.ul className={styles.list} layout>
             <AnimatePresence>
               {filteredPairs.map((p, index) => (
-                <m.li key={p.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <m.li
+                  layout
+                  key={p.id}
+                  initial={{ opacity: 0, margin: "1rem 0 0 0" }}
+                  animate={{ opacity: 1, margin: "1rem 0 0 0" }}
+                  exit={{ opacity: 0, height: 0, margin: "0" }}
+                  transition={{ duration: 0.3 }}
+                >
                   <m.div
                     className={styles.wordDetailsWrapper}
                     initial={{ opacity: 0.7 }}

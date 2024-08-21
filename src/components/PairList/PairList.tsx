@@ -5,10 +5,10 @@ import { LazyMotion, m, AnimatePresence } from "framer-motion";
 import styles from "./PairList.module.css";
 
 import WordCell from "../WordCell";
+import Spinner from "../Spinner";
 
 import { Pair } from "@/constants";
 import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
-import Spinner from "../Spinner";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
