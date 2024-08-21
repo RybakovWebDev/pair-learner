@@ -151,5 +151,5 @@ export const smoothSpring = {
 
 export const SOCIAL_LINKS = [
   { slug: "website", href: "https://www.rybakov.dev/", icon: <Globe strokeWidth={1} /> },
-  { slug: "linkedin", href: "www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
+  { slug: "linkedin", href: "https://www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
 ];
