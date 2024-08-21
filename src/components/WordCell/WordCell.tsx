@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";
@@ -12,11 +12,8 @@ interface WordCellProps {
   isAnyIncorrectAnimating: boolean;
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
-  fontSize?: string;
   children: string;
 }
-
-// TODO 15 characters break to next
 
 function WordCell({
   isSelected,
@@ -26,9 +23,36 @@ function WordCell({
   isAnyIncorrectAnimating,
   isAnyCorrectAnimating,
   isGameRunning,
-  fontSize = "14px",
   children,
 }: WordCellProps) {
+  const [fontSize, setFontSize] = useState(14);
+  const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const resizeText = () => {
+      if (textRef.current) {
+        const containerWidth = textRef.current.offsetWidth;
+        const containerHeight = textRef.current.offsetHeight;
+        let size = 14;
+
+        while (size > 8) {
+          textRef.current.style.fontSize = `${size}px`;
+          if (textRef.current.scrollWidth <= containerWidth && textRef.current.scrollHeight <= containerHeight) {
+            break;
+          }
+          size--;
+        }
+
+        setFontSize(size);
+      }
+    };
+
+    resizeText();
+    window.addEventListener("resize", resizeText);
+
+    return () => window.removeEventListener("resize", resizeText);
+  }, [children]);
+
   const backgroundColor =
     isAnimating && matchResult === "correct"
       ? "var(--color-background-highlight-win)"
@@ -49,7 +73,6 @@ function WordCell({
 
   return (
     <m.div
-      style={{ fontSize: fontSize }}
       className={styles.mainWrapper}
       animate={{
         backgroundColor,
@@ -73,7 +96,19 @@ function WordCell({
           : {}
       }
     >
-      {children}
+      <div
+        ref={textRef}
+        style={{
+          fontSize: `${fontSize}px`,
+          width: "100%",
+          height: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
+      >
+        {children}
+      </div>
     </m.div>
   );
 }

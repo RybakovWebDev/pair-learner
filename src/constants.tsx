@@ -1,5 +1,5 @@
 import { CSSProperties } from "react";
-import { Edit, Play, User } from "react-feather";
+import { Edit, Globe, Linkedin, Play, User } from "react-feather";
 
 export interface Pair {
   id: string;
@@ -142,3 +142,14 @@ export const DARK_COLORS: ThemeColors = {
   "--color-border-success": "hsl(120, 73%, 63%)",
   "--color-border-failure": "hsl(0, 100%, 63%)",
 };
+
+export const smoothSpring = {
+  type: "spring",
+  damping: 60,
+  stiffness: 500,
+};
+
+export const SOCIAL_LINKS = [
+  { slug: "website", href: "https://www.rybakov.dev/", icon: <Globe strokeWidth={1} /> },
+  { slug: "linkedin", href: "www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
+];

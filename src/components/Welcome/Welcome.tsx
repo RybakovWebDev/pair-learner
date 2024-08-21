@@ -35,7 +35,7 @@ function Welcome() {
           </p>
         </div>
         <div className={styles.feature}>
-          <h3>Customize Tags</h3>
+          <h3>Customize Categories</h3>
           <p>Sort words by language, topic, or anything else</p>
         </div>
         <div className={styles.feature}>
@@ -44,7 +44,7 @@ function Welcome() {
         </div>
       </section>
 
-      {!user && !loading && <Auth openButtonFontSize='24px' />}
+      {!user && !loading && <Auth openButtonFontSize='24px' margin='2rem 0 0 0' />}
     </section>
   );
 }

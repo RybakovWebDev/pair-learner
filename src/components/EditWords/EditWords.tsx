@@ -34,7 +34,12 @@ function EditWords() {
   const [confirmDelete, setConfirmDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [editedPair, setEditedPair] = useState<Pair | null>(null);
+  const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
   const router = useRouter();
+
+  const clearAllErrors = useCallback(() => {
+    setErrors({});
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -161,11 +166,13 @@ function EditWords() {
 
     if (error) {
       console.error("Error adding new pair:", error);
+      setErrors({ new: { general: "Failed to add new pair. Please try again." } });
     } else if (data) {
       const updatedPairs = [...pairs, data];
       setPairs(updatedPairs);
       localStorage.setItem("pairs", JSON.stringify(updatedPairs));
       updateCategories(updatedPairs);
+      clearAllErrors();
     }
   };
 
@@ -188,6 +195,7 @@ function EditWords() {
 
   const handleEditStart = (pair: Pair) => {
     setConfirmDelete("");
+    clearAllErrors();
     if (editing !== pair.id) {
       setEditing(pair.id);
       setEditedPair({ ...pair });
@@ -201,11 +209,13 @@ function EditWords() {
 
     if (error) {
       console.error("Error updating pair:", error);
+      setErrors({ [editedPair.id]: { general: "Failed to update pair. Please try again." } });
     } else {
       const updatedPairs = pairs.map((p) => (p.id === editedPair.id ? editedPair : p));
       setPairs(updatedPairs);
       localStorage.setItem("pairs", JSON.stringify(updatedPairs));
       updateCategories(updatedPairs);
+      clearAllErrors();
     }
 
     setEditing("");
@@ -219,6 +229,7 @@ function EditWords() {
 
   const handlePairDelete = (pair: Pair) => {
     setEditing("");
+    clearAllErrors();
     setConfirmDelete(pair.id);
   };
 
@@ -227,11 +238,13 @@ function EditWords() {
 
     if (error) {
       console.error("Error deleting pair:", error);
+      setErrors({ [id]: { general: "Failed to delete pair. Please try again." } });
     } else {
       const updatedPairs = pairs.filter((p) => p.id !== id);
       setPairs(updatedPairs);
       localStorage.setItem("pairs", JSON.stringify(updatedPairs));
       updateCategories(updatedPairs);
+      setErrors({});
     }
 
     setConfirmDelete("");
@@ -244,6 +257,10 @@ function EditWords() {
   const handleInputChange = (field: keyof Pair, value: string) => {
     if (editedPair) {
       setEditedPair({ ...editedPair, [field]: value });
+      setErrors((prev) => ({
+        ...prev,
+        [editedPair.id]: { ...prev[editedPair.id], [field]: undefined },
+      }));
     }
   };
 
@@ -330,6 +347,8 @@ function EditWords() {
           </m.button>
         </m.div>
 
+        {errors.new?.general && <p className={styles.errorMessage}>{errors.new.general}</p>}
+
         {user ? (
           <m.ul className={styles.list} layout>
             <AnimatePresence>
@@ -352,11 +371,13 @@ function EditWords() {
                       <div className={styles.wordWrapper1}>
                         <input
                           required
+                          maxLength={35}
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word1 : p.word1}
                           onChange={(e) => handleInputChange("word1", e.target.value)}
                         />
                       </div>
+                      {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
                     </div>
 
                     <div className={styles.wordWrapperOuter}>
@@ -364,13 +385,14 @@ function EditWords() {
                       <div className={styles.wordWrapper2}>
                         <input
                           required
+                          maxLength={35}
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word2 : p.word2}
                           onChange={(e) => handleInputChange("word2", e.target.value)}
                         />
                       </div>
+                      {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
                     </div>
-
                     <div className={styles.categoryWrapperOuter}>
                       <p className={styles.wordAttribute}>Category: </p>
                       <div className={styles.categoryWrapper}>
@@ -382,6 +404,8 @@ function EditWords() {
                       </div>
                     </div>
                   </m.div>
+
+                  {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
 
                   <div className={styles.controlsWrapper}>
                     <m.div

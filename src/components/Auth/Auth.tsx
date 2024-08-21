@@ -1,4 +1,3 @@
-"usec lient";
 import { FormEvent, useId, useState } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -9,19 +8,21 @@ import { Eye, EyeOff } from "react-feather";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
-const authOptions = ["Login", "Register"];
+const authOptions = ["Login", "Register", "Magic Link"];
 
 interface AuthProps {
+  margin?: string;
   openButtonFontSize?: string;
 }
 
-function Auth({ openButtonFontSize = "16px" }: AuthProps) {
+function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [authOption, setAuthOption] = useState("Login");
   const [showPassword, setShowPassword] = useState(false);
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const id = useId();
 
@@ -32,6 +33,7 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
   const handleAuthOptionChange = (option: string) => {
     setAuthOption(option);
     setError(null);
+    setSuccessMessage(null);
   };
 
   const handleShowPassword = () => {
@@ -44,11 +46,10 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
 
   const handleLogin = async () => {
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: username,
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email,
         password: password,
       });
-
       if (error) throw error;
     } catch (error) {
       setError((error as Error).message);
@@ -57,12 +58,24 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
 
   const handleRegister = async () => {
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: username,
+      const { error } = await supabase.auth.signUp({
+        email: email,
         password: password,
       });
-
       if (error) throw error;
+      setSuccessMessage("Registration successful! Please check your email to confirm your account.");
+    } catch (error) {
+      setError((error as Error).message);
+    }
+  };
+
+  const handleMagicLink = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email: email,
+      });
+      if (error) throw error;
+      setSuccessMessage("Magic link sent! Please check your email to sign in.");
     } catch (error) {
       setError((error as Error).message);
     }
@@ -71,16 +84,23 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (authOption === "Login") {
-      handleLogin();
-    } else {
-      handleRegister();
+    setSuccessMessage(null);
+    switch (authOption) {
+      case "Login":
+        handleLogin();
+        break;
+      case "Register":
+        handleRegister();
+        break;
+      case "Magic Link":
+        handleMagicLink();
+        break;
     }
   };
 
   return (
     <LazyMotion features={loadFeatures}>
-      <div className={styles.mainWrapper}>
+      <div className={styles.mainWrapper} style={{ margin: margin }}>
         <m.button
           style={{ fontSize: openButtonFontSize }}
           className={styles.openButton}
@@ -132,34 +152,42 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
                 <form onSubmit={handleSubmit} className={styles.bottomWrapper}>
                   <div className={styles.inputsWrapper}>
                     <input
-                      className={styles.usernameInput}
+                      className={styles.emailInput}
                       type='email'
-                      placeholder={authOption === "Login" ? "Login with your email" : "Sign up with your email"}
+                      placeholder={
+                        authOption === "Login"
+                          ? "Login with your email"
+                          : authOption === "Register"
+                          ? "Sign up with your email"
+                          : "Enter your email for passwordless login"
+                      }
                       maxLength={30}
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
 
-                    <div className={styles.passwordInputWrapper}>
-                      <input
-                        className={styles.passwordInput}
-                        type={showPassword ? "text" : "password"}
-                        placeholder={authOption === "Login" ? "Your password" : "Create a password"}
-                        minLength={6}
-                        maxLength={45}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                      />
-                      <button type='button' className={styles.passwordVisibilityWrapper} onClick={handleShowPassword}>
-                        {showPassword ? (
-                          <Eye size={20} color='var(--color-background-secondary)' />
-                        ) : (
-                          <EyeOff size={20} color='var(--color-background-secondary)' />
-                        )}
-                      </button>
-                    </div>
+                    {authOption !== "Magic Link" && (
+                      <div className={styles.passwordInputWrapper}>
+                        <input
+                          className={styles.passwordInput}
+                          type={showPassword ? "text" : "password"}
+                          placeholder={authOption === "Login" ? "Your password" : "Create a password"}
+                          minLength={6}
+                          maxLength={45}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                        />
+                        <button type='button' className={styles.passwordVisibilityWrapper} onClick={handleShowPassword}>
+                          {showPassword ? (
+                            <Eye size={20} color='var(--color-background-secondary)' />
+                          ) : (
+                            <EyeOff size={20} color='var(--color-background-secondary)' />
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <m.button
@@ -168,10 +196,29 @@ function Auth({ openButtonFontSize = "16px" }: AuthProps) {
                     initial={{ backgroundColor: "var(--color-background)" }}
                     whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                   >
-                    {authOption}
+                    {authOption === "Magic Link" ? "Send Magic Link" : authOption}
                   </m.button>
-                  <div className={styles.errorWrapper}>
-                    <p>{error}</p>
+                  <div className={styles.messageWrapper}>
+                    {error && (
+                      <m.p
+                        key={"errormsg"}
+                        className={styles.errorMessage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {error}
+                      </m.p>
+                    )}
+                    {successMessage && (
+                      <m.p
+                        key={"successmsg"}
+                        className={styles.successMessage}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                      >
+                        {successMessage}
+                      </m.p>
+                    )}
                   </div>
                 </form>
               </m.div>

@@ -7,9 +7,9 @@ import { supabase } from "@/lib/supabase";
 import styles from "./AccountSettings.module.css";
 
 import { Check, Edit, X, Eye, EyeOff } from "react-feather";
+import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
-import Spinner from "../Spinner";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
@@ -27,13 +27,10 @@ function AccountSettings() {
     if (!loading && !user) {
       router.replace("/");
     }
-  }, [user, loading, router]);
-
-  useEffect(() => {
     if (user) {
       setEmail(user.email || "");
     }
-  }, [user]);
+  }, [user, loading, router]);
 
   const handleEditing = () => {
     setEditing(!editing);
@@ -97,7 +94,8 @@ function AccountSettings() {
       <section className={styles.mainWrapper}>
         <h2>Update account information</h2>
         <p>
-          Leave password empty if you don&apos;t <br /> want to change it.
+          You can update your email address and password here. If you&apos;re using Magic Link authentication, you can
+          add or update a password to enable email/password login as well.
         </p>
 
         <m.form key={"authDataForm"} onSubmit={handleEditConfirm} className={styles.form}>

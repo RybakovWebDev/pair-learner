@@ -274,3 +274,9 @@
   right: 2rem;
   /* bottom: 0; */
 }
+
+.errorMessage {
+  margin-top: 1rem;
+  color: var(--color-text-danger);
+  font-size: 12px;
+}
