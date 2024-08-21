@@ -1,5 +1,5 @@
 .mainWrapper {
-  margin: 5vh 0 09 0;
+  margin: 5vh 0 3rem 0;
   padding: 0 2rem;
   display: flex;
   flex-direction: column;
@@ -72,7 +72,7 @@
 }
 
 .features {
-  margin: 0 0 3rem 0;
+  /* margin: 0 0 3rem 0; */
   display: flex;
   flex-direction: column;
   justify-content: center;
