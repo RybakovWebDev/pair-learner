@@ -65,7 +65,8 @@
 .hero p {
   margin: 2rem 0;
   font-size: 1.2rem;
-  font-weight: 600;
+  /* font-weight: 600; */
+  /* font-family: "Montserrat"; */
   text-transform: uppercase;
   color: var(--color-text);
 }
