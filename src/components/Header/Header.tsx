@@ -38,7 +38,7 @@ function Header({ initialTheme }: HeaderProps) {
       ) : user ? (
         <HeaderMenu />
       ) : (
-        <Auth />
+        <Auth openButtonText='Sign In' />
       )}
     </header>
   );

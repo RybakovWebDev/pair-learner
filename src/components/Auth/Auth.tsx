@@ -13,9 +13,16 @@ const authOptions = ["Login", "Register", "Magic Link"];
 interface AuthProps {
   margin?: string;
   openButtonFontSize?: string;
+  openButtonPadding?: string;
+  openButtonText: string;
 }
 
-function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
+function Auth({
+  margin = "0",
+  openButtonFontSize = "16px",
+  openButtonPadding = "0.5rem 1rem",
+  openButtonText,
+}: AuthProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [authOption, setAuthOption] = useState("Login");
   const [showPassword, setShowPassword] = useState(false);
@@ -67,7 +74,7 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
         password: trimmedPassword,
       });
       if (error) throw error;
-      setSuccessMessage("Registration successful! Please check your email to confirm your account.");
+      setSuccessMessage("Registration successful!\nPlease check your email to confirm your account.");
     } catch (error) {
       setError((error as Error).message);
     }
@@ -80,7 +87,7 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
         email: trimmedEmail,
       });
       if (error) throw error;
-      setSuccessMessage("Magic link sent! Please check your email to sign in.");
+      setSuccessMessage("Magic link sent!\nPlease check your email to sign in.");
     } catch (error) {
       setError((error as Error).message);
     }
@@ -107,13 +114,13 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
     <LazyMotion features={loadFeatures}>
       <div className={styles.mainWrapper} style={{ margin: margin }}>
         <m.button
-          style={{ fontSize: openButtonFontSize }}
+          style={{ fontSize: openButtonFontSize, padding: openButtonPadding }}
           className={styles.openButton}
           initial={{ backgroundColor: "var(--color-background)" }}
           whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
           onClick={handleOpen}
         >
-          Get Started
+          {openButtonText}
         </m.button>
         <AnimatePresence>
           {isOpen && (
@@ -215,14 +222,16 @@ function Auth({ margin = "0", openButtonFontSize = "16px" }: AuthProps) {
                       </m.p>
                     )}
                     {successMessage && (
-                      <m.p
+                      <m.div
                         key={"successmsg"}
                         className={styles.successMessage}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                       >
-                        {successMessage}
-                      </m.p>
+                        {successMessage.split("\n").map((line, index) => (
+                          <p key={index}>{line}</p>
+                        ))}
+                      </m.div>
                     )}
                   </div>
                 </form>

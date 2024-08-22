@@ -53,21 +53,17 @@ function EditWords() {
   const fetchWordPairs = useCallback(async () => {
     if (!user) return;
 
-    const localPairs = localStorage.getItem("pairs");
-    if (localPairs) {
-      setPairs(JSON.parse(localPairs));
-      setDataLoaded(true);
-      return;
-    }
-
     try {
-      const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
-      console.log("Fetching pairs from database");
+      const { data, error } = await supabase
+        .from("word-pairs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
       if (error) {
         console.error("Error fetching word pairs:", error);
       } else {
         setPairs(data as Pair[]);
-        localStorage.setItem("pairs", JSON.stringify(data));
       }
     } catch (error) {
       console.error("Unexpected error:", error);
@@ -78,25 +74,18 @@ function EditWords() {
   const fetchUserCategories = useCallback(async () => {
     if (!user) return;
 
-    const localCategories = localStorage.getItem("categories");
-    if (localCategories) {
-      const parsedCategories = JSON.parse(localCategories);
-      setUserCategories(parsedCategories);
-      setEnabledCategories([...parsedCategories.map((c: UserCategory) => c.category), "None"]);
-      setCategoriesLoading(false);
-      return;
-    }
-
-    console.log("Fetching categories from database");
     setCategoriesLoading(true);
-    const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
+    try {
+      const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
 
-    if (error) {
-      console.error("Error fetching user categories:", error);
-    } else {
-      setUserCategories(data);
-      setEnabledCategories([...data.map((c) => c.category), "None"]);
-      localStorage.setItem("categories", JSON.stringify(data));
+      if (error) {
+        console.error("Error fetching user categories:", error);
+      } else {
+        setUserCategories(data);
+        setEnabledCategories([...data.map((c) => c.category), "None"]);
+      }
+    } catch (error) {
+      console.error("Unexpected error:", error);
     }
     setCategoriesLoading(false);
   }, [user]);
@@ -109,10 +98,10 @@ function EditWords() {
   }, [user, dataLoaded, fetchWordPairs, fetchUserCategories]);
 
   const updateCategories = useCallback(
-    async (pairs: Pair[]) => {
+    async (updatedPairs: Pair[]) => {
       if (!user) return;
 
-      const categories = new Set(pairs.map((p) => p.category).filter(Boolean));
+      const categories = new Set(updatedPairs.map((p) => p.category).filter(Boolean));
       const categoriesArray = Array.from(categories) as string[];
 
       const currentCategories = userCategories.map((c) => c.category);
@@ -150,7 +139,6 @@ function EditWords() {
         }
 
         setUserCategories(updatedCategories);
-        localStorage.setItem("categories", JSON.stringify(updatedCategories));
         setEnabledCategories([...updatedCategories.map((c) => c.category), "None"]);
       }
     },
@@ -173,10 +161,8 @@ function EditWords() {
       console.error("Error adding new pair:", error);
       setErrors({ new: { general: "Failed to add new pair. Please try again." } });
     } else if (data) {
-      const updatedPairs = [...pairs, data];
-      setPairs(updatedPairs);
-      localStorage.setItem("pairs", JSON.stringify(updatedPairs));
-      updateCategories(updatedPairs);
+      setPairs((prevPairs) => [data, ...prevPairs]);
+      updateCategories([data, ...pairs]);
       clearAllErrors();
     }
   };
@@ -200,9 +186,8 @@ function EditWords() {
 
   const handleDisabledInputClick = useCallback(
     (e: React.MouseEvent, pairId: string) => {
-      e.stopPropagation(); // Stop event propagation
+      e.stopPropagation();
       if (editing !== pairId) {
-        console.log("clicked", pairId);
         setShakeEditButton(pairId);
         setTimeout(() => setShakeEditButton(null), 500);
       }
@@ -235,10 +220,8 @@ function EditWords() {
       console.error("Error updating pair:", error);
       setErrors({ [trimmedPair.id]: { general: "Failed to update pair. Please try again." } });
     } else {
-      const updatedPairs = pairs.map((p) => (p.id === trimmedPair.id ? trimmedPair : p));
-      setPairs(updatedPairs);
-      localStorage.setItem("pairs", JSON.stringify(updatedPairs));
-      updateCategories(updatedPairs);
+      setPairs((prevPairs) => prevPairs.map((p) => (p.id === trimmedPair.id ? { ...p, ...trimmedPair } : p)));
+      updateCategories(pairs.map((p) => (p.id === trimmedPair.id ? { ...p, ...trimmedPair } : p)));
       clearAllErrors();
     }
 
@@ -266,7 +249,6 @@ function EditWords() {
     } else {
       const updatedPairs = pairs.filter((p) => p.id !== id);
       setPairs(updatedPairs);
-      localStorage.setItem("pairs", JSON.stringify(updatedPairs));
       updateCategories(updatedPairs);
       setErrors({});
     }
@@ -288,18 +270,16 @@ function EditWords() {
     }
   };
 
-  const filteredPairs = pairs
-    .filter((pair) => {
-      const matchesSearch =
-        pair.word1.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        pair.word2.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesCategory =
-        enabledCategories.length === 0 ||
-        (pair.category && enabledCategories.includes(pair.category)) ||
-        (!pair.category && enabledCategories.includes("None"));
-      return matchesSearch && matchesCategory;
-    })
-    .reverse();
+  const filteredPairs = pairs.filter((pair) => {
+    const matchesSearch =
+      pair.word1.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      pair.word2.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      enabledCategories.length === 0 ||
+      (pair.category && enabledCategories.includes(pair.category)) ||
+      (!pair.category && enabledCategories.includes("None"));
+    return matchesSearch && matchesCategory;
+  });
 
   if (!user) {
     return <Spinner />;
@@ -387,7 +367,7 @@ function EditWords() {
                   initial={{ opacity: 0, margin: "1rem 0 0 0" }}
                   animate={{ opacity: 1, margin: "1rem 0 0 0" }}
                   exit={{ opacity: 0, height: 0, margin: "1rem 0 0 0" }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: 0.3, delay: 0.3 }}
                 >
                   <m.div
                     className={styles.wordDetailsWrapper}

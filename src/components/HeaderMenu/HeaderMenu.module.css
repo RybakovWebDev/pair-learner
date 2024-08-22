@@ -1,4 +1,5 @@
 .wrapperMain {
+  display: flex;
 }
 
 .menuButton {
@@ -13,20 +14,19 @@
 .list {
   position: fixed;
   top: 3.5rem;
+  left: 0;
   right: 0;
-  /* padding: 0 1rem; */
+  margin-left: auto;
+  margin-right: auto;
   height: 100%;
-  width: 100%;
+  width: calc(100% - 2rem);
+  max-width: 1080px;
   display: flex;
   flex-direction: column;
-  /* justify-content: space-evenly; */
   list-style: none;
   text-align: right;
   background-color: var(--color-background);
   border: 1px solid var(--color-background-secondary);
-  border-left: none;
-  border-right: none;
-  /* border-radius: 0 0 20px 20px; */
   z-index: 100;
   touch-action: none;
   overflow-y: hidden;
@@ -34,8 +34,6 @@
 
 .list li {
   padding: 0 1rem;
-  /* margin: 1rem 0; */
-  /* flex-grow: 1; */
   height: 5rem;
 
   font-size: 30px;
@@ -51,13 +49,23 @@
 }
 
 .iconWrapper {
-  padding: 0.5rem;
+  height: 2.5rem;
+  display: flex;
   border: 1px solid var(--color-background-secondary);
   border-radius: 10px;
+  overflow: hidden;
+}
+.iconWrapper svg {
+  margin: 0.5rem;
+}
+
+.iconInnerWrapper {
+  cursor: pointer;
 }
 
 .list li a,
-.list li button {
+.list li button,
+.logoutWrapper {
   height: 100%;
   width: 100%;
   display: flex;
@@ -68,10 +76,25 @@
   border: none;
   background: none;
   cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pairControlButtonWrapper {
+  display: flex;
+}
+
+.iconWrapper span {
+  height: 100%;
+  border-left: 1px solid var(--color-background-secondary);
 }
 
 @media (max-width: 1080px) {
   .list {
     top: 3.5rem;
+    width: 100%;
+
+    border-left: none;
+    border-right: none;
   }
 }

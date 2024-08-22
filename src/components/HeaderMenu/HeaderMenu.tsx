@@ -7,7 +7,7 @@ import Link from "next/link";
 
 import styles from "./HeaderMenu.module.css";
 
-import { LogOut } from "react-feather";
+import { Check, LogOut, X } from "react-feather";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { MENU_ITEMS } from "@/constants";
@@ -26,10 +26,15 @@ const Path = (props: any) => (
 
 function HeaderMenu() {
   const [isOpen, setIsOpen] = useState(false);
+  const [logoutConfirm, setLogoutConfirm] = useState(false);
   const router = useRouter();
   const { setUser } = useUserContext();
 
-  const handleLogout = async () => {
+  const handleInitiateLogout = () => {
+    setLogoutConfirm(true);
+  };
+
+  const handleConfirmLogout = async () => {
     try {
       await supabase.auth.signOut();
       setUser(null);
@@ -38,6 +43,11 @@ function HeaderMenu() {
       console.error("Error logging out:", error);
     }
     setIsOpen(false);
+    setLogoutConfirm(false);
+  };
+
+  const handleCancelLogout = () => {
+    setLogoutConfirm(false);
   };
 
   const handleLinkClick = () => {
@@ -82,9 +92,9 @@ function HeaderMenu() {
           {isOpen && (
             <m.ul
               className={styles.list}
-              initial={{ opacity: 1, x: "100%" }}
+              initial={{ opacity: 1, x: "100vw" }}
               animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 1, x: "100%" }}
+              exit={{ opacity: 1, x: "100vw" }}
               transition={{ duration: 0.3 }}
             >
               {MENU_ITEMS.map((item) => (
@@ -97,12 +107,74 @@ function HeaderMenu() {
               ))}
 
               <m.li key='logout' initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                <button onClick={handleLogout}>
-                  <p>Logout</p>
-                  <div className={styles.iconWrapper}>
-                    <LogOut size={22} />
-                  </div>
-                </button>
+                <div
+                  className={styles.logoutWrapper}
+                  onClick={!logoutConfirm ? handleInitiateLogout : undefined}
+                  style={{ cursor: logoutConfirm ? "default" : "pointer" }}
+                >
+                  <AnimatePresence mode='wait' initial={false}>
+                    {logoutConfirm ? (
+                      <m.p key={"areyousure"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        Are you sure?
+                      </m.p>
+                    ) : (
+                      <m.p key='logouttext' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        Logout
+                      </m.p>
+                    )}
+                  </AnimatePresence>
+
+                  <m.div
+                    className={styles.iconWrapper}
+                    initial={{ width: "4rem" }}
+                    animate={{
+                      width: logoutConfirm ? "5rem" : "2.5rem",
+                    }}
+                    transition={{
+                      width: { duration: 0.3 },
+                    }}
+                  >
+                    <AnimatePresence mode='wait'>
+                      {logoutConfirm ? (
+                        <m.div
+                          key={"confrimButtons"}
+                          className={styles.pairControlButtonWrapper}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <m.div
+                            className={styles.iconInnerWrapper}
+                            onClick={handleConfirmLogout}
+                            initial={{ backgroundColor: "var(--color-background)" }}
+                            whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                          >
+                            <Check size={22} />
+                          </m.div>
+                          <span />
+                          <m.div
+                            className={styles.iconInnerWrapper}
+                            onClick={handleCancelLogout}
+                            initial={{ backgroundColor: "var(--color-background)" }}
+                            whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                          >
+                            <X size={22} />
+                          </m.div>
+                        </m.div>
+                      ) : (
+                        <m.div
+                          key={"startLogoutButton"}
+                          className={styles.iconInnerWrapper}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                        >
+                          <LogOut size={22} />
+                        </m.div>
+                      )}
+                    </AnimatePresence>
+                  </m.div>
+                </div>
               </m.li>
             </m.ul>
           )}

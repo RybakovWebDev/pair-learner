@@ -47,7 +47,14 @@ function Welcome() {
         </div>
       </section>
 
-      {!user && !loading && <Auth openButtonFontSize='24px' margin='2rem 0 0 0' />}
+      {!user && !loading && (
+        <Auth
+          openButtonFontSize='30px'
+          margin='2rem 0 0 0'
+          openButtonPadding='1rem 2rem'
+          openButtonText='Get Started'
+        />
+      )}
     </section>
   );
 }
