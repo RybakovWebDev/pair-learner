@@ -259,7 +259,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
     return (
       <LazyMotion features={loadFeatures}>
         <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <Spinner marginTop='5vh' />
+          <Spinner margin='5vh 0 0 0' />
         </m.div>
       </LazyMotion>
     );

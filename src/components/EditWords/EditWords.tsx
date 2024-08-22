@@ -50,99 +50,96 @@ function EditWords() {
     }
   }, [user, loading, router]);
 
-  const fetchWordPairs = useCallback(async () => {
+  const fetchAndUpdateData = useCallback(async () => {
     if (!user) return;
 
     try {
-      const { data, error } = await supabase
+      const { data: pairsData, error: pairsError } = await supabase
         .from("word-pairs")
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (error) {
-        console.error("Error fetching word pairs:", error);
+      if (pairsError) {
+        console.error("Error fetching word pairs:", pairsError);
+        return;
+      }
+
+      setPairs(pairsData as Pair[]);
+
+      const usedCategories = new Set(pairsData.map((pair) => pair.category).filter(Boolean));
+
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from("pair-categories")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (categoriesError) {
+        console.error("Error fetching user categories:", categoriesError);
+        return;
+      }
+
+      const categoriesToRemove = categoriesData
+        .filter((category) => !usedCategories.has(category.category))
+        .map((category) => category.id);
+
+      if (categoriesToRemove.length > 0) {
+        const { error: deleteError } = await supabase.from("pair-categories").delete().in("id", categoriesToRemove);
+
+        if (deleteError) {
+          console.error("Error deleting unused categories:", deleteError);
+        }
+      }
+      const { data: updatedCategoriesData, error: updatedCategoriesError } = await supabase
+        .from("pair-categories")
+        .select("*")
+        .eq("user_id", user.id);
+
+      if (updatedCategoriesError) {
+        console.error("Error fetching updated user categories:", updatedCategoriesError);
       } else {
-        setPairs(data as Pair[]);
+        setUserCategories(updatedCategoriesData);
+        setEnabledCategories([...updatedCategoriesData.map((c) => c.category), "None"]);
       }
     } catch (error) {
       console.error("Unexpected error:", error);
     }
     setDataLoaded(true);
-  }, [user]);
-
-  const fetchUserCategories = useCallback(async () => {
-    if (!user) return;
-
-    setCategoriesLoading(true);
-    try {
-      const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
-
-      if (error) {
-        console.error("Error fetching user categories:", error);
-      } else {
-        setUserCategories(data);
-        setEnabledCategories([...data.map((c) => c.category), "None"]);
-      }
-    } catch (error) {
-      console.error("Unexpected error:", error);
-    }
     setCategoriesLoading(false);
   }, [user]);
 
   useEffect(() => {
     if (user && !dataLoaded) {
-      fetchWordPairs();
-      fetchUserCategories();
+      fetchAndUpdateData();
     }
-  }, [user, dataLoaded, fetchWordPairs, fetchUserCategories]);
+  }, [user, dataLoaded, fetchAndUpdateData]);
 
   const updateCategories = useCallback(
-    async (updatedPairs: Pair[]) => {
-      if (!user) return;
+    async (newCategory: string | null) => {
+      if (!user || !newCategory) return;
 
-      const categories = new Set(updatedPairs.map((p) => p.category).filter(Boolean));
-      const categoriesArray = Array.from(categories) as string[];
+      const { data, error } = await supabase
+        .from("pair-categories")
+        .select("*")
+        .eq("user_id", user.id)
+        .eq("category", newCategory);
 
-      const currentCategories = userCategories.map((c) => c.category);
-      const newCategories = categoriesArray.filter((c) => !currentCategories.includes(c));
-      const categoriesToRemove = currentCategories.filter((c) => !categoriesArray.includes(c));
+      if (error) {
+        console.error("Error checking category:", error);
+        return;
+      }
 
-      if (newCategories.length > 0 || categoriesToRemove.length > 0) {
-        let updatedCategories = [...userCategories];
+      if (data.length === 0) {
+        const { error: insertError } = await supabase
+          .from("pair-categories")
+          .insert({ user_id: user.id, category: newCategory });
 
-        if (newCategories.length > 0) {
-          const { data, error: insertError } = await supabase
-            .from("pair-categories")
-            .insert(newCategories.map((category) => ({ user_id: user.id, category })))
-            .select();
-
-          if (insertError) {
-            console.error("Error inserting new categories:", insertError);
-          } else if (data) {
-            updatedCategories = [...updatedCategories, ...data];
-          }
+        if (insertError) {
+          console.error("Error inserting new category:", insertError);
         }
-
-        if (categoriesToRemove.length > 0) {
-          const { error: deleteError } = await supabase
-            .from("pair-categories")
-            .delete()
-            .eq("user_id", user.id)
-            .in("category", categoriesToRemove);
-
-          if (deleteError) {
-            console.error("Error deleting unused categories:", deleteError);
-          } else {
-            updatedCategories = updatedCategories.filter((c) => !categoriesToRemove.includes(c.category));
-          }
-        }
-
-        setUserCategories(updatedCategories);
-        setEnabledCategories([...updatedCategories.map((c) => c.category), "None"]);
       }
     },
-    [user, userCategories]
+    [user]
   );
 
   const handleAdd = async () => {
@@ -155,14 +152,13 @@ function EditWords() {
       user_id: user.id,
     };
 
-    const { data, error } = await supabase.from("word-pairs").insert(newPair).select().single();
+    const { error } = await supabase.from("word-pairs").insert(newPair);
 
     if (error) {
       console.error("Error adding new pair:", error);
       setErrors({ new: { general: "Failed to add new pair. Please try again." } });
-    } else if (data) {
-      setPairs((prevPairs) => [data, ...prevPairs]);
-      updateCategories([data, ...pairs]);
+    } else {
+      await fetchAndUpdateData();
       clearAllErrors();
     }
   };
@@ -220,8 +216,10 @@ function EditWords() {
       console.error("Error updating pair:", error);
       setErrors({ [trimmedPair.id]: { general: "Failed to update pair. Please try again." } });
     } else {
-      setPairs((prevPairs) => prevPairs.map((p) => (p.id === trimmedPair.id ? { ...p, ...trimmedPair } : p)));
-      updateCategories(pairs.map((p) => (p.id === trimmedPair.id ? { ...p, ...trimmedPair } : p)));
+      await Promise.all([
+        trimmedPair.category ? updateCategories(trimmedPair.category) : Promise.resolve(),
+        fetchAndUpdateData(),
+      ]);
       clearAllErrors();
     }
 
@@ -247,9 +245,7 @@ function EditWords() {
       console.error("Error deleting pair:", error);
       setErrors({ [id]: { general: "Failed to delete pair. Please try again." } });
     } else {
-      const updatedPairs = pairs.filter((p) => p.id !== id);
-      setPairs(updatedPairs);
-      updateCategories(updatedPairs);
+      await fetchAndUpdateData();
       setErrors({});
     }
 
@@ -314,35 +310,33 @@ function EditWords() {
             />
           </div>
 
-          <div className={styles.categoriesWrapper}>
+          <AnimateChangeInHeight className={styles.categoriesWrapper}>
             <div className={styles.categoriesLabelWrapper}>
               <p>Filter by category</p>
             </div>
             {categoriesLoading ? (
-              <Spinner marginTop='3vh' />
+              <Spinner margin='4rem calc(50% - 2rem)' />
             ) : (
-              <AnimateChangeInHeight className={styles.categoriesInnerHeightWrapper}>
-                <m.ul>
-                  <AnimatePresence>
-                    {[...userCategories.map((uc) => uc.category), "None"].map((c) => (
-                      <m.li key={c} value={c} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <m.div className={styles.checkWrapperOuter}>
-                          <m.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: enabledCategories.includes(c) ? 1 : 0 }}
-                            onClick={() => user && handleCategoriesChange(c)}
-                          >
-                            <Check />
-                          </m.div>
+              <m.ul>
+                <AnimatePresence>
+                  {[...userCategories.map((uc) => uc.category), "None"].map((c) => (
+                    <m.li key={c} value={c} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                      <m.div className={styles.checkWrapperOuter}>
+                        <m.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: enabledCategories.includes(c) ? 1 : 0 }}
+                          onClick={() => user && handleCategoriesChange(c)}
+                        >
+                          <Check />
                         </m.div>
-                        <p>{c}</p>
-                      </m.li>
-                    ))}
-                  </AnimatePresence>
-                </m.ul>
-              </AnimateChangeInHeight>
+                      </m.div>
+                      <p>{c}</p>
+                    </m.li>
+                  ))}
+                </AnimatePresence>
+              </m.ul>
             )}
-          </div>
+          </AnimateChangeInHeight>
 
           <m.button
             className={styles.addButton}
@@ -367,7 +361,7 @@ function EditWords() {
                   initial={{ opacity: 0, margin: "1rem 0 0 0" }}
                   animate={{ opacity: 1, margin: "1rem 0 0 0" }}
                   exit={{ opacity: 0, height: 0, margin: "1rem 0 0 0" }}
-                  transition={{ duration: 0.3, delay: 0.3 }}
+                  transition={{ duration: 0.3, delay: 0 }}
                 >
                   <m.div
                     className={styles.wordDetailsWrapper}

@@ -34,7 +34,7 @@ function Header({ initialTheme }: HeaderProps) {
         <DarkmodeToggle initialTheme={initialTheme} />
       </div>
       {loading ? (
-        <Spinner marginTop='0' height='30px' width='30px' borderWidth='2px' />
+        <Spinner margin='0' height='30px' width='30px' borderWidth='2px' />
       ) : user ? (
         <HeaderMenu />
       ) : (
