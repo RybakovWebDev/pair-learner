@@ -6,8 +6,16 @@ export interface Pair {
   user_id: string;
   word1: string;
   word2: string;
-  category: string | null;
+  tag_ids: string[];
   created_at?: string;
+}
+
+export interface Tag {
+  id: string;
+  user_id: string;
+  name: string;
+  created_at?: string;
+  tempId?: string;
 }
 
 export interface UserCategory {

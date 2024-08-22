@@ -11,7 +11,7 @@ import { Check, ChevronDown } from "react-feather";
 import PairList from "../PairList";
 
 import { useUserContext } from "@/contexts/UserContext";
-import { Pair, rowCountOptions, UserCategory } from "@/constants";
+import { Pair, rowCountOptions, Tag, UserCategory } from "@/constants";
 import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
@@ -61,10 +61,10 @@ const controlsVariants: Variants = {
 function Game() {
   const { user, loading } = useUserContext();
   const [pairs, setPairs] = useState<Pair[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
+  const [tags, setTags] = useState<Tag[]>([]);
   const [rowCount, setRowCount] = useState(5);
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [enabledCategories, setEnabledCategories] = useState<string[]>([]);
+  const [tagsOpen, setTagsOpen] = useState(false);
+  const [enabledTags, setEnabledTags] = useState<string[]>([]);
   const [roundLength, setRoundLength] = useState(210);
   const [isGameRunning, setIsGameRunning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(210);
@@ -86,51 +86,35 @@ function Game() {
   const fetchWordPairs = useCallback(async () => {
     if (!user) return;
 
-    const localPairs = localStorage.getItem("pairs");
-    if (localPairs) {
-      setPairs(JSON.parse(localPairs));
-    } else {
-      try {
-        const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
-        if (error) {
-          console.error("Error fetching word pairs:", error);
-        } else {
-          setPairs(data as Pair[]);
-          localStorage.setItem("pairs", JSON.stringify(data));
-        }
-      } catch (error) {
-        console.error("Unexpected error:", error);
+    try {
+      const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
+      if (error) {
+        console.error("Error fetching word pairs:", error);
+      } else {
+        setPairs(data as Pair[]);
       }
+    } catch (error) {
+      console.error("Unexpected error:", error);
     }
   }, [user]);
 
-  const fetchUserCategories = useCallback(async () => {
+  const fetchUserTags = useCallback(async () => {
     if (!user) return;
 
-    const localCategories = localStorage.getItem("categories");
-    if (localCategories) {
-      const parsedCategories = JSON.parse(localCategories);
-      setCategories([...parsedCategories.map((c: UserCategory) => c.category), "None"]);
-      setEnabledCategories([...parsedCategories.map((c: UserCategory) => c.category), "None"]);
+    const { data, error } = await supabase.from("tags").select("*").eq("user_id", user.id);
+    if (error) {
+      console.error("Error fetching user tags:", error);
     } else {
-      const { data, error } = await supabase.from("pair-categories").select("*").eq("user_id", user.id);
-      if (error) {
-        console.error("Error fetching user categories:", error);
-      } else {
-        const categoryNames = [...data.map((c) => c.category), "None"];
-        setCategories(categoryNames);
-        setEnabledCategories(categoryNames);
-        localStorage.setItem("categories", JSON.stringify(data));
-      }
+      setTags(data);
     }
   }, [user]);
 
   useEffect(() => {
     if (user) {
       fetchWordPairs();
-      fetchUserCategories();
+      fetchUserTags();
     }
-  }, [user, fetchWordPairs, fetchUserCategories]);
+  }, [user, fetchWordPairs, fetchUserTags]);
 
   useEffect(() => {
     if (isGameRunning && roundLength !== 210) {
@@ -158,16 +142,13 @@ function Game() {
   }, [roundLength]);
 
   const getFilteredPairs = useCallback(() => {
+    if (enabledTags.length === 0) {
+      return pairs;
+    }
     return pairs.filter((pair) => {
-      if (pair.category && enabledCategories.includes(pair.category)) {
-        return true;
-      }
-      if (!pair.category && enabledCategories.includes("None")) {
-        return true;
-      }
-      return false;
+      return pair.tag_ids.some((tagId) => enabledTags.includes(tagId));
     });
-  }, [pairs, enabledCategories]);
+  }, [pairs, enabledTags]);
 
   const filteredPairs = useMemo(() => getFilteredPairs(), [getFilteredPairs]);
 
@@ -181,22 +162,19 @@ function Game() {
     }
   };
 
-  const handleCategoriesOpen = () => {
+  const handleTagsOpen = () => {
     if (!isGameRunning) {
-      setCategoriesOpen(!categoriesOpen);
+      setTagsOpen(!tagsOpen);
     }
   };
 
-  const handleCategoriesChange = (category: string) => {
+  const handleTagsChange = (tagId: string) => {
     if (!isGameRunning) {
-      setEnabledCategories((prevCategories) => {
-        if (prevCategories.includes(category)) {
-          if (prevCategories.length === 1) {
-            return prevCategories;
-          }
-          return prevCategories.filter((c) => c !== category);
+      setEnabledTags((prevTags) => {
+        if (prevTags.includes(tagId)) {
+          return prevTags.filter((id) => id !== tagId);
         } else {
-          return [...prevCategories, category];
+          return [...prevTags, tagId];
         }
       });
     }
@@ -231,48 +209,46 @@ function Game() {
       <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleVariants}>
         <m.div className={styles.controlsWrapper}>
           <m.div
-            className={styles.categoriesWrapper}
+            className={styles.tagsWrapper}
             variants={controlsVariants}
             animate={isGameRunning ? "disabled" : "enabled"}
           >
-            <div className={styles.categoriesLabelWrapper} onClick={handleCategoriesOpen}>
-              <p>Words to use:</p>
+            <div className={styles.tagsLabelWrapper} onClick={handleTagsOpen}>
+              <p>Filter by tags:</p>
               <AnimatePresence mode='wait'>
                 <m.p
-                  key={categories.length === enabledCategories.length ? "All" : "Custom"}
-                  className={styles.categoriesSelection}
+                  key={enabledTags.length === 0 ? "All" : "Custom"}
+                  className={styles.tagsSelection}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {categories.length === enabledCategories.length ? "All" : "Custom"}
+                  {enabledTags.length === 0 ? "All" : "Custom"}
                 </m.p>
               </AnimatePresence>
-              <m.div initial={{ rotate: 0 }} animate={{ rotate: categoriesOpen ? 180 : 0 }}>
+              <m.div initial={{ rotate: 0 }} animate={{ rotate: tagsOpen ? 180 : 0 }}>
                 <ChevronDown />
               </m.div>
             </div>
 
             <AnimatePresence>
-              {categoriesOpen && (
+              {tagsOpen && (
                 <m.ul initial='hidden' animate='show' exit='hidden' variants={categoriesUlVariants}>
-                  {categories.map((c, i) => {
-                    return (
-                      <li key={c + i} value={c}>
-                        <m.div className={styles.checkWrapperOuter}>
-                          <m.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: enabledCategories.includes(c) ? 1 : 0 }}
-                            onClick={() => handleCategoriesChange(c)}
-                          >
-                            <Check />
-                          </m.div>
+                  {tags.map((tag) => (
+                    <li key={tag.id} value={tag.name}>
+                      <m.div className={styles.checkWrapperOuter}>
+                        <m.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: enabledTags.includes(tag.id) ? 1 : 0 }}
+                          onClick={() => handleTagsChange(tag.id)}
+                        >
+                          <Check />
                         </m.div>
-                        <p>{c}</p>
-                      </li>
-                    );
-                  })}
+                      </m.div>
+                      <p>{tag.name}</p>
+                    </li>
+                  ))}
                 </m.ul>
               )}
             </AnimatePresence>

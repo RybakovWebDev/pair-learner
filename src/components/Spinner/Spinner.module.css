@@ -1,3 +1,9 @@
+.spinnerWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 .loader {
   /* margin: 10vh 0; */
   width: 48px;
