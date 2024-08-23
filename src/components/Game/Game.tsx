@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useId, useMemo, useReducer, useRef } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -7,31 +7,42 @@ import { supabase } from "@/lib/supabase";
 
 import styles from "./Game.module.css";
 
-import { Check, ChevronDown } from "react-feather";
 import PairList from "../PairList";
+import Spinner from "../Spinner";
+import GameTagFilter from "../GameTagFilter";
+import GameRowCountSelector from "../GameRowCountSelector";
+import GameRoundLengthSelector from "../GameRoundLengthSelector";
 
 import { useUserContext } from "@/contexts/UserContext";
-import { Pair, rowCountOptions, Tag, UserCategory } from "@/constants";
-import { AnimateChangeInHeight } from "@/helpers";
+import { controlsVariants, Pair, rowCountOptions, Tag } from "@/constants";
+import { AnimateChangeInHeight, formatTime } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
+
+interface PairListProps {
+  numPairs: number;
+  isGameRunning: boolean;
+  refreshTrigger: number;
+  pairs: Pair[];
+}
+
+type GameState = {
+  isLoading: boolean;
+  pairs: Pair[];
+  tags: Tag[];
+  rowCount: number;
+  tagsOpen: boolean;
+  enabledTags: string[];
+  roundLength: number;
+  isGameRunning: boolean;
+  timeRemaining: number;
+  refreshTrigger: number;
+};
 
 const simpleVariants: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-  },
-};
-
-const categoriesUlVariants: Variants = {
-  hidden: {
-    height: 0,
-  },
-  show: {
-    height: "auto",
-  },
-  exit: {
-    height: 0,
   },
 };
 
@@ -47,86 +58,118 @@ const startVariants: Variants = {
   },
 };
 
-const controlsVariants: Variants = {
-  enabled: {
-    opacity: 1,
-    pointerEvents: "auto" as const,
-  },
-  disabled: {
-    opacity: 0.5,
-    pointerEvents: "none" as const,
-  },
-};
+function gameReducer(state: GameState, action: any): GameState {
+  switch (action.type) {
+    case "INITIALIZE_DATA":
+      return {
+        ...state,
+        isLoading: false,
+        pairs: action.payload.pairs,
+        tags: action.payload.tags,
+      };
+    case "SET_ROW_COUNT":
+      return { ...state, rowCount: action.payload };
+    case "SET_TAGS_OPEN":
+      return { ...state, tagsOpen: action.payload };
+    case "SET_ENABLED_TAGS":
+      return { ...state, enabledTags: action.payload };
+    case "SET_ROUND_LENGTH":
+      return { ...state, roundLength: action.payload, timeRemaining: action.payload };
+    case "SET_GAME_RUNNING":
+      return {
+        ...state,
+        isGameRunning: action.payload,
+        timeRemaining: action.payload ? state.roundLength : state.timeRemaining,
+      };
+    case "SET_TIME_REMAINING":
+      return { ...state, timeRemaining: action.payload };
+    case "REFRESH_TRIGGER":
+      return { ...state, refreshTrigger: state.refreshTrigger + 1 };
+    default:
+      return state;
+  }
+}
 
 function Game() {
-  const { user, loading } = useUserContext();
-  const [pairs, setPairs] = useState<Pair[]>([]);
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [rowCount, setRowCount] = useState(5);
-  const [tagsOpen, setTagsOpen] = useState(false);
-  const [enabledTags, setEnabledTags] = useState<string[]>([]);
-  const [roundLength, setRoundLength] = useState(210);
-  const [isGameRunning, setIsGameRunning] = useState(false);
-  const [timeRemaining, setTimeRemaining] = useState(210);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [notEnoughPairs, setNotEnoughPairs] = useState(false);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const { user, loading: userLoading } = useUserContext();
+  const [state, dispatch] = useReducer(gameReducer, {
+    isLoading: true,
+    pairs: [],
+    tags: [],
+    rowCount: 5,
+    tagsOpen: false,
+    enabledTags: [],
+    roundLength: 210,
+    isGameRunning: false,
+    timeRemaining: 210,
+    refreshTrigger: 0,
+  });
+
   const router = useRouter();
-
-  const isControlsDisabled = useMemo(() => isGameRunning || notEnoughPairs, [isGameRunning, notEnoughPairs]);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
-    }
-  }, [user, loading, router]);
-
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const id = useId();
+  const fetchDataRef = useRef(false);
 
-  const fetchWordPairs = useCallback(async () => {
-    if (!user) return;
+  const filteredPairs = useMemo(() => {
+    if (state.enabledTags.length === 0) return state.pairs;
+    return state.pairs.filter((pair) => pair.tag_ids.some((tagId) => state.enabledTags.includes(tagId)));
+  }, [state.pairs, state.enabledTags]);
 
+  const fetchData = useCallback(async () => {
+    if (!user || fetchDataRef.current) return;
+    fetchDataRef.current = true;
+    console.log("Fetching data");
     try {
-      const { data, error } = await supabase.from("word-pairs").select("*").eq("user_id", user.id);
-      if (error) {
-        console.error("Error fetching word pairs:", error);
+      const [pairsResponse, tagsResponse] = await Promise.all([
+        supabase.from("word-pairs").select("*").eq("user_id", user.id),
+        supabase.from("tags").select("*").eq("user_id", user.id),
+      ]);
+
+      if (pairsResponse.error || tagsResponse.error) {
+        console.error("Error fetching data:", pairsResponse.error || tagsResponse.error);
       } else {
-        setPairs(data as Pair[]);
+        dispatch({
+          type: "INITIALIZE_DATA",
+          payload: { pairs: pairsResponse.data, tags: tagsResponse.data },
+        });
       }
     } catch (error) {
       console.error("Unexpected error:", error);
     }
   }, [user]);
 
-  const fetchUserTags = useCallback(async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase.from("tags").select("*").eq("user_id", user.id);
-    if (error) {
-      console.error("Error fetching user tags:", error);
-    } else {
-      setTags(data);
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.replace("/");
+    } else if (!userLoading && user) {
+      fetchData();
     }
-  }, [user]);
+  }, [user, userLoading, router, fetchData]);
 
   useEffect(() => {
-    if (user) {
-      fetchWordPairs();
-      fetchUserTags();
+    if (!userLoading && user && state.pairs.length === 0) {
+      fetchData();
     }
-  }, [user, fetchWordPairs, fetchUserTags]);
+  }, [userLoading, user, state.pairs.length, fetchData]);
 
   useEffect(() => {
-    if (isGameRunning && roundLength !== 210) {
+    // console.log("NotEnoughPairs effect running");
+    // TODO check if unncecessary
+    dispatch({ type: "SET_NOT_ENOUGH_PAIRS", payload: filteredPairs.length < 5 });
+  }, [filteredPairs]);
+
+  useEffect(() => {
+    if (state.isGameRunning && state.roundLength !== 210) {
       timerRef.current = setInterval(() => {
-        setTimeRemaining((prevTime) => {
-          if (prevTime <= 1) {
-            clearInterval(timerRef.current!);
-            setIsGameRunning(false);
-            return 0;
-          }
-          return prevTime - 1;
+        dispatch({
+          type: "SET_TIME_REMAINING",
+          payload: Math.max(0, state.timeRemaining - 1),
         });
+
+        if (state.timeRemaining <= 1) {
+          clearInterval(timerRef.current!);
+          dispatch({ type: "SET_GAME_RUNNING", payload: false });
+        }
       }, 1000);
     } else {
       clearInterval(timerRef.current!);
@@ -135,227 +178,101 @@ function Game() {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isGameRunning, roundLength]);
+  }, [state.isGameRunning, state.roundLength, state.timeRemaining]);
 
-  useEffect(() => {
-    setTimeRemaining(roundLength);
-  }, [roundLength]);
+  const handleRowCountChange = useCallback(
+    (rows: number) => {
+      if (!state.isGameRunning) {
+        dispatch({ type: "SET_ROW_COUNT", payload: rows });
+      }
+    },
+    [state.isGameRunning]
+  );
 
-  const getFilteredPairs = useCallback(() => {
-    if (enabledTags.length === 0) {
-      return pairs;
+  const handleTagsOpen = useCallback(() => {
+    if (!state.isGameRunning) {
+      dispatch({ type: "SET_TAGS_OPEN", payload: !state.tagsOpen });
     }
-    return pairs.filter((pair) => {
-      return pair.tag_ids.some((tagId) => enabledTags.includes(tagId));
+  }, [state.isGameRunning, state.tagsOpen]);
+
+  const handleTagsChange = useCallback(
+    (tagId: string) => {
+      if (!state.isGameRunning) {
+        dispatch({
+          type: "SET_ENABLED_TAGS",
+          payload: state.enabledTags.includes(tagId)
+            ? state.enabledTags.filter((id) => id !== tagId)
+            : [...state.enabledTags, tagId],
+        });
+      }
+    },
+    [state.isGameRunning, state.enabledTags]
+  );
+
+  const handleRoundLengthChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (!state.isGameRunning) {
+        const newLength = Number(event.target.value);
+        dispatch({ type: "SET_ROUND_LENGTH", payload: newLength });
+      }
+    },
+    [state.isGameRunning]
+  );
+
+  const handleStart = useCallback(() => {
+    dispatch({ type: "SET_GAME_RUNNING", payload: !state.isGameRunning });
+  }, [state.isGameRunning]);
+
+  const handleRefresh = useCallback(() => {
+    if (!state.isGameRunning) {
+      dispatch({ type: "REFRESH_TRIGGER" });
+    }
+  }, [state.isGameRunning]);
+
+  const MemoizedPairListWrapper = useMemo(() => {
+    return memo<PairListProps>(({ numPairs, isGameRunning, refreshTrigger, pairs }) => {
+      return (
+        <PairList numPairs={numPairs} isGameRunning={isGameRunning} refreshTrigger={refreshTrigger} pairs={pairs} />
+      );
     });
-  }, [pairs, enabledTags]);
+  }, []);
 
-  const filteredPairs = useMemo(() => getFilteredPairs(), [getFilteredPairs]);
-
-  useEffect(() => {
-    setNotEnoughPairs(filteredPairs.length < 5);
-  }, [filteredPairs]);
-
-  const handleRowCountChange = (rows: number) => {
-    if (!isGameRunning) {
-      setRowCount(rows);
-    }
-  };
-
-  const handleTagsOpen = () => {
-    if (!isGameRunning) {
-      setTagsOpen(!tagsOpen);
-    }
-  };
-
-  const handleTagsChange = (tagId: string) => {
-    if (!isGameRunning) {
-      setEnabledTags((prevTags) => {
-        if (prevTags.includes(tagId)) {
-          return prevTags.filter((id) => id !== tagId);
-        } else {
-          return [...prevTags, tagId];
-        }
-      });
-    }
-  };
-
-  const handleRoundLengthChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isGameRunning) {
-      const newLength = Number(event.target.value);
-      setRoundLength(newLength);
-      setTimeRemaining(newLength);
-    }
-  };
-
-  const handleStart = () => {
-    setIsGameRunning(!isGameRunning);
-  };
-
-  const handleRefresh = () => {
-    if (!isGameRunning) {
-      setRefreshTrigger((prev) => prev + 1);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const minutes = Math.floor(seconds / 60);
-    const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-  };
+  const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
   return (
     <LazyMotion features={loadFeatures}>
       <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleVariants}>
         <m.div className={styles.controlsWrapper}>
-          <m.div
-            className={styles.tagsWrapper}
-            variants={controlsVariants}
-            animate={isGameRunning ? "disabled" : "enabled"}
-          >
-            <div className={styles.tagsLabelWrapper} onClick={handleTagsOpen}>
-              <p>Filter by tags:</p>
-              <AnimatePresence mode='wait'>
-                <m.p
-                  key={enabledTags.length === 0 ? "All" : "Custom"}
-                  className={styles.tagsSelection}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  {enabledTags.length === 0 ? "All" : "Custom"}
-                </m.p>
-              </AnimatePresence>
-              <m.div initial={{ rotate: 0 }} animate={{ rotate: tagsOpen ? 180 : 0 }}>
-                <ChevronDown />
-              </m.div>
-            </div>
+          <GameTagFilter
+            tags={state.tags}
+            enabledTags={state.enabledTags}
+            isOpen={state.tagsOpen}
+            isDisabled={state.isGameRunning}
+            onToggleOpen={handleTagsOpen}
+            onTagChange={handleTagsChange}
+          />
 
-            <AnimatePresence>
-              {tagsOpen && (
-                <m.ul initial='hidden' animate='show' exit='hidden' variants={categoriesUlVariants}>
-                  {tags.map((tag) => (
-                    <li key={tag.id} value={tag.name}>
-                      <m.div className={styles.checkWrapperOuter}>
-                        <m.div
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: enabledTags.includes(tag.id) ? 1 : 0 }}
-                          onClick={() => handleTagsChange(tag.id)}
-                        >
-                          <Check />
-                        </m.div>
-                      </m.div>
-                      <p>{tag.name}</p>
-                    </li>
-                  ))}
-                </m.ul>
-              )}
-            </AnimatePresence>
-          </m.div>
+          <GameRowCountSelector
+            rowCount={state.rowCount}
+            rowCountOptions={rowCountOptions}
+            isDisabled={areControlsDisabled}
+            onRowCountChange={handleRowCountChange}
+          />
 
-          <m.div
-            className={styles.rowCountWrapper}
-            variants={controlsVariants}
-            animate={isControlsDisabled ? "disabled" : "enabled"}
-          >
-            <label htmlFor='row-count-select'>Number of rows:</label>
-
-            <div className={styles.rowsSelector}>
-              {rowCountOptions.map((r) => {
-                return (
-                  <button key={r} onClick={() => handleRowCountChange(r)}>
-                    <h3>{r}</h3>
-                    <AnimatePresence>
-                      {rowCount === r ? (
-                        <m.div
-                          className={styles.hovered}
-                          layoutId={id}
-                          initial={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                          animate={{
-                            opacity: 1,
-                            borderTopLeftRadius: rowCount === 3 ? 15 : 0,
-                            borderTopRightRadius: rowCount === 5 ? 15 : 0,
-                          }}
-                          exit={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
-                          transition={{ type: "spring", damping: 70, stiffness: 1000 }}
-                        />
-                      ) : null}
-                    </AnimatePresence>
-                  </button>
-                );
-              })}
-            </div>
-          </m.div>
-
-          <m.div
-            className={styles.roundLengthWrapper}
-            variants={controlsVariants}
-            animate={isControlsDisabled ? "disabled" : "enabled"}
-          >
-            <label htmlFor='length'>Round length:</label>
-
-            <div className={styles.roundLengthSecondsWrapper}>
-              <AnimatePresence mode='wait' initial={false}>
-                {roundLength !== 210 ? (
-                  <m.div
-                    key='seconds-wrapper'
-                    initial={{ opacity: 0, y: "-100%" }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: "100%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <div className={styles.secondsCountWrapper}>
-                      <AnimatePresence mode='wait'>
-                        <m.p
-                          className={styles.roundLengthSeconds}
-                          key={roundLength}
-                          initial={{ opacity: 0, y: "-100%" }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: "100%" }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          {roundLength}
-                        </m.p>
-                      </AnimatePresence>
-                    </div>
-                    <p>seconds</p>
-                  </m.div>
-                ) : (
-                  <m.p
-                    className={styles.roundLengthInfinite}
-                    key='infinite'
-                    initial={{ opacity: 0, y: "-100%" }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: "100%" }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    Infinite
-                  </m.p>
-                )}
-              </AnimatePresence>
-            </div>
-
-            <input
-              type='range'
-              id='length'
-              name='length'
-              min='30'
-              max='210'
-              step='30'
-              value={roundLength}
-              onChange={handleRoundLengthChange}
-            />
-          </m.div>
+          <GameRoundLengthSelector
+            roundLength={state.roundLength}
+            isDisabled={areControlsDisabled}
+            onChange={handleRoundLengthChange}
+          />
 
           <m.div
             className={styles.startWrapper}
             variants={controlsVariants}
-            animate={notEnoughPairs ? "disabled" : "enabled"}
+            animate={filteredPairs.length < 5 ? "disabled" : "enabled"}
           >
-            <button onClick={handleStart} disabled={notEnoughPairs || isGameRunning}>
+            <button onClick={handleStart} disabled={filteredPairs.length < 5}>
               <AnimatePresence mode='wait' initial={false}>
-                {isGameRunning ? (
+                {state.isGameRunning ? (
                   <m.p key={"stop"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
                     Stop
                   </m.p>
@@ -371,16 +288,20 @@ function Game() {
 
         <AnimateChangeInHeight className={styles.timerWrapper}>
           <AnimatePresence>
-            {roundLength !== 210 && (
+            {state.isGameRunning && state.roundLength !== 210 && (
               <m.div key={"timer"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <m.p>{formatTime(timeRemaining)}</m.p>
+                <m.p>{formatTime(state.timeRemaining)}</m.p>
               </m.div>
             )}
           </AnimatePresence>
         </AnimateChangeInHeight>
 
         <AnimateChangeInHeight>
-          {notEnoughPairs ? (
+          {state.isLoading ? (
+            <div className={styles.spinnerWrapper}>
+              <Spinner margin='11rem 0 0 0' />
+            </div>
+          ) : filteredPairs.length < 5 ? (
             <m.div
               className={styles.minPairsMessage}
               initial={{ opacity: 0 }}
@@ -394,10 +315,10 @@ function Game() {
               </Link>
             </m.div>
           ) : (
-            <PairList
-              numPairs={rowCount}
-              isGameRunning={isGameRunning}
-              refreshTrigger={refreshTrigger}
+            <MemoizedPairListWrapper
+              numPairs={state.rowCount}
+              isGameRunning={state.isGameRunning}
+              refreshTrigger={state.refreshTrigger}
               pairs={filteredPairs}
             />
           )}
@@ -407,7 +328,7 @@ function Game() {
           className={styles.resetButton}
           onClick={handleRefresh}
           variants={controlsVariants}
-          animate={isGameRunning ? "disabled" : "enabled"}
+          animate={state.isGameRunning ? "disabled" : "enabled"}
         >
           Refresh list
         </m.button>

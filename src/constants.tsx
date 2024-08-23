@@ -1,3 +1,4 @@
+import { Variants } from "framer-motion";
 import { CSSProperties } from "react";
 import { Edit, Globe, Linkedin, Play, User } from "react-feather";
 
@@ -161,3 +162,14 @@ export const SOCIAL_LINKS = [
   { slug: "website", href: "https://www.rybakov.dev/", icon: <Globe strokeWidth={1} /> },
   { slug: "linkedin", href: "https://www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
 ];
+
+export const controlsVariants: Variants = {
+  enabled: {
+    opacity: 1,
+    pointerEvents: "auto" as const,
+  },
+  disabled: {
+    opacity: 0.5,
+    pointerEvents: "none" as const,
+  },
+};

@@ -101,9 +101,11 @@
 }
 
 .tagAddWrapper {
+  padding: 0 0 1rem 0;
   width: 100%;
   display: flex;
   justify-content: center;
+  border-bottom: 1px solid var(--color-background-secondary);
 }
 
 .addTagButton {
@@ -145,7 +147,7 @@
 
 .tagsWrapper li {
   /* margin: 1rem 0; */
-  padding: 1rem;
+  /* padding: 1rem; */
   /* height: 2rem; */
   display: flex;
   align-items: center;
@@ -155,7 +157,8 @@
 }
 
 .tagsWrapper ul li:first-child {
-  margin-top: 1rem;
+  /* margin-top: 1rem; */
+  border: none;
 }
 
 .tagsWrapper ul li:last-child {
@@ -163,12 +166,13 @@
 }
 
 .tagLeftWrapper {
+  padding: 1rem;
   display: flex;
   align-items: center;
-  /* width: 5rem; */
 }
 
 .tagRightWrapper {
+  padding: 1rem 0;
   flex-grow: 1;
   display: flex;
   flex-direction: column;

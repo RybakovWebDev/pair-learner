@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -49,22 +49,14 @@ const controlsVariants: Variants = {
   },
 };
 
-const tagsTemp = [
-  { id: "sdoifbdsfisdbf", name: "Tag 1", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf3333", name: "Tag 2", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf444", name: "Tag 3", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf44466", name: "Tag 4", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf4565644", name: "Tag 5", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf44477", name: "Tag 6", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf467644", name: "Tag 7", user_id: "useridtest" },
-  // { id: "sdoifbdsfisdbf4489994", name: "Tag 8", user_id: "useridtest" },
-];
-
 function EditWords() {
   const { user, loading } = useUserContext();
+  const router = useRouter();
+
+  // State variables
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [newTag, setNewTag] = useState<Tag | null>(null);
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
   const [enabledTags, setEnabledTags] = useState<string[]>([]);
   const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
@@ -79,17 +71,11 @@ function EditWords() {
   const [editedPair, setEditedPair] = useState<Pair | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
-  const router = useRouter();
+  const newTagInputRef = useRef<HTMLInputElement>(null);
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
   }, []);
-
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace("/");
-    }
-  }, [user, loading, router]);
 
   const fetchAndUpdateData = useCallback(async () => {
     if (!user) return;
@@ -115,7 +101,15 @@ function EditWords() {
         return;
       }
 
-      setTags(tagsData);
+      setTags((prevTags) => {
+        return tagsData.map((newTag) => {
+          const existingTag = prevTags.find((t) => t.tempId === newTag.id);
+          if (existingTag) {
+            return { ...newTag, id: existingTag.id, tempId: newTag.id };
+          }
+          return newTag;
+        });
+      });
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -124,10 +118,19 @@ function EditWords() {
   }, [user]);
 
   useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/");
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
     if (user && !dataLoaded) {
       fetchAndUpdateData();
     }
   }, [user, dataLoaded, fetchAndUpdateData]);
+
+  ///////////////////////////////////////
+  // Tag handlers
 
   const handleAddTag = () => {
     if (!user || newTag) return;
@@ -136,37 +139,155 @@ function EditWords() {
       id: "temp-" + Date.now(),
       name: "",
       user_id: user.id,
+      tempId: "temp-" + Date.now(),
     };
 
-    setTags((prevTags) => [...prevTags, tempTag]);
+    setTags((prevTags) => [tempTag, ...prevTags]);
     setNewTag(tempTag);
     setEditingTag(tempTag.id);
     setEditedTag(tempTag);
+
+    // setTimeout(() => {
+    //   if (newTagInputRef.current) {
+    //     newTagInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    //     newTagInputRef.current.focus();
+    //   }
+    // }, 100);
   };
 
-  const handleAdd = async () => {
-    if (!user) return;
-
-    const newPair: Omit<Pair, "id" | "created_at"> = {
-      word1: "Word 1",
-      word2: "Word 2",
-      tag_ids: [],
-      user_id: user.id,
-    };
-
-    const { error } = await supabase.from("word-pairs").insert(newPair);
-
-    if (error) {
-      console.error("Error adding new pair:", error);
-      setErrors({ new: { general: "Failed to add new pair. Please try again." } });
-    } else {
-      await fetchAndUpdateData();
-      clearAllErrors();
+  const handleEditTagStart = (tag: Tag) => {
+    if (newTag && tag.id !== newTag.id) {
+      handleEditTagCancel();
+    }
+    setConfirmDeleteTag("");
+    clearAllErrors();
+    if (editingTag !== tag.id) {
+      setEditingTag(tag.id);
+      setEditedTag({ ...tag });
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleEditTagConfirm = async () => {
+    if (!user || !editedTag) return;
+
+    if (editedTag.name.trim() === "") {
+      setErrors({ [editedTag.id]: { general: "Tag name cannot be empty." } });
+      return;
+    }
+
+    const existingTag = tags.find(
+      (tag) => tag.name.toLowerCase() === editedTag.name.toLowerCase() && tag.id !== editedTag.id
+    );
+    if (existingTag) {
+      setErrors({ [editedTag.id]: { general: "A tag with this name already exists." } });
+      return;
+    }
+
+    if (editedTag.id.startsWith("temp-")) {
+      const { data, error } = await supabase
+        .from("tags")
+        .insert({
+          name: editedTag.name,
+          user_id: user.id,
+        })
+        .select();
+
+      if (error) {
+        console.error("Error adding new tag:", error);
+        setErrors({ [editedTag.id]: { general: "Failed to add new tag. Please try again." } });
+      } else if (data) {
+        setTags((prevTags) =>
+          prevTags.map((tag) => (tag.id === editedTag.id ? { ...data[0], id: editedTag.id, tempId: data[0].id } : tag))
+        );
+        clearAllErrors();
+      }
+    } else {
+      const { error } = await supabase.from("tags").update({ name: editedTag.name }).eq("id", editedTag.id);
+
+      if (error) {
+        console.error("Error updating tag:", error);
+        setErrors({ [editedTag.id]: { general: "Failed to update tag. Please try again." } });
+      } else {
+        setTags((prevTags) => prevTags.map((tag) => (tag.id === editedTag.id ? editedTag : tag)));
+        clearAllErrors();
+      }
+    }
+
+    setEditingTag(null);
+    setEditedTag(null);
+    setNewTag(null);
+  };
+
+  const handleEditTagCancel = () => {
+    if (newTag) {
+      setTags((prevTags) => prevTags.filter((tag) => tag.id !== newTag.id));
+    }
+    setEditingTag(null);
+    setEditedTag(null);
+    setNewTag(null);
+  };
+
+  const handleTagDelete = (tag: Tag) => {
+    setEditingTag(null);
+    clearAllErrors();
+    setConfirmDeleteTag(tag.id);
+  };
+
+  const handleConfirmDeleteTag = async (id: string) => {
+    const tagToDelete = tags.find((tag) => tag.id === id);
+
+    if (!tagToDelete) {
+      console.error("Tag not found for deletion");
+      return;
+    }
+
+    setTags((prevTags) => prevTags.filter((tag) => tag.id !== id));
+    setNewTag(null);
+
+    setTimeout(async () => {
+      const realId = tagToDelete.tempId || tagToDelete.id;
+
+      const { error } = await supabase.from("tags").delete().eq("id", realId);
+
+      if (error) {
+        console.error("Error deleting tag:", error);
+        setErrors({ [id]: { general: "Failed to delete tag. Please try again." } });
+        setTags((prevTags) => [...prevTags, tagToDelete]);
+      } else {
+        setEnabledTags((prevEnabled) => prevEnabled.filter((tagId) => tagId !== realId));
+
+        const updatedPairs = pairs.map((pair) => ({
+          ...pair,
+          tag_ids: Array.isArray(pair.tag_ids) ? pair.tag_ids.filter((tagId) => tagId !== realId) : [],
+        }));
+        setPairs(updatedPairs);
+
+        supabase
+          .from("word-pairs")
+          .upsert(updatedPairs)
+          .then(({ error: updateError }) => {
+            if (updateError) {
+              console.error("Error updating pairs after tag deletion:", updateError);
+            }
+          });
+
+        setErrors({});
+      }
+    }, 300);
+  };
+
+  const handleCancelDeleteTag = () => {
+    setConfirmDeleteTag("");
+  };
+
+  const handleInputChangeTag = (field: keyof Tag, value: string) => {
+    if (editedTag) {
+      setEditedTag({ ...editedTag, [field]: value });
+      setErrors((prev) => ({
+        ...prev,
+        [editedTag.id]: { ...prev[editedTag.id], [field]: undefined },
+      }));
+    }
   };
 
   const handleTagsChange = (tagId: string) => {
@@ -190,26 +311,27 @@ function EditWords() {
     [editingTag]
   );
 
-  const handleDisabledInputClick = useCallback(
-    (e: React.MouseEvent, pairId: string) => {
-      e.stopPropagation();
-      if (editing !== pairId) {
-        setShakeEditButton(pairId);
-        setTimeout(() => setShakeEditButton(null), 500);
-      }
-    },
-    [editing]
-  );
+  ///////////////////////////////////////
+  // Pair handlers
 
-  const handleEditTagStart = (tag: Tag) => {
-    if (newTag && tag.id !== newTag.id) {
-      handleEditTagCancel();
-    }
-    setConfirmDeleteTag("");
-    clearAllErrors();
-    if (editingTag !== tag.id) {
-      setEditingTag(tag.id);
-      setEditedTag({ ...tag });
+  const handleAdd = async () => {
+    if (!user) return;
+
+    const newPair: Omit<Pair, "id" | "created_at"> = {
+      word1: "Word 1",
+      word2: "Word 2",
+      tag_ids: [],
+      user_id: user.id,
+    };
+
+    const { error } = await supabase.from("word-pairs").insert(newPair);
+
+    if (error) {
+      console.error("Error adding new pair:", error);
+      setErrors({ new: { general: "Failed to add new pair. Please try again." } });
+    } else {
+      await fetchAndUpdateData();
+      clearAllErrors();
     }
   };
 
@@ -221,61 +343,8 @@ function EditWords() {
     clearAllErrors();
     if (editing !== pair.id) {
       setEditing(pair.id);
-      setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] }); // Create a new array to avoid reference issues
+      setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
     }
-  };
-
-  const handleEditTagConfirm = async () => {
-    if (!user || !editedTag) return;
-
-    if (editedTag.name.trim() === "") {
-      setErrors({ [editedTag.id]: { general: "Tag name cannot be empty." } });
-      return;
-    }
-
-    // Check for uniqueness
-    const existingTag = tags.find(
-      (tag) => tag.name.toLowerCase() === editedTag.name.toLowerCase() && tag.id !== editedTag.id
-    );
-    if (existingTag) {
-      setErrors({ [editedTag.id]: { general: "A tag with this name already exists." } });
-      return;
-    }
-
-    if (editedTag.id.startsWith("temp-")) {
-      const { data, error } = await supabase
-        .from("tags")
-        .insert({
-          name: editedTag.name,
-          user_id: user.id,
-        })
-        .select();
-
-      if (error) {
-        console.error("Error adding new tag:", error);
-        setErrors({ [editedTag.id]: { general: "Failed to add new tag. Please try again." } });
-      } else if (data) {
-        // Update the tag in place, keeping the temporary ID for visual consistency
-        setTags((prevTags) =>
-          prevTags.map((tag) => (tag.id === editedTag.id ? { ...data[0], id: editedTag.id, tempId: data[0].id } : tag))
-        );
-        clearAllErrors();
-      }
-    } else {
-      const { error } = await supabase.from("tags").update({ name: editedTag.name }).eq("id", editedTag.id);
-
-      if (error) {
-        console.error("Error updating tag:", error);
-        setErrors({ [editedTag.id]: { general: "Failed to update tag. Please try again." } });
-      } else {
-        setTags((prevTags) => prevTags.map((tag) => (tag.id === editedTag.id ? editedTag : tag)));
-        clearAllErrors();
-      }
-    }
-
-    setEditingTag(null);
-    setEditedTag(null);
-    setNewTag(null);
   };
 
   const handleEditConfirm = async () => {
@@ -285,7 +354,10 @@ function EditWords() {
       ...editedPair,
       word1: editedPair.word1.trim(),
       word2: editedPair.word2.trim(),
-      tag_ids: editedPair.tag_ids, // Include the updated tag_ids
+      tag_ids: editedPair.tag_ids.map((id) => {
+        const tag = tags.find((t) => t.id === id || t.tempId === id);
+        return tag ? tag.tempId || tag.id : id;
+      }),
     };
 
     const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
@@ -294,21 +366,12 @@ function EditWords() {
       console.error("Error updating pair:", error);
       setErrors({ [updatedPair.id]: { general: "Failed to update pair. Please try again." } });
     } else {
-      await fetchAndUpdateData();
+      setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
       clearAllErrors();
     }
     setPairTagsOpened("");
     setEditing("");
     setEditedPair(null);
-  };
-
-  const handleEditTagCancel = () => {
-    if (newTag) {
-      setTags((prevTags) => prevTags.filter((tag) => tag.id !== newTag.id));
-    }
-    setEditingTag(null);
-    setEditedTag(null);
-    setNewTag(null);
   };
 
   const handleEditCancel = () => {
@@ -317,78 +380,11 @@ function EditWords() {
     setPairTagsOpened("");
   };
 
-  const handlePairTagsOpen = (pairId: string) => {
-    if (pairTagsOpened !== pairId) {
-      setPairTagsOpened(pairId);
-    } else {
-      setPairTagsOpened("");
-    }
-  };
-
-  const handleTagDelete = (tag: Tag) => {
-    setEditingTag(null);
-    clearAllErrors();
-    setConfirmDeleteTag(tag.id);
-  };
-
   const handlePairDelete = (pair: Pair) => {
     setEditing("");
     clearAllErrors();
     setPairTagsOpened("");
     setConfirmDelete(pair.id);
-  };
-
-  const handleConfirmDeleteTag = async (id: string) => {
-    // Find the tag to be deleted
-    const tagToDelete = tags.find((tag) => tag.id === id);
-
-    if (!tagToDelete) {
-      console.error("Tag not found for deletion");
-      return;
-    }
-
-    // Remove the tag from local state to trigger the exit animation
-    setTags((prevTags) => prevTags.filter((tag) => tag.id !== id));
-    setNewTag(null);
-
-    // Wait for the exit animation to complete
-    setTimeout(async () => {
-      // Use the real ID for database operations
-      const realId = tagToDelete.tempId || tagToDelete.id;
-
-      // Attempt to delete from Supabase
-      const { error } = await supabase.from("tags").delete().eq("id", realId);
-
-      if (error) {
-        console.error("Error deleting tag:", error);
-        setErrors({ [id]: { general: "Failed to delete tag. Please try again." } });
-        // If there's an error, we should add the tag back to the local state
-        setTags((prevTags) => [...prevTags, tagToDelete]);
-      } else {
-        setEnabledTags((prevEnabled) => prevEnabled.filter((tagId) => tagId !== realId));
-
-        const updatedPairs = pairs.map((pair) => ({
-          ...pair,
-          tag_ids: Array.isArray(pair.tag_ids) ? pair.tag_ids.filter((tagId) => tagId !== realId) : [],
-        }));
-        setPairs(updatedPairs);
-
-        supabase
-          .from("word-pairs")
-          .upsert(updatedPairs)
-          .then(({ error: updateError }) => {
-            if (updateError) {
-              console.error("Error updating pairs after tag deletion:", updateError);
-            }
-          });
-
-        setErrors({});
-      }
-    }, 300); // This delay matches the exit animation duration
-  };
-
-  const handleCancelDeleteTag = () => {
-    setConfirmDeleteTag("");
   };
 
   const handleConfirmDelete = async (id: string) => {
@@ -409,16 +405,6 @@ function EditWords() {
     setConfirmDelete("");
   };
 
-  const handleInputChangeTag = (field: keyof Tag, value: string) => {
-    if (editedTag) {
-      setEditedTag({ ...editedTag, [field]: value });
-      setErrors((prev) => ({
-        ...prev,
-        [editedTag.id]: { ...prev[editedTag.id], [field]: undefined },
-      }));
-    }
-  };
-
   const handleInputChange = (field: keyof Pair, value: string) => {
     if (editedPair) {
       setEditedPair({ ...editedPair, [field]: value });
@@ -429,21 +415,46 @@ function EditWords() {
     }
   };
 
+  const handleDisabledInputClick = useCallback(
+    (e: React.MouseEvent, pairId: string) => {
+      e.stopPropagation();
+      if (editing !== pairId) {
+        setShakeEditButton(pairId);
+        setTimeout(() => setShakeEditButton(null), 500);
+      }
+    },
+    [editing]
+  );
+
+  ///////////////////////////////////////
+  // Tag-Pair interaction handlers
+
+  const handlePairTagsOpen = (pairId: string) => {
+    if (pairTagsOpened !== pairId) {
+      setPairTagsOpened(pairId);
+    } else {
+      setPairTagsOpened("");
+    }
+  };
+
   const handleTagToggle = (pairId: string, tagId: string) => {
+    const tag = tags.find((t) => t.id === tagId || t.tempId === tagId);
+    if (!tag) return;
+
+    const realTagId = tag.tempId || tag.id;
+
     if (editing === pairId && editedPair) {
-      // If we're editing, update the editedPair state
       const updatedTagIds = editedPair.tag_ids.includes(tagId)
         ? editedPair.tag_ids.filter((id) => id !== tagId)
         : [...editedPair.tag_ids, tagId];
 
       setEditedPair({ ...editedPair, tag_ids: updatedTagIds });
     } else {
-      // If we're not editing, update the pairs state and the database
       const pair = pairs.find((p) => p.id === pairId);
       if (pair) {
-        const updatedTagIds = pair.tag_ids.includes(tagId)
-          ? pair.tag_ids.filter((id) => id !== tagId)
-          : [...pair.tag_ids, tagId];
+        const updatedTagIds = pair.tag_ids.includes(realTagId)
+          ? pair.tag_ids.filter((id) => id !== realTagId)
+          : [...pair.tag_ids, realTagId];
 
         setPairs((prevPairs) => prevPairs.map((p) => (p.id === pairId ? { ...p, tag_ids: updatedTagIds } : p)));
 
@@ -460,6 +471,13 @@ function EditWords() {
     }
   };
 
+  ///////////////////////////////////////
+  // Search and filter
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
   const filteredPairs = pairs.filter((pair) => {
     const matchesSearch =
       pair.word1.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -468,6 +486,9 @@ function EditWords() {
       enabledTags.length === 0 || (pair.tag_ids && pair.tag_ids.some((tagId) => enabledTags.includes(tagId)));
     return matchesSearch && matchesTags;
   });
+
+  ///////////////////////////////////////
+  // Render
 
   if (!user) {
     return <Spinner />;
@@ -534,10 +555,22 @@ function EditWords() {
                     <p>No tags yet.</p>
                   </m.div>
                 ) : (
-                  <m.ul key={"tagsulkey"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  <m.ul
+                    layout
+                    key={"tagsulkey"}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
                     <AnimatePresence>
                       {tags.map((t) => (
-                        <m.li key={t.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <m.li
+                          layout
+                          key={t.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0, height: 0 }}
+                        >
                           <div className={styles.tagLeftWrapper}>
                             <m.div className={styles.checkWrapperOuter}>
                               <m.div
@@ -556,6 +589,7 @@ function EditWords() {
                               onClick={(e) => editingTag !== t.id && handleDisabledTagInputClick(e, t.id)}
                             >
                               <input
+                                ref={t.id === newTag?.id ? newTagInputRef : null}
                                 required
                                 maxLength={15}
                                 disabled={editingTag !== t.id}
