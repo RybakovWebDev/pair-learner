@@ -296,6 +296,15 @@ function EditWords() {
         </div>
 
         <m.div className={styles.mainControlsWrapper} variants={simpleFadeVariants} initial='hidden' animate='show'>
+          <EditWordsTagsSection
+            user={user}
+            tags={tags}
+            setTags={setTags}
+            pairs={pairs}
+            setPairs={setPairs}
+            tagsLoading={tagsLoading}
+          />
+
           <div className={styles.searchWrapper}>
             <Search />
             <input
@@ -307,15 +316,6 @@ function EditWords() {
               disabled={!user || tagsLoading}
             />
           </div>
-
-          <EditWordsTagsSection
-            user={user}
-            tags={tags}
-            setTags={setTags}
-            pairs={pairs}
-            setPairs={setPairs}
-            tagsLoading={tagsLoading}
-          />
 
           <m.button
             className={styles.addButton}
