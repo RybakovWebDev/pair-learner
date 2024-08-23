@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -7,12 +7,12 @@ import { supabase } from "@/lib/supabase";
 import styles from "./EditWords.module.css";
 
 import { Check, ChevronDown, Plus, Search } from "react-feather";
+import EditWordsTagsSection from "../EditWordsTagsSection";
 import EditDeleteControls from "../EditDeleteControls";
 import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, simpleFadeVariants, Tag } from "@/constants";
-import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -44,23 +44,16 @@ function EditWords() {
   const router = useRouter();
 
   const [pairs, setPairs] = useState<Pair[]>([]);
-  const [newTag, setNewTag] = useState<Tag | null>(null);
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
-  const [enabledTags, setEnabledTags] = useState<string[]>([]);
   const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
-  const [shakeEditButtonTag, setShakeEditButtonTag] = useState<string | null>(null);
-  const [editingTag, setEditingTag] = useState<string | null>(null);
   const [editing, setEditing] = useState("");
   const [pairTagsOpened, setPairTagsOpened] = useState("");
-  const [confirmDeleteTag, setConfirmDeleteTag] = useState("");
   const [confirmDelete, setConfirmDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [editedTag, setEditedTag] = useState<Tag | null>(null);
   const [editedPair, setEditedPair] = useState<Pair | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
-  const newTagInputRef = useRef<HTMLInputElement>(null);
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
@@ -83,22 +76,18 @@ function EditWords() {
 
       setPairs(pairsData as Pair[]);
 
-      const { data: tagsData, error: tagsError } = await supabase.from("tags").select("*").eq("user_id", user.id);
+      const { data: tagsData, error: tagsError } = await supabase
+        .from("tags")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
 
       if (tagsError) {
         console.error("Error fetching user tags:", tagsError);
         return;
       }
 
-      setTags((prevTags) => {
-        return tagsData.map((newTag) => {
-          const existingTag = prevTags.find((t) => t.tempId === newTag.id);
-          if (existingTag) {
-            return { ...newTag, id: existingTag.id, tempId: newTag.id };
-          }
-          return newTag;
-        });
-      });
+      setTags(tagsData as (Tag & { tempId?: string })[]);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -117,191 +106,6 @@ function EditWords() {
       fetchAndUpdateData();
     }
   }, [user, dataLoaded, fetchAndUpdateData]);
-
-  ///////////////////////////////////////
-  // Tag handlers
-
-  const handleAddTag = () => {
-    if (!user || newTag) return;
-
-    const tempTag: Tag = {
-      id: "temp-" + Date.now(),
-      name: "",
-      user_id: user.id,
-      tempId: "temp-" + Date.now(),
-    };
-
-    setTags((prevTags) => [tempTag, ...prevTags]);
-    setNewTag(tempTag);
-    setEditingTag(tempTag.id);
-    setEditedTag(tempTag);
-
-    // setTimeout(() => {
-    //   if (newTagInputRef.current) {
-    //     newTagInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-    //     newTagInputRef.current.focus();
-    //   }
-    // }, 100);
-  };
-
-  const handleEditTagStart = (tag: Tag) => {
-    if (newTag && tag.id !== newTag.id) {
-      handleEditTagCancel();
-    }
-    setConfirmDeleteTag("");
-    clearAllErrors();
-    if (editingTag !== tag.id) {
-      setEditingTag(tag.id);
-      setEditedTag({ ...tag });
-    }
-  };
-
-  const handleEditTagConfirm = async () => {
-    if (!user || !editedTag) return;
-
-    if (editedTag.name.trim() === "") {
-      setErrors({ [editedTag.id]: { general: "Tag name cannot be empty." } });
-      return;
-    }
-
-    const existingTag = tags.find(
-      (tag) => tag.name.toLowerCase() === editedTag.name.toLowerCase() && tag.id !== editedTag.id
-    );
-    if (existingTag) {
-      setErrors({ [editedTag.id]: { general: "A tag with this name already exists." } });
-      return;
-    }
-
-    if (editedTag.id.startsWith("temp-")) {
-      const { data, error } = await supabase
-        .from("tags")
-        .insert({
-          name: editedTag.name,
-          user_id: user.id,
-        })
-        .select();
-
-      if (error) {
-        console.error("Error adding new tag:", error);
-        setErrors({ [editedTag.id]: { general: "Failed to add new tag. Please try again." } });
-      } else if (data) {
-        setTags((prevTags) =>
-          prevTags.map((tag) => (tag.id === editedTag.id ? { ...data[0], id: editedTag.id, tempId: data[0].id } : tag))
-        );
-        clearAllErrors();
-      }
-    } else {
-      const { error } = await supabase.from("tags").update({ name: editedTag.name }).eq("id", editedTag.id);
-
-      if (error) {
-        console.error("Error updating tag:", error);
-        setErrors({ [editedTag.id]: { general: "Failed to update tag. Please try again." } });
-      } else {
-        setTags((prevTags) => prevTags.map((tag) => (tag.id === editedTag.id ? editedTag : tag)));
-        clearAllErrors();
-      }
-    }
-
-    setEditingTag(null);
-    setEditedTag(null);
-    setNewTag(null);
-  };
-
-  const handleEditTagCancel = () => {
-    if (newTag) {
-      setTags((prevTags) => prevTags.filter((tag) => tag.id !== newTag.id));
-    }
-    setEditingTag(null);
-    setEditedTag(null);
-    setNewTag(null);
-  };
-
-  const handleTagDelete = (tag: Tag) => {
-    setEditingTag(null);
-    clearAllErrors();
-    setConfirmDeleteTag(tag.id);
-  };
-
-  const handleConfirmDeleteTag = async (id: string) => {
-    const tagToDelete = tags.find((tag) => tag.id === id);
-
-    if (!tagToDelete) {
-      console.error("Tag not found for deletion");
-      return;
-    }
-
-    setTags((prevTags) => prevTags.filter((tag) => tag.id !== id));
-    setNewTag(null);
-
-    setTimeout(async () => {
-      const realId = tagToDelete.tempId || tagToDelete.id;
-
-      const { error } = await supabase.from("tags").delete().eq("id", realId);
-
-      if (error) {
-        console.error("Error deleting tag:", error);
-        setErrors({ [id]: { general: "Failed to delete tag. Please try again." } });
-        setTags((prevTags) => [...prevTags, tagToDelete]);
-      } else {
-        setEnabledTags((prevEnabled) => prevEnabled.filter((tagId) => tagId !== realId));
-
-        const updatedPairs = pairs.map((pair) => ({
-          ...pair,
-          tag_ids: Array.isArray(pair.tag_ids) ? pair.tag_ids.filter((tagId) => tagId !== realId) : [],
-        }));
-        setPairs(updatedPairs);
-
-        supabase
-          .from("word-pairs")
-          .upsert(updatedPairs)
-          .then(({ error: updateError }) => {
-            if (updateError) {
-              console.error("Error updating pairs after tag deletion:", updateError);
-            }
-          });
-
-        setErrors({});
-      }
-    }, 300);
-  };
-
-  const handleCancelDeleteTag = () => {
-    setConfirmDeleteTag("");
-  };
-
-  const handleInputChangeTag = (field: keyof Tag, value: string) => {
-    if (editedTag) {
-      setEditedTag({ ...editedTag, [field]: value });
-      setErrors((prev) => ({
-        ...prev,
-        [editedTag.id]: { ...prev[editedTag.id], [field]: undefined },
-      }));
-    }
-  };
-
-  const handleTagsChange = (tagId: string) => {
-    setEnabledTags((prev) => {
-      if (prev.includes(tagId)) {
-        return prev.filter((id) => id !== tagId);
-      } else {
-        return [...prev, tagId];
-      }
-    });
-  };
-
-  const handleDisabledTagInputClick = useCallback(
-    (e: React.MouseEvent, tagId: string) => {
-      e.stopPropagation();
-      if (editingTag !== tagId) {
-        setShakeEditButtonTag(tagId);
-        setTimeout(() => setShakeEditButtonTag(null), 500);
-      }
-    },
-    [editingTag]
-  );
-
-  ///////////////////////////////////////
-  // Pair handlers
 
   const handleAdd = async () => {
     if (!user) return;
@@ -325,15 +129,11 @@ function EditWords() {
   };
 
   const handleEditStart = (pair: Pair) => {
-    if (newTag) {
-      handleEditTagCancel();
-    }
+    setEditing(pair.id);
+    setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+    setPairTagsOpened("");
     setConfirmDelete("");
     clearAllErrors();
-    if (editing !== pair.id) {
-      setEditing(pair.id);
-      setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-    }
   };
 
   const handleEditConfirm = async () => {
@@ -343,10 +143,7 @@ function EditWords() {
       ...editedPair,
       word1: editedPair.word1.trim(),
       word2: editedPair.word2.trim(),
-      tag_ids: editedPair.tag_ids.map((id) => {
-        const tag = tags.find((t) => t.id === id || t.tempId === id);
-        return tag ? tag.tempId || tag.id : id;
-      }),
+      tag_ids: editedPair.tag_ids,
     };
 
     const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
@@ -415,37 +212,38 @@ function EditWords() {
     [editing]
   );
 
-  ///////////////////////////////////////
-  // Tag-Pair interaction handlers
-
   const handlePairTagsOpen = (pairId: string) => {
-    if (pairTagsOpened !== pairId) {
-      setPairTagsOpened(pairId);
-    } else {
-      setPairTagsOpened("");
-    }
+    setPairTagsOpened((prev) => (prev !== pairId ? pairId : ""));
   };
 
   const handleTagToggle = (pairId: string, tagId: string) => {
     const tag = tags.find((t) => t.id === tagId || t.tempId === tagId);
-    if (!tag) return;
-
-    const realTagId = tag.tempId || tag.id;
+    const realTagId = tag?.tempId || tagId;
 
     if (editing === pairId && editedPair) {
-      const updatedTagIds = editedPair.tag_ids.includes(tagId)
-        ? editedPair.tag_ids.filter((id) => id !== tagId)
-        : [...editedPair.tag_ids, tagId];
+      const updatedTagIds = editedPair.tag_ids.includes(realTagId)
+        ? editedPair.tag_ids.filter((id) => id !== realTagId)
+        : [...editedPair.tag_ids, realTagId];
 
       setEditedPair({ ...editedPair, tag_ids: updatedTagIds });
     } else {
+      setPairs((prevPairs) =>
+        prevPairs.map((p) => {
+          if (p.id === pairId) {
+            const updatedTagIds = p.tag_ids.includes(realTagId)
+              ? p.tag_ids.filter((id) => id !== realTagId)
+              : [...p.tag_ids, realTagId];
+            return { ...p, tag_ids: updatedTagIds };
+          }
+          return p;
+        })
+      );
+
       const pair = pairs.find((p) => p.id === pairId);
       if (pair) {
         const updatedTagIds = pair.tag_ids.includes(realTagId)
           ? pair.tag_ids.filter((id) => id !== realTagId)
           : [...pair.tag_ids, realTagId];
-
-        setPairs((prevPairs) => prevPairs.map((p) => (p.id === pairId ? { ...p, tag_ids: updatedTagIds } : p)));
 
         supabase
           .from("word-pairs")
@@ -460,24 +258,22 @@ function EditWords() {
     }
   };
 
-  ///////////////////////////////////////
-  // Search and filter
-
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
   const filteredPairs = pairs.filter((pair) => {
-    const matchesSearch =
-      pair.word1.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pair.word2.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTags =
-      enabledTags.length === 0 || (pair.tag_ids && pair.tag_ids.some((tagId) => enabledTags.includes(tagId)));
-    return matchesSearch && matchesTags;
-  });
+    const searchLower = searchQuery.toLowerCase();
+    const matchesWord =
+      pair.word1.toLowerCase().includes(searchLower) || pair.word2.toLowerCase().includes(searchLower);
 
-  ///////////////////////////////////////
-  // Render
+    const matchesTags = pair.tag_ids.some((tagId) => {
+      const tag = tags.find((t) => t.id === tagId);
+      return tag && tag.name.toLowerCase().includes(searchLower);
+    });
+
+    return matchesWord || matchesTags;
+  });
 
   if (!user) {
     return <Spinner />;
@@ -505,114 +301,21 @@ function EditWords() {
             <input
               className={styles.search}
               type='search'
-              placeholder='Search by word'
+              placeholder='Search by word or tag'
               maxLength={25}
               onChange={handleSearch}
               disabled={!user || tagsLoading}
             />
           </div>
 
-          <AnimateChangeInHeight className={styles.tagsWrapper}>
-            <div className={styles.tagsLabelWrapper}>
-              <p>Filter by tags</p>
-            </div>
-            <div className={styles.tagAddWrapper}>
-              <m.button
-                className={styles.addTagButton}
-                initial={{ backgroundColor: "var(--color-background)", opacity: 1 }}
-                animate={{ opacity: !!newTag ? 0.3 : 1 }}
-                whileTap={user && !newTag ? { backgroundColor: "var(--color-background-highlight)" } : {}}
-                onClick={handleAddTag}
-                disabled={!user || tagsLoading || !!newTag}
-              >
-                <p>Add tag</p>
-                <Plus size={25} />
-              </m.button>
-            </div>
-            {tagsLoading ? (
-              <Spinner margin='4rem calc(50% - 2rem)' />
-            ) : (
-              <AnimatePresence mode='wait'>
-                {tags.length === 0 ? (
-                  <m.div
-                    key={"notagsyet"}
-                    className={styles.noTagsWrapper}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <p>No tags yet.</p>
-                  </m.div>
-                ) : (
-                  <m.ul
-                    layout
-                    key={"tagsulkey"}
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0 }}
-                  >
-                    <AnimatePresence>
-                      {tags.map((t) => (
-                        <m.li
-                          layout
-                          key={t.id}
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          exit={{ opacity: 0, height: 0 }}
-                        >
-                          <div className={styles.tagLeftWrapper}>
-                            <m.div className={styles.checkWrapperOuter}>
-                              <m.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: enabledTags.includes(t.id) ? 1 : 0 }}
-                                onClick={() => user && handleTagsChange(t.id)}
-                              >
-                                <Check />
-                              </m.div>
-                            </m.div>
-                          </div>
-                          <div className={styles.tagRightWrapper}>
-                            <m.div
-                              initial={{ opacity: 0.5 }}
-                              animate={{ opacity: editingTag === t.id ? 1 : 0.5 }}
-                              onClick={(e) => editingTag !== t.id && handleDisabledTagInputClick(e, t.id)}
-                            >
-                              <input
-                                ref={t.id === newTag?.id ? newTagInputRef : null}
-                                required
-                                maxLength={15}
-                                disabled={editingTag !== t.id}
-                                value={editingTag === t.id ? editedTag?.name : t.name}
-                                onChange={(e) => handleInputChangeTag("name", e.target.value)}
-                                style={{ pointerEvents: editingTag !== t.id ? "none" : "auto" }}
-                                autoFocus={t.id === newTag?.id}
-                                placeholder='Tag names must be unique'
-                              />
-                              {errors[t.id]?.general && <p className={styles.errorMessage}>{errors[t.id].general}</p>}
-                            </m.div>
-                            <div className={styles.tagControlsWrapper}>
-                              <EditDeleteControls
-                                isEditing={editingTag === t.id}
-                                confirmDelete={confirmDeleteTag === t.id}
-                                onEditStart={() => handleEditTagStart(t)}
-                                onEditConfirm={handleEditTagConfirm}
-                                onEditCancel={handleEditTagCancel}
-                                onDeleteStart={() => handleTagDelete(t)}
-                                onDeleteConfirm={() => handleConfirmDeleteTag(t.id)}
-                                onDeleteCancel={handleCancelDeleteTag}
-                                shakeEditButton={shakeEditButtonTag === t.id}
-                                centerIcons={false}
-                              />
-                            </div>
-                          </div>
-                        </m.li>
-                      ))}
-                    </AnimatePresence>
-                  </m.ul>
-                )}
-              </AnimatePresence>
-            )}
-          </AnimateChangeInHeight>
+          <EditWordsTagsSection
+            user={user}
+            tags={tags}
+            setTags={setTags}
+            pairs={pairs}
+            setPairs={setPairs}
+            tagsLoading={tagsLoading}
+          />
 
           <m.button
             className={styles.addButton}
@@ -698,26 +401,32 @@ function EditWords() {
                       <AnimatePresence>
                         {pairTagsOpened === p.id && (
                           <m.ul initial='hidden' animate='show' exit='hidden' variants={tagsUlVariants}>
-                            {tags.map((t) => (
-                              <li key={t.id}>
-                                <m.div className={styles.checkWrapperOuter}>
-                                  <m.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{
-                                      opacity: (
-                                        (editing === p.id && editedPair ? editedPair.tag_ids : p.tag_ids) || []
-                                      ).includes(t.id)
-                                        ? 1
-                                        : 0,
-                                    }}
-                                    onClick={() => handleTagToggle(p.id, t.id)}
-                                  >
-                                    <Check />
+                            {tags.map((t) => {
+                              const realTagId = t.tempId || t.id;
+                              return (
+                                <li key={realTagId}>
+                                  <m.div className={styles.checkWrapperOuter}>
+                                    <m.div
+                                      initial={{ opacity: 0 }}
+                                      animate={{
+                                        opacity:
+                                          editing === p.id && editedPair
+                                            ? editedPair.tag_ids.includes(realTagId)
+                                              ? 1
+                                              : 0
+                                            : p.tag_ids.includes(realTagId)
+                                            ? 1
+                                            : 0,
+                                      }}
+                                      onClick={() => handleTagToggle(p.id, realTagId)}
+                                    >
+                                      <Check />
+                                    </m.div>
                                   </m.div>
-                                </m.div>
-                                <p>{t.name}</p>
-                              </li>
-                            ))}
+                                  <p>{t.name}</p>
+                                </li>
+                              );
+                            })}
                           </m.ul>
                         )}
                       </AnimatePresence>

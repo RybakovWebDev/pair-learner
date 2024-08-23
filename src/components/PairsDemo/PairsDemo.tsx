@@ -136,8 +136,6 @@ const PairsDemo = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
   const [mountKey, setMountKey] = useState(0);
 
-  console.log("rendering PairsDemo");
-
   useEffect(() => {
     dispatch({ type: "INITIALIZE_COLUMNS" });
     setMountKey((prev) => prev + 1);
