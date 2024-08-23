@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useReducer } from "react";
+import React, { useEffect, useReducer, useState } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 
 import styles from "./PairsDemo.module.css";
@@ -134,9 +134,13 @@ function reducer(state: State, action: Action): State {
 
 const PairsDemo = () => {
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [mountKey, setMountKey] = useState(0);
+
+  console.log("rendering PairsDemo");
 
   useEffect(() => {
     dispatch({ type: "INITIALIZE_COLUMNS" });
+    setMountKey((prev) => prev + 1);
   }, []);
 
   useEffect(() => {
@@ -160,14 +164,14 @@ const PairsDemo = () => {
 
   return (
     <LazyMotion features={loadFeatures}>
-      <AnimatePresence mode='wait'>
+      <AnimatePresence mode='wait' key={mountKey}>
         <m.section
           className={styles.mainWrapper}
           key={state.listKey}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
+          transition={{ duration: 0.3, delay: 0.3 }}
         >
           <ul className={styles.leftColumn}>
             {state.leftColumn.map((wordState, i) => (

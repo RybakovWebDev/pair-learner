@@ -14,7 +14,7 @@ import GameRowCountSelector from "../GameRowCountSelector";
 import GameRoundLengthSelector from "../GameRoundLengthSelector";
 
 import { useUserContext } from "@/contexts/UserContext";
-import { controlsVariants, Pair, rowCountOptions, Tag } from "@/constants";
+import { controlsVariants, Pair, rowCountOptions, simpleFadeVariants, Tag } from "@/constants";
 import { AnimateChangeInHeight, formatTime } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
@@ -37,13 +37,6 @@ type GameState = {
   isGameRunning: boolean;
   timeRemaining: number;
   refreshTrigger: number;
-};
-
-const simpleVariants: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-  },
 };
 
 const startVariants: Variants = {
@@ -243,7 +236,7 @@ function Game() {
 
   return (
     <LazyMotion features={loadFeatures}>
-      <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleVariants}>
+      <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleFadeVariants}>
         <m.div className={styles.controlsWrapper}>
           <GameTagFilter
             tags={state.tags}

@@ -11,20 +11,10 @@ import EditDeleteControls from "../EditDeleteControls";
 import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
-import { Pair, Tag, UserCategory } from "@/constants";
+import { Pair, simpleFadeVariants, Tag } from "@/constants";
 import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
-
-const simpleVariants: Variants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-  },
-  exit: {
-    opacity: 0,
-  },
-};
 
 const tagsUlVariants: Variants = {
   hidden: {
@@ -53,7 +43,6 @@ function EditWords() {
   const { user, loading } = useUserContext();
   const router = useRouter();
 
-  // State variables
   const [pairs, setPairs] = useState<Pair[]>([]);
   const [newTag, setNewTag] = useState<Tag | null>(null);
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
@@ -510,7 +499,7 @@ function EditWords() {
           <p>Experiment to find what works best for you!</p>
         </div>
 
-        <m.div className={styles.mainControlsWrapper} variants={simpleVariants} initial='hidden' animate='show'>
+        <m.div className={styles.mainControlsWrapper} variants={simpleFadeVariants} initial='hidden' animate='show'>
           <div className={styles.searchWrapper}>
             <Search />
             <input

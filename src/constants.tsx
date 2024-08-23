@@ -163,6 +163,16 @@ export const SOCIAL_LINKS = [
   { slug: "linkedin", href: "https://www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
 ];
 
+export const simpleFadeVariants: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+  },
+  exit: {
+    opacity: 0,
+  },
+};
+
 export const controlsVariants: Variants = {
   enabled: {
     opacity: 1,
