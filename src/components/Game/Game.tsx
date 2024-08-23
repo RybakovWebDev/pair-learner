@@ -230,11 +230,13 @@ function Game() {
   }, [state.isGameRunning]);
 
   const MemoizedPairListWrapper = useMemo(() => {
-    return memo<PairListProps>(({ numPairs, isGameRunning, refreshTrigger, pairs }) => {
+    const MemoizedComponent = memo<PairListProps>(({ numPairs, isGameRunning, refreshTrigger, pairs }) => {
       return (
         <PairList numPairs={numPairs} isGameRunning={isGameRunning} refreshTrigger={refreshTrigger} pairs={pairs} />
       );
     });
+    MemoizedComponent.displayName = "MemoizedPairListWrapper";
+    return MemoizedComponent;
   }, []);
 
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
