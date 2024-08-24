@@ -13,14 +13,6 @@ function Welcome() {
   return (
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
-        {/* <div className={styles.titleContainer}>
-          <button className={styles.pushable}>
-            <span className={styles.front}>Pair</span>
-          </button>
-          <button className={styles.pushable}>
-            <span className={styles.front}>Learner</span>
-          </button>
-        </div> */}
         <p>
           Create, edit, and learn <br />
           word pairs in any language
@@ -38,8 +30,8 @@ function Welcome() {
           </p>
         </div>
         <div className={styles.feature}>
-          <h3>Customize Categories</h3>
-          <p>Sort words by language, topic, or anything else</p>
+          <h3>Customize Tags</h3>
+          <p>Filter words by language, topic, or anything you want</p>
         </div>
         <div className={styles.feature}>
           <h3>Interactive Learning</h3>

@@ -1,5 +1,5 @@
 "use client";
-import { memo, useCallback, useEffect, useId, useMemo, useReducer, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -100,7 +100,6 @@ function Game() {
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const id = useId();
   const fetchDataRef = useRef(false);
 
   const filteredPairs = useMemo(() => {
@@ -146,7 +145,6 @@ function Game() {
   }, [userLoading, user, state.pairs.length, fetchData]);
 
   useEffect(() => {
-    // console.log("NotEnoughPairs effect running");
     // TODO check if unncecessary
     dispatch({ type: "SET_NOT_ENOUGH_PAIRS", payload: filteredPairs.length < 5 });
   }, [filteredPairs]);
@@ -237,60 +235,6 @@ function Game() {
   return (
     <LazyMotion features={loadFeatures}>
       <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleFadeVariants}>
-        <m.div className={styles.controlsWrapper}>
-          <GameTagFilter
-            tags={state.tags}
-            enabledTags={state.enabledTags}
-            isOpen={state.tagsOpen}
-            isDisabled={state.isGameRunning}
-            onToggleOpen={handleTagsOpen}
-            onTagChange={handleTagsChange}
-          />
-
-          <GameRowCountSelector
-            rowCount={state.rowCount}
-            rowCountOptions={rowCountOptions}
-            isDisabled={areControlsDisabled}
-            onRowCountChange={handleRowCountChange}
-          />
-
-          <GameRoundLengthSelector
-            roundLength={state.roundLength}
-            isDisabled={areControlsDisabled}
-            onChange={handleRoundLengthChange}
-          />
-
-          <m.div
-            className={styles.startWrapper}
-            variants={controlsVariants}
-            animate={filteredPairs.length < 5 ? "disabled" : "enabled"}
-          >
-            <button onClick={handleStart} disabled={filteredPairs.length < 5}>
-              <AnimatePresence mode='wait' initial={false}>
-                {state.isGameRunning ? (
-                  <m.p key={"stop"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
-                    Stop
-                  </m.p>
-                ) : (
-                  <m.p key={"start"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
-                    Start
-                  </m.p>
-                )}
-              </AnimatePresence>
-            </button>
-          </m.div>
-        </m.div>
-
-        <AnimateChangeInHeight className={styles.timerWrapper}>
-          <AnimatePresence>
-            {state.isGameRunning && state.roundLength !== 210 && (
-              <m.div key={"timer"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                <m.p>{formatTime(state.timeRemaining)}</m.p>
-              </m.div>
-            )}
-          </AnimatePresence>
-        </AnimateChangeInHeight>
-
         <AnimateChangeInHeight>
           {state.isLoading ? (
             <div className={styles.spinnerWrapper}>
@@ -319,14 +263,73 @@ function Game() {
           )}
         </AnimateChangeInHeight>
 
-        <m.button
-          className={styles.resetButton}
-          onClick={handleRefresh}
-          variants={controlsVariants}
-          animate={state.isGameRunning ? "disabled" : "enabled"}
-        >
-          Refresh list
-        </m.button>
+        <AnimateChangeInHeight className={styles.timerWrapper}>
+          <AnimatePresence>
+            {state.isGameRunning && state.roundLength !== 210 && (
+              <m.div key={"timer"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <m.p>{formatTime(state.timeRemaining)}</m.p>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </AnimateChangeInHeight>
+
+        <m.div className={styles.controlsWrapper}>
+          <m.button
+            disabled={filteredPairs.length < 5}
+            className={styles.resetButton}
+            onClick={handleRefresh}
+            variants={controlsVariants}
+            initial={{ backgroundColor: "var(--color-background)" }}
+            animate={state.isGameRunning || filteredPairs.length < 5 ? "disabled" : "enabled"}
+            whileTap={{
+              backgroundColor: "var(--color-background-highlight)",
+            }}
+          >
+            Refresh list
+          </m.button>
+
+          <m.div
+            className={styles.startWrapper}
+            variants={controlsVariants}
+            animate={filteredPairs.length < 5 ? "disabled" : "enabled"}
+          >
+            <button onClick={handleStart} disabled={filteredPairs.length < 5}>
+              <AnimatePresence mode='wait' initial={false}>
+                {state.isGameRunning ? (
+                  <m.p key={"stop"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
+                    Stop
+                  </m.p>
+                ) : (
+                  <m.p key={"start"} initial='hidden' animate='show' exit='exit' variants={startVariants}>
+                    Start
+                  </m.p>
+                )}
+              </AnimatePresence>
+            </button>
+          </m.div>
+
+          <GameTagFilter
+            tags={state.tags}
+            enabledTags={state.enabledTags}
+            isOpen={state.tagsOpen}
+            isDisabled={state.isGameRunning}
+            onToggleOpen={handleTagsOpen}
+            onTagChange={handleTagsChange}
+          />
+
+          <GameRowCountSelector
+            rowCount={state.rowCount}
+            rowCountOptions={rowCountOptions}
+            isDisabled={areControlsDisabled}
+            onRowCountChange={handleRowCountChange}
+          />
+
+          <GameRoundLengthSelector
+            roundLength={state.roundLength}
+            isDisabled={areControlsDisabled}
+            onChange={handleRoundLengthChange}
+          />
+        </m.div>
       </m.section>
     </LazyMotion>
   );

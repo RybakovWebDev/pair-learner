@@ -1,5 +1,4 @@
 "use client";
-import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import styles from "./Header.module.css";
@@ -19,11 +18,6 @@ interface HeaderProps {
 function Header({ initialTheme }: HeaderProps) {
   const { headerRef } = useRefsContext();
   const { user, loading } = useUserContext();
-  const [storedUser, setStoredUser] = useState<string | null>(null);
-
-  useEffect(() => {
-    setStoredUser(localStorage.getItem("user"));
-  }, []);
 
   return (
     <header ref={headerRef} className={styles.header}>

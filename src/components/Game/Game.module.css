@@ -1,5 +1,4 @@
 .wrapperMain {
-  padding: 1rem;
   /* height: 89vh; */
   width: 100%;
   max-width: 24rem;
@@ -7,59 +6,6 @@
   flex-direction: column;
   /* justify-content: center; */
   align-items: center;
-}
-
-.controlsWrapper {
-  /* height: 15rem; */
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.startWrapper {
-  /* padding: 1rem; */
-  height: 7rem;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  border: 1px solid var(--color-text);
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.startWrapper button {
-  height: 100%;
-  width: 100%;
-  color: var(--color-text);
-  font-size: 26px;
-  background-color: var(--color-background);
-  border: none;
-  cursor: pointer;
-  user-select: none;
-}
-
-.startWrapper p {
-  height: 100%;
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.timerWrapper {
-  margin: 1rem 0 0 0;
-  height: 3rem;
-}
-
-.timerWrapper p {
-  font-size: 30px;
-}
-
-.spinnerWrapper {
-  height: 26rem;
 }
 
 .minPairsMessage {
@@ -90,8 +36,29 @@
   border-top: 1px solid var(--color-text);
 }
 
+.timerWrapper {
+  margin: 0 0 1rem 0;
+  height: 3rem;
+}
+
+.timerWrapper p {
+  font-size: 30px;
+}
+
+.controlsWrapper {
+  padding: 0 1rem 1rem 1rem;
+  /* height: 15rem; */
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  font-size: 18px;
+  font-weight: 600;
+}
+
 .resetButton {
-  margin: 1rem 0 0 0;
+  /* margin: 1rem 0 0 0; */
   height: 3rem;
   width: 100%;
   display: flex;
@@ -102,4 +69,42 @@
   border: 1px solid var(--color-text);
   border-radius: 20px;
   cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.startWrapper {
+  /* padding: 1rem; */
+  height: 7rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 1px solid var(--color-text);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.startWrapper button {
+  height: 100%;
+  width: 100%;
+  color: var(--color-text);
+  font-size: 26px;
+  background-color: var(--color-background);
+  border: none;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.startWrapper p {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinnerWrapper {
+  height: 26rem;
 }

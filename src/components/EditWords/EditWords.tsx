@@ -117,14 +117,17 @@ function EditWords() {
       user_id: user.id,
     };
 
-    const { error } = await supabase.from("word-pairs").insert(newPair);
+    const { data, error } = await supabase.from("word-pairs").insert(newPair).select();
 
     if (error) {
       console.error("Error adding new pair:", error);
       setErrors({ new: { general: "Failed to add new pair. Please try again." } });
     } else {
+      const addedPair = data[0] as Pair;
       await fetchAndUpdateData();
       clearAllErrors();
+      setEditing(addedPair.id);
+      setEditedPair(addedPair);
     }
   };
 
@@ -286,7 +289,7 @@ function EditWords() {
               id='search-input'
               className={styles.search}
               type='search'
-              placeholder='Start typing'
+              placeholder='Search pairs by word or tag'
               maxLength={25}
               onChange={handleSearch}
               disabled={!user || tagsLoading}

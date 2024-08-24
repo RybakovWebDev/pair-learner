@@ -10,17 +10,25 @@ import Header from "@/components/Header";
 
 import { LIGHT_COLORS, DARK_COLORS } from "@/constants";
 import { UserProvider } from "@/contexts/UserContext";
+import { Viewport } from "next";
 
 const inter = Inter({ weight: "400", subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata = {
   title: "Pair Learner",
-  description: "Learn words in any language!",
+  description: "Learn new words in any language",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const savedTheme = cookies().get("color-theme");
-  const theme = savedTheme?.value || "light";
+  const theme = savedTheme?.value || "dark";
 
   const themeColors = theme === "light" ? LIGHT_COLORS : DARK_COLORS;
   return (

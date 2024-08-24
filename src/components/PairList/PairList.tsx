@@ -51,29 +51,28 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
     leftId: string | null;
     rightId: string | null;
   }>({ left: null, right: null, leftId: null, rightId: null });
+  const currentRoundPairs = useRef<Pair[]>([]);
 
-  const getRandomPair = useCallback(() => {
-    if (allPairs.current.length === 0) {
-      console.error("No pairs available in getRandomPair");
-      return { word1: "", word2: "" };
-    }
-    const randomIndex = Math.floor(Math.random() * allPairs.current.length);
-    return allPairs.current[randomIndex];
+  const getRandomUniquePairs = useCallback((allPairs: Pair[], count: number) => {
+    const shuffled = [...allPairs].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
   }, []);
 
   const initializeColumns = useCallback(() => {
-    if (allPairs.current.length < numPairs) {
+    if (pairs.length < numPairs) {
       console.error("Not enough pairs available");
       setLeftColumn([]);
       setRightColumn([]);
       return;
     }
 
+    const selectedPairs = getRandomUniquePairs(pairs, numPairs);
+    currentRoundPairs.current = selectedPairs;
+
     const newLeftColumn: WordState[] = [];
     const newRightColumn: WordState[] = [];
 
-    for (let i = 0; i < numPairs; i++) {
-      const pair = getRandomPair();
+    selectedPairs.forEach((pair) => {
       newLeftColumn.push({
         word: pair.word1,
         isMatched: false,
@@ -86,17 +85,16 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
         isAnimating: false,
         id: makeid(15),
       });
-    }
+    });
 
     setLeftColumn(shuffleArray(newLeftColumn));
     setRightColumn(shuffleArray(newRightColumn));
-  }, [numPairs, getRandomPair]);
+  }, [numPairs, pairs, getRandomUniquePairs]);
 
   useEffect(() => {
-    allPairs.current = pairs;
     setIsLoading(true);
 
-    if (allPairs.current.length >= numPairs) {
+    if (pairs.length >= numPairs) {
       initializeColumns();
       setListKey((prevKey) => prevKey + 1);
     } else {
@@ -175,7 +173,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
 
     isProcessingQueue.current = true;
     const pair = matchQueue.current[0];
-    const isMatch = allPairs.current.some(
+    const isMatch = currentRoundPairs.current.some(
       (testPair) =>
         (testPair.word1 === pair.left && testPair.word2 === pair.right) ||
         (testPair.word1 === pair.right && testPair.word2 === pair.left)

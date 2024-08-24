@@ -15,53 +15,6 @@
   text-align: center;
 }
 
-.titleContainer {
-  display: flex;
-  gap: 1rem;
-}
-
-.pushable {
-  margin: 1rem 0 0 0;
-  padding: 0;
-  position: relative;
-  width: 10rem;
-  height: 4rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.front {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 1px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--color-background);
-  border-radius: 20px;
-  font-size: 24px;
-  color: var(--color-text);
-  border: 1px solid var(--color-text);
-  border-bottom: 3px solid var(--color-text);
-  box-sizing: border-box;
-  user-select: none;
-  overflow: hidden;
-  will-change: transform;
-  transform: translateY(-2px);
-  transition: transform 100ms, border-bottom 100ms;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.pushable:active .front {
-  border-bottom: 1px solid var(--color-text);
-  transform: translateY(0px);
-  transition: transform 34ms, border-bottom 34ms;
-}
-
 .hero p {
   margin: 5vh 0 1rem 0;
   font-size: 1.3rem;

@@ -100,7 +100,7 @@ export const DEMO_PAIRS = [
 ];
 
 export const MENU_ITEMS = [
-  { title: "Play", slug: "play", href: "/play", icon: <Play size={22} /> },
+  { title: "Learn", slug: "learn", href: "/learn", icon: <Play size={22} /> },
   { title: "Word Editor", slug: "words", href: "/edit", icon: <Edit size={22} /> },
   { title: "Account", slug: "account", href: "/account", icon: <User size={22} /> },
 ];
@@ -127,8 +127,11 @@ export const LIGHT_COLORS: ThemeColors = {
   "--color-text-secondary": "hsl(0 0% 0%)",
   "--color-text-danger": "hsl(0, 100%, 52%)",
   "--color-underline": "0, 0, 0",
-  "--color-background": "hsl(0 0% 92%)",
-  "--color-background-highlight": "hsl(0 0% 65%)",
+  // "--color-background": "hsl(0 0% 92%)",
+  "--color-background": "hsl(186, 51%, 92%)",
+  // "--color-background-highlight": "hsl(0, 0%, 65%)",
+  "--color-background-highlight": "hsl(184, 26%, 50%)",
+  // "--color-background-highlight": "hsl(180, 92%, 30%)",
   "--color-background-highlight-win": "hsl(128, 100%, 70%)",
   "--color-background-highlight-fail": "hsl(0, 100%, 67%)",
   "--color-background-secondary": "hsla(0, 0%, 0%, 0.3)",
