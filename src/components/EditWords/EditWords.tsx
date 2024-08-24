@@ -278,11 +278,15 @@ function EditWords() {
           />
 
           <div className={styles.searchWrapper}>
+            <label htmlFor='search-input' className={styles.visuallyHidden}>
+              Search by word or tag
+            </label>
             <Search />
             <input
+              id='search-input'
               className={styles.search}
               type='search'
-              placeholder='Search by word or tag'
+              placeholder='Start typing'
               maxLength={25}
               onChange={handleSearch}
               disabled={!user || tagsLoading}
@@ -322,12 +326,15 @@ function EditWords() {
                     animate={{ opacity: editing === p.id ? 1 : 0.7 }}
                   >
                     <div className={styles.wordWrapperOuter}>
-                      <p className={styles.wordAttribute}>Word 1: </p>
+                      <label htmlFor={`word1-${p.id}`} className={styles.wordAttribute}>
+                        Word 1:
+                      </label>
                       <div
                         className={styles.wordWrapper1}
                         onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
                       >
                         <input
+                          id={`word1-${p.id}`}
                           required
                           maxLength={35}
                           disabled={editing !== p.id}
@@ -340,12 +347,15 @@ function EditWords() {
                     </div>
 
                     <div className={styles.wordWrapperOuter}>
-                      <p className={styles.wordAttribute}>Word 2: </p>
+                      <label htmlFor={`word2-${p.id}`} className={styles.wordAttribute}>
+                        Word 2:
+                      </label>
                       <div
                         className={styles.wordWrapper2}
                         onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
                       >
                         <input
+                          id={`word2-${p.id}`}
                           required
                           maxLength={35}
                           disabled={editing !== p.id}

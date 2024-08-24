@@ -57,7 +57,12 @@ function HeaderMenu() {
   return (
     <LazyMotion features={loadFeatures}>
       <nav className={styles.wrapperMain}>
-        <m.button className={styles.menuButton} onClick={() => setIsOpen(!isOpen)}>
+        <m.button
+          className={styles.menuButton}
+          onClick={() => setIsOpen(!isOpen)}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+        >
           <svg width='30' height='30' viewBox='0 0 23 23'>
             <Path
               initial={{ d: "M 2 2.5 L 20 2.5" }}

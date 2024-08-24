@@ -9,10 +9,11 @@ const loadFeatures = () => import("../../features").then((res) => res.default);
 
 interface ExternalLinkIconProps {
   link: string;
+  ariaLabel: string;
   children: ReactNode;
 }
 
-function ExternalLinkIcon({ link, children, ...props }: ExternalLinkIconProps) {
+function ExternalLinkIcon({ link, ariaLabel, children, ...props }: ExternalLinkIconProps) {
   return (
     <LazyMotion features={loadFeatures}>
       <m.a

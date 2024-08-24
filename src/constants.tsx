@@ -159,8 +159,18 @@ export const smoothSpring = {
 };
 
 export const SOCIAL_LINKS = [
-  { slug: "website", href: "https://www.rybakov.dev/", icon: <Globe strokeWidth={1} /> },
-  { slug: "linkedin", href: "https://www.linkedin.com/in/andrey-rybakov-webdev", icon: <Linkedin strokeWidth={1} /> },
+  {
+    slug: "website",
+    href: "https://www.rybakov.dev/",
+    ariaLabelText: "Visit Andrey Rybakov's personal website",
+    icon: <Globe strokeWidth={1} />,
+  },
+  {
+    slug: "linkedin",
+    href: "https://www.linkedin.com/in/andrey-rybakov-webdev",
+    ariaLabelText: "Visit Andrey Rybakov's LinkedIn profile",
+    icon: <Linkedin strokeWidth={1} />,
+  },
 ];
 
 export const simpleFadeVariants: Variants = {

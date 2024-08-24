@@ -18,7 +18,7 @@ function Footer() {
       <div className={styles.iconsWrapper}>
         {SOCIAL_LINKS.map((l) => {
           return (
-            <ExternalLinkIcon key={l.slug} link={l.href}>
+            <ExternalLinkIcon ariaLabel={l.ariaLabelText} key={l.slug} link={l.href}>
               {l.icon}
             </ExternalLinkIcon>
           );
