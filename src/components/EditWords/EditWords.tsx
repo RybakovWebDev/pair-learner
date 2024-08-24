@@ -110,6 +110,10 @@ function EditWords() {
   const handleAdd = async () => {
     if (!user) return;
 
+    if (editing && editedPair) {
+      await handleEditSave(editedPair);
+    }
+
     const newPair: Omit<Pair, "id" | "created_at"> = {
       word1: "Word 1",
       word2: "Word 2",
@@ -132,20 +136,23 @@ function EditWords() {
   };
 
   const handleEditStart = (pair: Pair) => {
+    if (editing && editedPair) {
+      handleEditSave(editedPair);
+    }
     setEditing(pair.id);
     setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
     setConfirmDelete("");
     clearAllErrors();
   };
 
-  const handleEditConfirm = async () => {
-    if (!user || !editedPair) return;
+  const handleEditSave = async (pairToSave: Pair) => {
+    if (!user) return;
 
     const updatedPair = {
-      ...editedPair,
-      word1: editedPair.word1.trim(),
-      word2: editedPair.word2.trim(),
-      tag_ids: editedPair.tag_ids,
+      ...pairToSave,
+      word1: pairToSave.word1.trim(),
+      word2: pairToSave.word2.trim(),
+      tag_ids: pairToSave.tag_ids,
     };
 
     const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
@@ -157,6 +164,12 @@ function EditWords() {
       setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
       clearAllErrors();
     }
+  };
+
+  const handleEditConfirm = async () => {
+    if (!user || !editedPair) return;
+
+    await handleEditSave(editedPair);
     setPairTagsOpened("");
     setEditing("");
     setEditedPair(null);
@@ -168,6 +181,9 @@ function EditWords() {
   };
 
   const handlePairDelete = (pair: Pair) => {
+    if (editing && editedPair) {
+      handleEditSave(editedPair);
+    }
     setEditing("");
     clearAllErrors();
     setPairTagsOpened("");
@@ -320,7 +336,7 @@ function EditWords() {
                   className={styles.wordPairListItem}
                   initial={{ opacity: 0, margin: "1rem 0 0 0" }}
                   animate={{ opacity: 1, margin: "1rem 0 0 0" }}
-                  exit={{ opacity: 0, height: 0, margin: "1rem 0 0 0" }}
+                  exit={{ opacity: 0, margin: "1rem 0 0 0" }}
                   transition={{ duration: 0.3, delay: 0 }}
                 >
                   <m.div
