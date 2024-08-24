@@ -131,7 +131,6 @@ function EditWords() {
   const handleEditStart = (pair: Pair) => {
     setEditing(pair.id);
     setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-    setPairTagsOpened("");
     setConfirmDelete("");
     clearAllErrors();
   };
@@ -163,7 +162,6 @@ function EditWords() {
   const handleEditCancel = () => {
     setEditing("");
     setEditedPair(null);
-    setPairTagsOpened("");
   };
 
   const handlePairDelete = (pair: Pair) => {
@@ -227,34 +225,8 @@ function EditWords() {
 
       setEditedPair({ ...editedPair, tag_ids: updatedTagIds });
     } else {
-      setPairs((prevPairs) =>
-        prevPairs.map((p) => {
-          if (p.id === pairId) {
-            const updatedTagIds = p.tag_ids.includes(realTagId)
-              ? p.tag_ids.filter((id) => id !== realTagId)
-              : [...p.tag_ids, realTagId];
-            return { ...p, tag_ids: updatedTagIds };
-          }
-          return p;
-        })
-      );
-
-      const pair = pairs.find((p) => p.id === pairId);
-      if (pair) {
-        const updatedTagIds = pair.tag_ids.includes(realTagId)
-          ? pair.tag_ids.filter((id) => id !== realTagId)
-          : [...pair.tag_ids, realTagId];
-
-        supabase
-          .from("word-pairs")
-          .update({ tag_ids: updatedTagIds })
-          .eq("id", pairId)
-          .then(({ error }) => {
-            if (error) {
-              console.error("Error updating pair tags:", error);
-            }
-          });
-      }
+      setShakeEditButton(pairId);
+      setTimeout(() => setShakeEditButton(null), 500);
     }
   };
 
@@ -386,12 +358,7 @@ function EditWords() {
                     </div>
 
                     <m.div className={styles.pairTagsWrapper} variants={controlsVariants}>
-                      <div
-                        className={styles.pairTagsLabelWrapper}
-                        onClick={(e) =>
-                          editing === p.id ? handlePairTagsOpen(p.id) : handleDisabledInputClick(e, p.id)
-                        }
-                      >
+                      <div className={styles.pairTagsLabelWrapper} onClick={() => handlePairTagsOpen(p.id)}>
                         <p>Tags:</p>
                         <m.div initial={{ rotate: 0 }} animate={{ rotate: pairTagsOpened === p.id ? 180 : 0 }}>
                           <ChevronDown />
@@ -404,7 +371,11 @@ function EditWords() {
                             {tags.map((t) => {
                               const realTagId = t.tempId || t.id;
                               return (
-                                <li key={realTagId}>
+                                <li
+                                  key={realTagId}
+                                  onClick={() => handleTagToggle(p.id, realTagId)}
+                                  style={{ cursor: editing === p.id ? "pointer" : "default" }}
+                                >
                                   <m.div className={styles.checkWrapperOuter}>
                                     <m.div
                                       initial={{ opacity: 0 }}
@@ -418,7 +389,6 @@ function EditWords() {
                                             ? 1
                                             : 0,
                                       }}
-                                      onClick={() => handleTagToggle(p.id, realTagId)}
                                     >
                                       <Check />
                                     </m.div>

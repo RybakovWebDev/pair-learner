@@ -103,6 +103,7 @@
   border: 1px solid var(--color-background-secondary);
   border-radius: 20px;
   /* box-shadow: 0 0px 5px var(--color-background-secondary); */
+  /* background-color: var(--color-background-highlight); */
 }
 
 .wordDetailsWrapper {
@@ -172,6 +173,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+  cursor: pointer;
 }
 
 .pairTagsWrapper ul li:last-child {
@@ -180,7 +182,6 @@
 
 .checkWrapperOuter {
   border: 1px solid var(--color-text);
-  cursor: pointer;
 }
 
 .pairTagsWrapper li p {
