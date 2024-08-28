@@ -21,6 +21,7 @@ function ExternalLinkIcon({ link, ariaLabel, children, ...props }: ExternalLinkI
         target='_blank'
         rel='noopener noreferrer'
         href={link}
+        aria-label={ariaLabel}
         whileHover={{
           y: -10,
         }}

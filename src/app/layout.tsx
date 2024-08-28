@@ -17,12 +17,18 @@ const inter = Inter({ weight: "400", subsets: ["latin"], variable: "--font-inter
 export const metadata = {
   title: "Pair Learner",
   description: "Learn new words in any language",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    title: "Pair Learner",
+    statusBarStyle: "default",
+    capable: true,
+  },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  maximumScale: 5,
   userScalable: false,
 };
 
