@@ -25,6 +25,10 @@ body {
   color: var(--color-text);
 }
 
+body ::selection {
+  background-color: var(--color-background-highlight);
+}
+
 a {
   color: inherit;
   text-decoration: none;
