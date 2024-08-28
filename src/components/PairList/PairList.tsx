@@ -162,7 +162,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
         }
       });
     },
-    [leftColumn, rightColumn, isAnyIncorrectAnimating, isGameRunning]
+    [leftColumn, rightColumn, isAnyIncorrectAnimating, isAnyCorrectAnimating, isGameRunning]
   );
 
   const processMatchQueue = useCallback(() => {

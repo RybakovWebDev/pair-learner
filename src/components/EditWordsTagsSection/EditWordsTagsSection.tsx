@@ -40,7 +40,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
     setErrors({});
   }, []);
 
-  const handleAddTag = () => {
+  const handleAddTag = useCallback(() => {
     if (!user || newTag) return;
 
     const tempTag: Tag = {
@@ -54,21 +54,33 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
     setNewTag(tempTag);
     setEditingTag(tempTag.id);
     setEditedTag(tempTag);
-  };
+  }, [user, newTag, setTags]);
 
-  const handleEditTagStart = (tag: Tag) => {
-    if (newTag && tag.id !== newTag.id) {
-      handleEditTagCancel();
+  const handleEditTagCancel = useCallback(() => {
+    if (newTag) {
+      setTags((prevTags) => prevTags.filter((tag) => tag.id !== newTag.id));
     }
-    setConfirmDeleteTag("");
-    clearAllErrors();
-    if (editingTag !== tag.id) {
-      setEditingTag(tag.id);
-      setEditedTag({ ...tag });
-    }
-  };
+    setEditingTag(null);
+    setEditedTag(null);
+    setNewTag(null);
+  }, [newTag, setTags]);
 
-  const handleEditTagConfirm = async () => {
+  const handleEditTagStart = useCallback(
+    (tag: Tag) => {
+      if (newTag && tag.id !== newTag.id) {
+        handleEditTagCancel();
+      }
+      setConfirmDeleteTag("");
+      clearAllErrors();
+      if (editingTag !== tag.id) {
+        setEditingTag(tag.id);
+        setEditedTag({ ...tag });
+      }
+    },
+    [newTag, editingTag, clearAllErrors, handleEditTagCancel]
+  );
+
+  const handleEditTagConfirm = useCallback(async () => {
     if (!user || !editedTag) return;
 
     if (editedTag.name.trim() === "") {
@@ -117,77 +129,90 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
     setEditingTag(null);
     setEditedTag(null);
     setNewTag(null);
-  };
+  }, [user, editedTag, tags, clearAllErrors, setTags]);
 
-  const handleEditTagCancel = () => {
-    if (newTag) {
-      setTags((prevTags) => prevTags.filter((tag) => tag.id !== newTag.id));
-    }
-    setEditingTag(null);
-    setEditedTag(null);
-    setNewTag(null);
-  };
+  const handleTagDelete = useCallback(
+    (tag: Tag) => {
+      setEditingTag(null);
+      clearAllErrors();
+      setConfirmDeleteTag(tag.id);
+    },
+    [clearAllErrors]
+  );
 
-  const handleTagDelete = (tag: Tag) => {
-    setEditingTag(null);
-    clearAllErrors();
-    setConfirmDeleteTag(tag.id);
-  };
+  const handleConfirmDeleteTag = useCallback(
+    async (id: string) => {
+      const tagToDelete = tags.find((tag) => tag.id === id);
 
-  const handleConfirmDeleteTag = async (id: string) => {
-    const tagToDelete = tags.find((tag) => tag.id === id);
-
-    if (!tagToDelete) {
-      console.error("Tag not found for deletion");
-      return;
-    }
-
-    setTags((prevTags) => prevTags.filter((tag) => tag.id !== id));
-    setNewTag(null);
-
-    setTimeout(async () => {
-      const realId = tagToDelete.tempId || tagToDelete.id;
-
-      const { error } = await supabase.from("tags").delete().eq("id", realId);
-
-      if (error) {
-        console.error("Error deleting tag:", error);
-        setErrors({ [id]: { general: "Failed to delete tag. Please try again." } });
-        setTags((prevTags) => [...prevTags, tagToDelete]);
-      } else {
-        const updatedPairs = pairs.map((pair) => ({
-          ...pair,
-          tag_ids: Array.isArray(pair.tag_ids) ? pair.tag_ids.filter((tagId) => tagId !== realId) : [],
-        }));
-        setPairs(updatedPairs);
-
-        supabase
-          .from("word-pairs")
-          .upsert(updatedPairs)
-          .then(({ error: updateError }) => {
-            if (updateError) {
-              console.error("Error updating pairs after tag deletion:", updateError);
-            }
-          });
-
-        setErrors({});
+      if (!tagToDelete) {
+        console.error("Tag not found for deletion");
+        return;
       }
-    }, 300);
-  };
 
-  const handleCancelDeleteTag = () => {
+      setTags((prevTags) => prevTags.filter((tag) => tag.id !== id));
+      setNewTag(null);
+
+      setTimeout(async () => {
+        const realId = tagToDelete.tempId || tagToDelete.id;
+
+        const { error } = await supabase.from("tags").delete().eq("id", realId);
+
+        if (error) {
+          console.error("Error deleting tag:", error);
+          setErrors({ [id]: { general: "Failed to delete tag. Please try again." } });
+          setTags((prevTags) => [...prevTags, tagToDelete]);
+        } else {
+          const updatedPairs = pairs.map((pair) => ({
+            ...pair,
+            tag_ids: Array.isArray(pair.tag_ids) ? pair.tag_ids.filter((tagId) => tagId !== realId) : [],
+          }));
+          setPairs(updatedPairs);
+
+          supabase
+            .from("word-pairs")
+            .upsert(updatedPairs)
+            .then(({ error: updateError }) => {
+              if (updateError) {
+                console.error("Error updating pairs after tag deletion:", updateError);
+              }
+            });
+
+          setErrors({});
+        }
+      }, 300);
+    },
+    [tags, setTags, pairs, setPairs]
+  );
+
+  const handleCancelDeleteTag = useCallback(() => {
     setConfirmDeleteTag("");
-  };
+  }, []);
 
-  const handleInputChangeTag = (field: keyof Tag, value: string) => {
-    if (editedTag) {
-      setEditedTag({ ...editedTag, [field]: value });
-      setErrors((prev) => ({
-        ...prev,
-        [editedTag.id]: { ...prev[editedTag.id], [field]: undefined },
-      }));
-    }
-  };
+  const handleInputChangeTag = useCallback(
+    (field: keyof Tag, value: string) => {
+      if (editedTag) {
+        setEditedTag({ ...editedTag, [field]: value });
+        setErrors((prev) => ({
+          ...prev,
+          [editedTag.id]: { ...prev[editedTag.id], [field]: undefined },
+        }));
+      }
+    },
+    [editedTag]
+  );
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && editingTag && editedTag) {
+        e.preventDefault();
+        handleEditTagConfirm();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        handleEditTagCancel();
+      }
+    },
+    [editingTag, editedTag, handleEditTagConfirm, handleEditTagCancel]
+  );
 
   const handleDisabledTagInputClick = useCallback(
     (e: React.MouseEvent, tagId: string) => {
@@ -255,6 +280,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
                           disabled={editingTag !== t.id}
                           value={editingTag === t.id ? editedTag?.name : t.name}
                           onChange={(e) => handleInputChangeTag("name", e.target.value)}
+                          onKeyDown={handleKeyDown}
                           style={{ pointerEvents: editingTag !== t.id ? "none" : "auto" }}
                           autoFocus={t.id === newTag?.id}
                           placeholder='Tag names must be unique'

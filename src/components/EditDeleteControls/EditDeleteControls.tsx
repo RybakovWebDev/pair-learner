@@ -18,7 +18,7 @@ interface EditDeleteControlsProps {
   centerIcons?: boolean;
 }
 
-const EditDeleteControls: React.FC<EditDeleteControlsProps> = ({
+const EditDeleteControls = ({
   isEditing,
   confirmDelete,
   onEditStart,
@@ -29,7 +29,7 @@ const EditDeleteControls: React.FC<EditDeleteControlsProps> = ({
   onDeleteCancel,
   shakeEditButton,
   centerIcons = true,
-}) => {
+}: EditDeleteControlsProps) => {
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirmDelete) {

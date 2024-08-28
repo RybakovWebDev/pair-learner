@@ -145,40 +145,43 @@ function EditWords() {
     clearAllErrors();
   };
 
-  const handleEditSave = async (pairToSave: Pair) => {
-    if (!user) return;
+  const handleEditSave = useCallback(
+    async (pairToSave: Pair) => {
+      if (!user) return;
 
-    const updatedPair = {
-      ...pairToSave,
-      word1: pairToSave.word1.trim(),
-      word2: pairToSave.word2.trim(),
-      tag_ids: pairToSave.tag_ids,
-    };
+      const updatedPair = {
+        ...pairToSave,
+        word1: pairToSave.word1.trim(),
+        word2: pairToSave.word2.trim(),
+        tag_ids: pairToSave.tag_ids,
+      };
 
-    const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
+      const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
 
-    if (error) {
-      console.error("Error updating pair:", error);
-      setErrors({ [updatedPair.id]: { general: "Failed to update pair. Please try again." } });
-    } else {
-      setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
-      clearAllErrors();
-    }
-  };
+      if (error) {
+        console.error("Error updating pair:", error);
+        setErrors({ [updatedPair.id]: { general: "Failed to update pair. Please try again." } });
+      } else {
+        setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
+        clearAllErrors();
+      }
+    },
+    [user, clearAllErrors]
+  );
 
-  const handleEditConfirm = async () => {
+  const handleEditConfirm = useCallback(async () => {
     if (!user || !editedPair) return;
 
     await handleEditSave(editedPair);
     setPairTagsOpened("");
     setEditing("");
     setEditedPair(null);
-  };
+  }, [user, editedPair, handleEditSave, setPairTagsOpened, setEditing, setEditedPair]);
 
-  const handleEditCancel = () => {
+  const handleEditCancel = useCallback(() => {
     setEditing("");
     setEditedPair(null);
-  };
+  }, [setEditing, setEditedPair]);
 
   const handlePairDelete = (pair: Pair) => {
     if (editing && editedPair) {
@@ -217,6 +220,21 @@ function EditWords() {
       }));
     }
   };
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (editing && editedPair) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleEditConfirm();
+        } else if (e.key === "Escape") {
+          e.preventDefault();
+          handleEditCancel();
+        }
+      }
+    },
+    [editing, editedPair, handleEditConfirm, handleEditCancel]
+  );
 
   const handleDisabledInputClick = useCallback(
     (e: React.MouseEvent, pairId: string) => {
@@ -359,6 +377,7 @@ function EditWords() {
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word1 : p.word1}
                           onChange={(e) => handleInputChange("word1", e.target.value)}
+                          onKeyDown={handleKeyDown}
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
@@ -380,6 +399,7 @@ function EditWords() {
                           disabled={editing !== p.id}
                           value={editing === p.id ? editedPair?.word2 : p.word2}
                           onChange={(e) => handleInputChange("word2", e.target.value)}
+                          onKeyDown={handleKeyDown}
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
