@@ -261,6 +261,11 @@
   /* bottom: 0; */
 }
 
+.errorWrapper {
+  display: flex;
+  justify-content: center;
+}
+
 .errorMessage {
   margin-top: 1rem;
   color: var(--color-text-danger);

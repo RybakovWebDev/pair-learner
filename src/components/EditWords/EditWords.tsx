@@ -149,10 +149,23 @@ function EditWords() {
     async (pairToSave: Pair) => {
       if (!user) return;
 
+      const trimmedWord1 = pairToSave.word1.trim();
+      const trimmedWord2 = pairToSave.word2.trim();
+
+      if (trimmedWord1 === "" || trimmedWord2 === "") {
+        setErrors({
+          [pairToSave.id]: {
+            word1: trimmedWord1 === "" ? "Word 1 cannot be empty" : undefined,
+            word2: trimmedWord2 === "" ? "Word 2 cannot be empty" : undefined,
+          },
+        });
+        return;
+      }
+
       const updatedPair = {
         ...pairToSave,
-        word1: pairToSave.word1.trim(),
-        word2: pairToSave.word2.trim(),
+        word1: trimmedWord1,
+        word2: trimmedWord2,
         tag_ids: pairToSave.tag_ids,
       };
 
@@ -164,6 +177,8 @@ function EditWords() {
       } else {
         setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
         clearAllErrors();
+        setEditing("");
+        setEditedPair(null);
       }
     },
     [user, clearAllErrors]
@@ -174,9 +189,7 @@ function EditWords() {
 
     await handleEditSave(editedPair);
     setPairTagsOpened("");
-    setEditing("");
-    setEditedPair(null);
-  }, [user, editedPair, handleEditSave, setPairTagsOpened, setEditing, setEditedPair]);
+  }, [user, editedPair, handleEditSave, setPairTagsOpened]);
 
   const handleEditCancel = useCallback(() => {
     setEditing("");
@@ -381,7 +394,7 @@ function EditWords() {
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
-                      {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
+                      {/* {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>} */}
                     </div>
 
                     <div className={styles.wordWrapperOuter}>
@@ -403,8 +416,16 @@ function EditWords() {
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
-                      {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
+                      {/* {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>} */}
                     </div>
+
+                    {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
+                      <div className={styles.errorWrapper}>
+                        {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
+                        {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
+                        {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
+                      </div>
+                    )}
 
                     <m.div className={styles.pairTagsWrapper} variants={controlsVariants}>
                       <div className={styles.pairTagsLabelWrapper} onClick={() => handlePairTagsOpen(p.id)}>
