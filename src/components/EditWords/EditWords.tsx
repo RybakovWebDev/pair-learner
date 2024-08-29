@@ -130,19 +130,10 @@ function EditWords() {
       const addedPair = data[0] as Pair;
       await fetchAndUpdateData();
       clearAllErrors();
+      setPairTagsOpened(addedPair.id);
       setEditing(addedPair.id);
       setEditedPair(addedPair);
     }
-  };
-
-  const handleEditStart = (pair: Pair) => {
-    if (editing && editedPair) {
-      handleEditSave(editedPair);
-    }
-    setEditing(pair.id);
-    setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-    setConfirmDelete("");
-    clearAllErrors();
   };
 
   const handleEditSave = useCallback(
@@ -184,6 +175,27 @@ function EditWords() {
     [user, clearAllErrors]
   );
 
+  const handleEditStart = useCallback(
+    (pair: Pair) => {
+      if (editing && editedPair) {
+        handleEditSave(editedPair).then(() => {
+          setEditing(pair.id);
+          setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+          setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+          setConfirmDelete("");
+          clearAllErrors();
+        });
+      } else {
+        setEditing(pair.id);
+        setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+        setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+        setConfirmDelete("");
+        clearAllErrors();
+      }
+    },
+    [editing, editedPair, handleEditSave, clearAllErrors]
+  );
+
   const handleEditConfirm = useCallback(async () => {
     if (!user || !editedPair) return;
 
@@ -202,7 +214,6 @@ function EditWords() {
     }
     setEditing("");
     clearAllErrors();
-    setPairTagsOpened("");
     setConfirmDelete(pair.id);
   };
 
@@ -394,7 +405,6 @@ function EditWords() {
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
-                      {/* {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>} */}
                     </div>
 
                     <div className={styles.wordWrapperOuter}>
@@ -416,7 +426,6 @@ function EditWords() {
                           style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                         />
                       </div>
-                      {/* {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>} */}
                     </div>
 
                     {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
