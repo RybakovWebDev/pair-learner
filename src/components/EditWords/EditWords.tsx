@@ -13,6 +13,7 @@ import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, simpleFadeVariants, Tag } from "@/constants";
+import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -43,15 +44,16 @@ function EditWords() {
   const { user, loading } = useUserContext();
   const router = useRouter();
 
-  const [pairs, setPairs] = useState<Pair[]>([]);
+  const [pairs, setPairs] = useState<(Pair & { tempId?: string })[]>([]);
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
   const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
+  const [isAddingNewPair, setIsAddingNewPair] = useState(false);
   const [editing, setEditing] = useState("");
   const [pairTagsOpened, setPairTagsOpened] = useState("");
   const [confirmDelete, setConfirmDelete] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const [editedPair, setEditedPair] = useState<Pair | null>(null);
+  const [editedPair, setEditedPair] = useState<(Pair & { tempId?: string }) | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
 
@@ -74,7 +76,12 @@ function EditWords() {
         return;
       }
 
-      setPairs(pairsData as Pair[]);
+      const updatedPairsData = pairsData.map((pair: Pair) => ({
+        ...pair,
+        tempId: pair.id,
+      }));
+
+      setPairs(updatedPairsData as (Pair & { tempId?: string })[]);
 
       const { data: tagsData, error: tagsError } = await supabase
         .from("tags")
@@ -87,7 +94,12 @@ function EditWords() {
         return;
       }
 
-      setTags(tagsData as (Tag & { tempId?: string })[]);
+      const updatedTagsData = tagsData.map((tag: Tag) => ({
+        ...tag,
+        tempId: tag.id,
+      }));
+
+      setTags(updatedTagsData as (Tag & { tempId?: string })[]);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -108,36 +120,32 @@ function EditWords() {
   }, [user, dataLoaded, fetchAndUpdateData]);
 
   const handleAdd = async () => {
-    if (!user) return;
+    if (!user || isAddingNewPair) return;
 
     if (editing && editedPair) {
       await handleEditSave(editedPair);
     }
 
-    const newPair: Omit<Pair, "id" | "created_at"> = {
-      word1: "Word 1",
-      word2: "Word 2",
+    const tempId = "temp-" + Date.now();
+    const newPair: Pair & { tempId: string } = {
+      id: tempId,
+      word1: "",
+      word2: "",
       tag_ids: [],
       user_id: user.id,
+      tempId: tempId,
     };
 
-    const { data, error } = await supabase.from("word-pairs").insert(newPair).select();
-
-    if (error) {
-      console.error("Error adding new pair:", error);
-      setErrors({ new: { general: "Failed to add new pair. Please try again." } });
-    } else {
-      const addedPair = data[0] as Pair;
-      await fetchAndUpdateData();
-      clearAllErrors();
-      setPairTagsOpened(addedPair.id);
-      setEditing(addedPair.id);
-      setEditedPair(addedPair);
-    }
+    setPairs((prevPairs) => [newPair, ...prevPairs]);
+    clearAllErrors();
+    setPairTagsOpened(tempId);
+    setEditing(tempId);
+    setEditedPair(newPair);
+    setIsAddingNewPair(true);
   };
 
   const handleEditSave = useCallback(
-    async (pairToSave: Pair) => {
+    async (pairToSave: Pair & { tempId?: string }) => {
       if (!user) return;
 
       const trimmedWord1 = pairToSave.word1.trim();
@@ -153,83 +161,138 @@ function EditWords() {
         return;
       }
 
+      const { id, tempId, ...pairDataToSave } = pairToSave;
       const updatedPair = {
-        ...pairToSave,
+        ...pairDataToSave,
         word1: trimmedWord1,
         word2: trimmedWord2,
-        tag_ids: pairToSave.tag_ids,
       };
 
-      const { error } = await supabase.from("word-pairs").update(updatedPair).eq("id", updatedPair.id);
+      if (id.startsWith("temp-") && tempId?.startsWith("temp-")) {
+        const { data, error } = await supabase.from("word-pairs").insert(updatedPair).select();
 
-      if (error) {
-        console.error("Error updating pair:", error);
-        setErrors({ [updatedPair.id]: { general: "Failed to update pair. Please try again." } });
+        if (error) {
+          console.error("Error adding new pair:", error);
+          setErrors({ [id]: { general: "Failed to add new pair. Please try again." } });
+        } else if (data && data[0]) {
+          setPairs((prevPairs) =>
+            prevPairs.map((pair) => (pair.id === id ? { ...data[0], id: id, tempId: data[0].id } : pair))
+          );
+          clearAllErrors();
+        }
       } else {
-        setPairs((prevPairs) => prevPairs.map((pair) => (pair.id === updatedPair.id ? updatedPair : pair)));
-        clearAllErrors();
-        setEditing("");
-        setEditedPair(null);
+        const { error } = await supabase
+          .from("word-pairs")
+          .update(updatedPair)
+          .eq("id", tempId || id);
+
+        if (error) {
+          console.error("Error updating pair:", error);
+          setErrors({ [id]: { general: "Failed to update pair. Please try again." } });
+        } else {
+          setPairs((prevPairs) =>
+            prevPairs.map((pair) => (pair.id === id ? { ...updatedPair, id, tempId: tempId || id } : pair))
+          );
+          clearAllErrors();
+        }
       }
+
+      setPairTagsOpened("");
+      setEditing("");
+      setEditedPair(null);
+      setIsAddingNewPair(false);
     },
     [user, clearAllErrors]
   );
 
+  const handleEditConfirm = useCallback(() => {
+    if (!user || !editedPair) return;
+
+    handleEditSave(editedPair);
+  }, [user, editedPair, handleEditSave]);
+
   const handleEditStart = useCallback(
-    (pair: Pair) => {
+    (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
-        handleEditSave(editedPair).then(() => {
-          setEditing(pair.id);
-          setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-          setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
-          setConfirmDelete("");
-          clearAllErrors();
-        });
-      } else {
-        setEditing(pair.id);
-        setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-        setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
-        setConfirmDelete("");
-        clearAllErrors();
+        if (editedPair.id.startsWith("temp-") && (!editedPair.word1.trim() || !editedPair.word2.trim())) {
+          setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
+          setIsAddingNewPair(false);
+        } else {
+          handleEditSave(editedPair);
+        }
       }
+
+      setEditing(pair.id);
+      setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+      setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+      setConfirmDelete("");
+      clearAllErrors();
     },
     [editing, editedPair, handleEditSave, clearAllErrors]
   );
 
-  const handleEditConfirm = useCallback(async () => {
-    if (!user || !editedPair) return;
-
-    await handleEditSave(editedPair);
-    setPairTagsOpened("");
-  }, [user, editedPair, handleEditSave, setPairTagsOpened]);
-
   const handleEditCancel = useCallback(() => {
+    if (editedPair?.tempId) {
+      setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== editedPair.id));
+    }
     setEditing("");
     setEditedPair(null);
-  }, [setEditing, setEditedPair]);
+    setIsAddingNewPair(false);
+  }, [editedPair]);
 
-  const handlePairDelete = (pair: Pair) => {
-    if (editing && editedPair) {
-      handleEditSave(editedPair);
-    }
-    setEditing("");
-    clearAllErrors();
-    setConfirmDelete(pair.id);
-  };
+  const handlePairDelete = useCallback(
+    (pair: Pair & { tempId?: string }) => {
+      if (editing && editedPair) {
+        if (editedPair.id.startsWith("temp-")) {
+          setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
+          setIsAddingNewPair(false);
+          setEditing("");
+          setEditedPair(null);
+        } else {
+          handleEditSave(editedPair);
+        }
+      }
+      setEditing("");
+      clearAllErrors();
+      setConfirmDelete(pair.id);
+    },
+    [editing, editedPair, handleEditSave, clearAllErrors]
+  );
 
-  const handleConfirmDelete = async (id: string) => {
-    const { error } = await supabase.from("word-pairs").delete().eq("id", id);
+  const handleConfirmDelete = useCallback(
+    async (id: string) => {
+      const pairToDelete = pairs.find((pair) => pair.id === id);
 
-    if (error) {
-      console.error("Error deleting pair:", error);
-      setErrors({ [id]: { general: "Failed to delete pair. Please try again." } });
-    } else {
-      await fetchAndUpdateData();
-      setErrors({});
-    }
+      if (!pairToDelete) {
+        console.error("Pair not found for deletion");
+        return;
+      }
 
-    setConfirmDelete("");
-  };
+      setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== id));
+
+      if (id.startsWith("temp-") && (!pairToDelete.tempId || pairToDelete.tempId === id)) {
+        setIsAddingNewPair(false);
+        setConfirmDelete("");
+        return;
+      }
+
+      const dbId =
+        pairToDelete.tempId && !pairToDelete.tempId.startsWith("temp-") ? pairToDelete.tempId : pairToDelete.id;
+
+      const { error } = await supabase.from("word-pairs").delete().eq("id", dbId);
+
+      if (error) {
+        console.error("Error deleting pair:", error);
+        setErrors({ [id]: { general: "Failed to delete pair. Please try again." } });
+        setPairs((prevPairs) => [...prevPairs, pairToDelete]);
+      } else {
+        setErrors({});
+      }
+
+      setConfirmDelete("");
+    },
+    [pairs]
+  );
 
   const handleCancelDelete = () => {
     setConfirmDelete("");
@@ -250,14 +313,14 @@ function EditWords() {
       if (editing && editedPair) {
         if (e.key === "Enter") {
           e.preventDefault();
-          handleEditConfirm();
+          handleEditSave(editedPair);
         } else if (e.key === "Escape") {
           e.preventDefault();
           handleEditCancel();
         }
       }
     },
-    [editing, editedPair, handleEditConfirm, handleEditCancel]
+    [editing, editedPair, handleEditSave, handleEditCancel]
   );
 
   const handleDisabledInputClick = useCallback(
@@ -357,9 +420,11 @@ function EditWords() {
           <m.button
             className={styles.addButton}
             initial={{ backgroundColor: "var(--color-background)" }}
-            whileTap={user ? { backgroundColor: "var(--color-background-highlight)" } : {}}
+            animate={{ opacity: isAddingNewPair ? 0.5 : 1 }}
+            style={{ pointerEvents: isAddingNewPair ? "none" : "auto" }}
+            whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
             onClick={handleAdd}
-            disabled={!user || tagsLoading}
+            disabled={!user || tagsLoading || isAddingNewPair}
           >
             <p>Add word pair</p>
             <Plus size={25} />
@@ -428,13 +493,15 @@ function EditWords() {
                       </div>
                     </div>
 
-                    {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
-                      <div className={styles.errorWrapper}>
-                        {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
-                        {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
-                        {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
-                      </div>
-                    )}
+                    <AnimateChangeInHeight>
+                      {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
+                        <div className={styles.errorWrapper}>
+                          {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
+                          {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
+                          {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
+                        </div>
+                      )}
+                    </AnimateChangeInHeight>
 
                     <m.div className={styles.pairTagsWrapper} variants={controlsVariants}>
                       <div className={styles.pairTagsLabelWrapper} onClick={() => handlePairTagsOpen(p.id)}>

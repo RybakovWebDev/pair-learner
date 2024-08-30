@@ -96,7 +96,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
       return;
     }
 
-    if (editedTag.id.startsWith("temp-")) {
+    if (editedTag.id.startsWith("temp-") && editedTag.tempId?.startsWith("temp-")) {
       const { data, error } = await supabase
         .from("tags")
         .insert({
@@ -115,7 +115,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
         clearAllErrors();
       }
     } else {
-      const { error } = await supabase.from("tags").update({ name: editedTag.name }).eq("id", editedTag.id);
+      const { error } = await supabase.from("tags").update({ name: editedTag.name }).eq("id", editedTag.tempId);
 
       if (error) {
         console.error("Error updating tag:", error);
@@ -133,11 +133,14 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
 
   const handleTagDelete = useCallback(
     (tag: Tag) => {
+      if (newTag) {
+        handleEditTagCancel();
+      }
       setEditingTag(null);
       clearAllErrors();
       setConfirmDeleteTag(tag.id);
     },
-    [clearAllErrors]
+    [newTag, handleEditTagCancel, clearAllErrors]
   );
 
   const handleConfirmDeleteTag = useCallback(
