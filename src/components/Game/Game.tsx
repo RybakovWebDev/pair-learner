@@ -110,7 +110,6 @@ function Game() {
   const fetchData = useCallback(async () => {
     if (!user || fetchDataRef.current) return;
     fetchDataRef.current = true;
-    console.log("Fetching data");
     try {
       const [pairsResponse, tagsResponse] = await Promise.all([
         supabase.from("word-pairs").select("*").eq("user_id", user.id),
@@ -145,7 +144,6 @@ function Game() {
   }, [userLoading, user, state.pairs.length, fetchData]);
 
   useEffect(() => {
-    // TODO check if unncecessary
     dispatch({ type: "SET_NOT_ENOUGH_PAIRS", payload: filteredPairs.length < 5 });
   }, [filteredPairs]);
 
