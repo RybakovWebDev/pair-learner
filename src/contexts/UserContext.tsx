@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useState, useEffect, useContext, ReactNode } from "react";
 import { User } from "@supabase/supabase-js";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface UserContextType {
   user: User | null;
@@ -17,11 +17,16 @@ const defaultValue: UserContextType = {
 
 const UserContext = createContext<UserContextType>(defaultValue);
 
-export function UserProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+export function UserProvider({ children, initialUser }: { children: ReactNode; initialUser: User | null }) {
+  const [user, setUser] = useState<User | null>(initialUser);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
     const fetchSession = async () => {
       const {
         data: { session },
@@ -30,7 +35,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     };
 
-    fetchSession();
+    if (initialUser) {
+      setLoading(false);
+    } else {
+      fetchSession();
+    }
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
@@ -40,7 +49,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return () => {
       authListener.subscription.unsubscribe();
     };
-  }, []);
+  }, [initialUser]);
 
   return <UserContext.Provider value={{ user, loading, setUser }}>{children}</UserContext.Provider>;
 }

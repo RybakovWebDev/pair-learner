@@ -1,10 +1,12 @@
 import { FormEvent, useId, useState } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase/client";
 
 import styles from "./Auth.module.css";
 
 import { Eye, EyeOff } from "react-feather";
+import { login, register, sendMagicLink } from "@/app/actions/auth";
+import { useUserContext } from "@/contexts/UserContext";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -31,11 +33,10 @@ function Auth({
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
+  const { setUser } = useUserContext();
   const id = useId();
 
-  const handleOpen = () => {
-    setIsOpen(!isOpen);
-  };
+  const handleOpen = () => setIsOpen(!isOpen);
 
   const handleAuthOptionChange = (option: string) => {
     setAuthOption(option);
@@ -43,70 +44,53 @@ function Auth({
     setSuccessMessage(null);
   };
 
-  const handleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
+  const handleShowPassword = () => setShowPassword(!showPassword);
 
-  const handleModalClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
+  const handleModalClick = (e: React.MouseEvent) => e.stopPropagation();
 
-  const handleLogin = async () => {
-    try {
-      const trimmedEmail = email.trim();
-      const trimmedPassword = password.trim();
-      const { error } = await supabase.auth.signInWithPassword({
-        email: trimmedEmail,
-        password: trimmedPassword,
-      });
-      if (error) throw error;
-    } catch (error) {
-      setError((error as Error).message);
-    }
-  };
-
-  const handleRegister = async () => {
-    try {
-      const trimmedEmail = email.trim();
-      const trimmedPassword = password.trim();
-      const { error } = await supabase.auth.signUp({
-        email: trimmedEmail,
-        password: trimmedPassword,
-      });
-      if (error) throw error;
-      setSuccessMessage("Registration successful!\nPlease check your email to confirm your account.");
-    } catch (error) {
-      setError((error as Error).message);
-    }
-  };
-
-  const handleMagicLink = async () => {
-    try {
-      const trimmedEmail = email.trim();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: trimmedEmail,
-      });
-      if (error) throw error;
-      setSuccessMessage("Magic link sent!\nPlease check your email to sign in.");
-    } catch (error) {
-      setError((error as Error).message);
-    }
-  };
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
-    switch (authOption) {
-      case "Login":
-        handleLogin();
-        break;
-      case "Register":
-        handleRegister();
-        break;
-      case "Magic Link":
-        handleMagicLink();
-        break;
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    try {
+      let result;
+
+      switch (authOption) {
+        case "Login":
+          result = await login(trimmedEmail, trimmedPassword);
+          break;
+        case "Register":
+          result = await register(trimmedEmail, trimmedPassword);
+          break;
+        case "Magic Link":
+          result = await sendMagicLink(trimmedEmail);
+          break;
+        default:
+          throw new Error("Invalid auth option");
+      }
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      if (authOption === "Register") {
+        setSuccessMessage("Registration successful!\nPlease check your email to confirm your account.");
+      } else if (authOption === "Magic Link") {
+        setSuccessMessage("Magic link sent!\nPlease check your email to sign in.");
+      } else {
+        console.log("Logged in:", result);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        setUser(user);
+        setIsOpen(false);
+      }
+    } catch (error) {
+      setError((error as Error).message);
     }
   };
 
@@ -173,7 +157,8 @@ function Auth({
                           ? "Sign up with your email"
                           : "Enter your email for passwordless login"
                       }
-                      maxLength={30}
+                      minLength={5}
+                      maxLength={35}
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       required
@@ -186,7 +171,7 @@ function Auth({
                           type={showPassword ? "text" : "password"}
                           placeholder={authOption === "Login" ? "Your password" : "Create a password"}
                           minLength={6}
-                          maxLength={45}
+                          maxLength={65}
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           required

@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useReducer, useRef } from "react
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase/client";
 
 import styles from "./Game.module.css";
 

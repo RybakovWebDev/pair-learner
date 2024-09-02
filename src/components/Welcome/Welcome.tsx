@@ -3,9 +3,9 @@
 import styles from "./Welcome.module.css";
 
 import Auth from "../Auth";
+import PairsDemo from "../PairsDemo";
 
 import { useUserContext } from "@/contexts/UserContext";
-import PairsDemo from "../PairsDemo";
 
 function Welcome() {
   const { user, loading } = useUserContext();

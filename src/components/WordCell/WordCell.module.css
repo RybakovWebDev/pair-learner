@@ -18,5 +18,4 @@
   cursor: pointer;
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
-  /* touch-action: none; */
 }

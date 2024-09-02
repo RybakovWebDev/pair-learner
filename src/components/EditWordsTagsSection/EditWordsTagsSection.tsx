@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import { AnimatePresence, m } from "framer-motion";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase/client";
 
 import styles from "./EditWordsTagsSection.module.css";
 

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase/client";
 import Link from "next/link";
 
 import styles from "./HeaderMenu.module.css";
@@ -29,6 +29,11 @@ function HeaderMenu() {
   const [logoutConfirm, setLogoutConfirm] = useState(false);
   const router = useRouter();
   const { setUser } = useUserContext();
+
+  const handleMenuOpen = () => {
+    setIsOpen(!isOpen);
+    setLogoutConfirm(false);
+  };
 
   const handleInitiateLogout = () => {
     setLogoutConfirm(true);
@@ -59,7 +64,7 @@ function HeaderMenu() {
       <nav className={styles.wrapperMain}>
         <m.button
           className={styles.menuButton}
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={handleMenuOpen}
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
         >

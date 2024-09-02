@@ -2,7 +2,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase/client";
 
 import styles from "./AccountSettings.module.css";
 
