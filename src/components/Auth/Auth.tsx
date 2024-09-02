@@ -82,7 +82,6 @@ function Auth({
       } else if (authOption === "Magic Link") {
         setSuccessMessage("Magic link sent!\nPlease check your email to sign in.");
       } else {
-        console.log("Logged in:", result);
         const {
           data: { user },
         } = await supabase.auth.getUser();
