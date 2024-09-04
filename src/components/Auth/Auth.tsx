@@ -101,6 +101,7 @@ function Auth({
           className={styles.openButton}
           initial={{ backgroundColor: "var(--color-background)" }}
           whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+          whileHover={{ backgroundColor: "var(--color-background-highlight)" }}
           onClick={handleOpen}
         >
           {openButtonText}
@@ -191,6 +192,7 @@ function Auth({
                     className={styles.authButton}
                     initial={{ backgroundColor: "var(--color-background)" }}
                     whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                    whileHover={{ backgroundColor: "var(--color-background-highlight)" }}
                   >
                     {authOption === "Magic Link" ? "Send Magic Link" : authOption}
                   </m.button>
