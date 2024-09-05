@@ -23,14 +23,14 @@ function Welcome() {
 
       <section className={styles.features}>
         <div className={styles.feature}>
-          <h3>Create Word Pairs</h3>
+          <h3>Custom Word Pairs</h3>
           <p>
             Add and organize your own <br />
             custom word pairs
           </p>
         </div>
         <div className={styles.feature}>
-          <h3>Customize Tags</h3>
+          <h3>Flexible Tag System</h3>
           <p>Filter words by language, topic, or anything you want</p>
         </div>
         <div className={styles.feature}>
