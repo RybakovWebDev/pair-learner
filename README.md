@@ -5,7 +5,7 @@
 Pair Learner is an interactive web application designed to help users learn and memorize word pairs across multiple languages or subjects through engaging memory games.
 
 <p align="center">
-  <img src="./images/homepage_dark.png" alt="Pair Learner Screenshot" width="400">
+  <img src="./public/images/homepage_dark.png" alt="Pair Learner Screenshot" width="400">
 </p>
 
 ## Features
