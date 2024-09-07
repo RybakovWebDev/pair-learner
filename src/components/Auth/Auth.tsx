@@ -1,5 +1,6 @@
 import { FormEvent, useId, useState } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 
 import styles from "./Auth.module.css";
@@ -7,6 +8,7 @@ import styles from "./Auth.module.css";
 import { Eye, EyeOff } from "react-feather";
 import { login, register, sendMagicLink } from "@/app/actions/auth";
 import { useUserContext } from "@/contexts/UserContext";
+import Spinner from "../Spinner";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -32,6 +34,8 @@ function Auth({
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const { setUser } = useUserContext();
   const id = useId();
@@ -52,6 +56,7 @@ function Auth({
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    setIsLoading(true);
 
     const trimmedEmail = email.trim();
     const trimmedPassword = password.trim();
@@ -87,9 +92,12 @@ function Auth({
         } = await supabase.auth.getUser();
         setUser(user);
         setIsOpen(false);
+        router.push("/learn");
       }
     } catch (error) {
       setError((error as Error).message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -193,8 +201,15 @@ function Auth({
                     initial={{ backgroundColor: "var(--color-background)" }}
                     whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                     whileHover={{ backgroundColor: "var(--color-background-highlight)" }}
+                    disabled={isLoading}
                   >
-                    {authOption === "Magic Link" ? "Send Magic Link" : authOption}
+                    {isLoading ? (
+                      <Spinner margin='0' height='30px' width='30px' borderWidth='3px' />
+                    ) : authOption === "Magic Link" ? (
+                      "Send Magic Link"
+                    ) : (
+                      authOption
+                    )}
                   </m.button>
                   <div className={styles.messageWrapper}>
                     {error && (

@@ -44,7 +44,6 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
   const [isLoading, setIsLoading] = useState(true);
   const matchQueue = useRef<SelectedPair[]>([]);
   const isProcessingQueue = useRef(false);
-  const allPairs = useRef<Pair[]>([]);
   const pendingSelections = useRef<{
     left: string | null;
     right: string | null;
@@ -340,10 +339,6 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
           ) : (
             <m.div key='no-pairs' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
               <p>Not enough pairs available. Please add more pairs or adjust your settings.</p>
-              <p>
-                Debug info: Pairs: {pairs.length}, Required pairs: {numPairs}, Left column: {leftColumn.length}, Right
-                column: {rightColumn.length}, All pairs: {allPairs.current.length}
-              </p>
             </m.div>
           )}
         </AnimatePresence>

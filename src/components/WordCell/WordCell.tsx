@@ -74,6 +74,7 @@ function WordCell({
   return (
     <m.div
       className={styles.mainWrapper}
+      style={{ pointerEvents: isGameRunning ? "auto" : "none" }}
       animate={{
         backgroundColor,
         borderColor,

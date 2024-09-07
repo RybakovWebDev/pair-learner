@@ -112,7 +112,7 @@ const EditDeleteControls = ({
         className={styles.controlButton}
         onClick={handleDeleteClick}
         initial={{ width: "4rem" }}
-        animate={{ width: confirmDelete ? "10rem" : "4rem" }}
+        animate={{ width: confirmDelete ? "8rem" : "4rem" }}
       >
         <AnimatePresence mode='wait'>
           {confirmDelete ? (

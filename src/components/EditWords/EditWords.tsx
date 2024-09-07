@@ -232,13 +232,17 @@ function EditWords() {
   );
 
   const handleEditCancel = useCallback(() => {
-    if (editedPair?.tempId) {
-      setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== editedPair.id));
+    if (editedPair) {
+      if (editedPair.id.startsWith("temp-")) {
+        setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== editedPair.id));
+      }
     }
     setEditing("");
     setEditedPair(null);
     setIsAddingNewPair(false);
   }, [editedPair]);
+
+  console.log(editing);
 
   const handlePairDelete = useCallback(
     (pair: Pair & { tempId?: string }) => {
