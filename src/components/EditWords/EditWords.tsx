@@ -144,6 +144,12 @@ function EditWords() {
     setIsAddingNewPair(true);
   };
 
+  // TODO
+  ////////////////////////
+  // After a new word pair is added and confirmed, starting to editing it and then pressing delete
+  // still removes it from the list instantly without asking for confirmation, but it stays on db
+  // tempid is being read wrongly somewhere still
+
   const handleEditSave = useCallback(
     async (pairToSave: Pair & { tempId?: string }) => {
       if (!user) return;
@@ -233,7 +239,7 @@ function EditWords() {
 
   const handleEditCancel = useCallback(() => {
     if (editedPair) {
-      if (editedPair.id.startsWith("temp-")) {
+      if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
         setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== editedPair.id));
       }
     }
@@ -242,12 +248,10 @@ function EditWords() {
     setIsAddingNewPair(false);
   }, [editedPair]);
 
-  console.log(editing);
-
   const handlePairDelete = useCallback(
     (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
-        if (editedPair.id.startsWith("temp-")) {
+        if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
           setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
           setIsAddingNewPair(false);
           setEditing("");
