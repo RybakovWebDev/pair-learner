@@ -144,12 +144,6 @@ function EditWords() {
     setIsAddingNewPair(true);
   };
 
-  // TODO
-  ////////////////////////
-  // After a new word pair is added and confirmed, starting to editing it and then pressing delete
-  // still removes it from the list instantly without asking for confirmation, but it stays on db
-  // tempid is being read wrongly somewhere still
-
   const handleEditSave = useCallback(
     async (pairToSave: Pair & { tempId?: string }) => {
       if (!user) return;
@@ -428,11 +422,11 @@ function EditWords() {
           <m.button
             className={styles.addButton}
             initial={{ backgroundColor: "var(--color-background)" }}
-            animate={{ opacity: isAddingNewPair ? 0.5 : 1 }}
-            style={{ pointerEvents: isAddingNewPair ? "none" : "auto" }}
+            animate={{ opacity: isAddingNewPair || Boolean(searchQuery) ? 0.5 : 1 }}
+            style={{ pointerEvents: isAddingNewPair || Boolean(searchQuery) ? "none" : "auto" }}
             whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
             onClick={handleAdd}
-            disabled={!user || tagsLoading || isAddingNewPair}
+            disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery)}
           >
             <p>Add word pair</p>
             <Plus size={25} />
@@ -442,142 +436,156 @@ function EditWords() {
         {errors.new?.general && <p className={styles.errorMessage}>{errors.new.general}</p>}
 
         {user ? (
-          <m.ul className={styles.list} layout>
-            <AnimatePresence>
-              {filteredPairs.map((p, index) => (
-                <m.li
-                  layout
-                  key={p.id}
-                  className={styles.wordPairListItem}
-                  initial={{ opacity: 0, margin: "1rem 0 0 0" }}
-                  animate={{ opacity: 1, margin: "1rem 0 0 0" }}
-                  exit={{ opacity: 0, margin: "1rem 0 0 0" }}
-                  transition={{ duration: 0.3, delay: 0 }}
-                >
-                  <m.div
-                    className={styles.wordDetailsWrapper}
-                    initial={{ opacity: 0.7 }}
-                    animate={{ opacity: editing === p.id ? 1 : 0.7 }}
-                  >
-                    <div className={styles.wordWrapperOuter}>
-                      <label htmlFor={`word1-${p.id}`} className={styles.wordAttribute}>
-                        Word 1:
-                      </label>
-                      <div
-                        className={styles.wordWrapper1}
-                        onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
+          <>
+            {filteredPairs.length > 0 ? (
+              <m.ul className={styles.list} layout>
+                <AnimatePresence>
+                  {filteredPairs.map((p, index) => (
+                    <m.li
+                      layout
+                      key={p.id}
+                      className={styles.wordPairListItem}
+                      initial={{ opacity: 0, margin: "1rem 0 0 0" }}
+                      animate={{ opacity: 1, margin: "1rem 0 0 0" }}
+                      exit={{ opacity: 0, margin: "1rem 0 0 0" }}
+                      transition={{ duration: 0.3, delay: 0 }}
+                    >
+                      <m.div
+                        className={styles.wordDetailsWrapper}
+                        initial={{ opacity: 0.7 }}
+                        animate={{ opacity: editing === p.id ? 1 : 0.7 }}
                       >
-                        <input
-                          id={`word1-${p.id}`}
-                          required
-                          maxLength={35}
-                          disabled={editing !== p.id}
-                          value={editing === p.id ? editedPair?.word1 : p.word1}
-                          onChange={(e) => handleInputChange("word1", e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
-                        />
-                      </div>
-                    </div>
-
-                    <div className={styles.wordWrapperOuter}>
-                      <label htmlFor={`word2-${p.id}`} className={styles.wordAttribute}>
-                        Word 2:
-                      </label>
-                      <div
-                        className={styles.wordWrapper2}
-                        onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
-                      >
-                        <input
-                          id={`word2-${p.id}`}
-                          required
-                          maxLength={35}
-                          disabled={editing !== p.id}
-                          value={editing === p.id ? editedPair?.word2 : p.word2}
-                          onChange={(e) => handleInputChange("word2", e.target.value)}
-                          onKeyDown={handleKeyDown}
-                          style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
-                        />
-                      </div>
-                    </div>
-
-                    <AnimateChangeInHeight>
-                      {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
-                        <div className={styles.errorWrapper}>
-                          {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
-                          {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
-                          {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
+                        <div className={styles.wordWrapperOuter}>
+                          <label htmlFor={`word1-${p.id}`} className={styles.wordAttribute}>
+                            Word 1:
+                          </label>
+                          <div
+                            className={styles.wordWrapper1}
+                            onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
+                          >
+                            <input
+                              id={`word1-${p.id}`}
+                              required
+                              maxLength={35}
+                              disabled={editing !== p.id}
+                              value={editing === p.id ? editedPair?.word1 : p.word1}
+                              onChange={(e) => handleInputChange("word1", e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
+                            />
+                          </div>
                         </div>
-                      )}
-                    </AnimateChangeInHeight>
 
-                    <m.div className={styles.pairTagsWrapper} variants={controlsVariants}>
-                      <div className={styles.pairTagsLabelWrapper} onClick={() => handlePairTagsOpen(p.id)}>
-                        <p>Tags:</p>
-                        <m.div initial={{ rotate: 0 }} animate={{ rotate: pairTagsOpened === p.id ? 180 : 0 }}>
-                          <ChevronDown />
-                        </m.div>
-                      </div>
+                        <div className={styles.wordWrapperOuter}>
+                          <label htmlFor={`word2-${p.id}`} className={styles.wordAttribute}>
+                            Word 2:
+                          </label>
+                          <div
+                            className={styles.wordWrapper2}
+                            onClick={(e) => editing !== p.id && handleDisabledInputClick(e, p.id)}
+                          >
+                            <input
+                              id={`word2-${p.id}`}
+                              required
+                              maxLength={35}
+                              disabled={editing !== p.id}
+                              value={editing === p.id ? editedPair?.word2 : p.word2}
+                              onChange={(e) => handleInputChange("word2", e.target.value)}
+                              onKeyDown={handleKeyDown}
+                              style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
+                            />
+                          </div>
+                        </div>
 
-                      <AnimatePresence>
-                        {pairTagsOpened === p.id && (
-                          <m.ul initial='hidden' animate='show' exit='hidden' variants={tagsUlVariants}>
-                            {tags.map((t) => {
-                              const realTagId = t.tempId || t.id;
-                              return (
-                                <li
-                                  key={realTagId}
-                                  onClick={() => handleTagToggle(p.id, realTagId)}
-                                  style={{ cursor: editing === p.id ? "pointer" : "default" }}
-                                >
-                                  <m.div className={styles.checkWrapperOuter}>
-                                    <m.div
-                                      initial={{ opacity: 0 }}
-                                      animate={{
-                                        opacity:
-                                          editing === p.id && editedPair
-                                            ? editedPair.tag_ids.includes(realTagId)
-                                              ? 1
-                                              : 0
-                                            : p.tag_ids.includes(realTagId)
-                                            ? 1
-                                            : 0,
-                                      }}
+                        <AnimateChangeInHeight>
+                          {(errors[p.id]?.word1 || errors[p.id]?.word2 || errors[p.id]?.general) && (
+                            <div className={styles.errorWrapper}>
+                              {errors[p.id]?.word1 && <p className={styles.errorMessage}>{errors[p.id].word1}</p>}
+                              {errors[p.id]?.word2 && <p className={styles.errorMessage}>{errors[p.id].word2}</p>}
+                              {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
+                            </div>
+                          )}
+                        </AnimateChangeInHeight>
+
+                        <m.div className={styles.pairTagsWrapper} variants={controlsVariants}>
+                          <div className={styles.pairTagsLabelWrapper} onClick={() => handlePairTagsOpen(p.id)}>
+                            <p>Tags:</p>
+                            <m.div initial={{ rotate: 0 }} animate={{ rotate: pairTagsOpened === p.id ? 180 : 0 }}>
+                              <ChevronDown />
+                            </m.div>
+                          </div>
+
+                          <AnimatePresence>
+                            {pairTagsOpened === p.id && (
+                              <m.ul initial='hidden' animate='show' exit='hidden' variants={tagsUlVariants}>
+                                {tags.map((t) => {
+                                  const realTagId = t.tempId || t.id;
+                                  return (
+                                    <li
+                                      key={realTagId}
+                                      onClick={() => handleTagToggle(p.id, realTagId)}
+                                      style={{ cursor: editing === p.id ? "pointer" : "default" }}
                                     >
-                                      <Check />
-                                    </m.div>
-                                  </m.div>
-                                  <p>{t.name}</p>
-                                </li>
-                              );
-                            })}
-                          </m.ul>
-                        )}
-                      </AnimatePresence>
-                    </m.div>
-                  </m.div>
+                                      <m.div className={styles.checkWrapperOuter}>
+                                        <m.div
+                                          initial={{ opacity: 0 }}
+                                          animate={{
+                                            opacity:
+                                              editing === p.id && editedPair
+                                                ? editedPair.tag_ids.includes(realTagId)
+                                                  ? 1
+                                                  : 0
+                                                : p.tag_ids.includes(realTagId)
+                                                ? 1
+                                                : 0,
+                                          }}
+                                        >
+                                          <Check />
+                                        </m.div>
+                                      </m.div>
+                                      <p>{t.name}</p>
+                                    </li>
+                                  );
+                                })}
+                              </m.ul>
+                            )}
+                          </AnimatePresence>
+                        </m.div>
+                      </m.div>
 
-                  {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
+                      {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
 
-                  <div className={styles.controlsWrapper}>
-                    <EditDeleteControls
-                      isEditing={editing === p.id}
-                      confirmDelete={confirmDelete === p.id}
-                      onEditStart={() => handleEditStart(p)}
-                      onEditConfirm={handleEditConfirm}
-                      onEditCancel={handleEditCancel}
-                      onDeleteStart={() => handlePairDelete(p)}
-                      onDeleteConfirm={() => handleConfirmDelete(p.id)}
-                      onDeleteCancel={handleCancelDelete}
-                      shakeEditButton={shakeEditButton === p.id}
-                      centerIcons={true}
-                    />
-                    <p className={styles.pairCount}>{filteredPairs.length - index}</p>
-                  </div>
-                </m.li>
-              ))}
-            </AnimatePresence>
-          </m.ul>
+                      <div className={styles.controlsWrapper}>
+                        <EditDeleteControls
+                          wrapperMargins='0'
+                          isEditing={editing === p.id}
+                          confirmDelete={confirmDelete === p.id}
+                          onEditStart={() => handleEditStart(p)}
+                          onEditConfirm={handleEditConfirm}
+                          onEditCancel={handleEditCancel}
+                          onDeleteStart={() => handlePairDelete(p)}
+                          onDeleteConfirm={() => handleConfirmDelete(p.id)}
+                          onDeleteCancel={handleCancelDelete}
+                          shakeEditButton={shakeEditButton === p.id}
+                          centerIcons={true}
+                        />
+                        <p className={styles.pairCount}>{filteredPairs.length - index}</p>
+                      </div>
+                    </m.li>
+                  ))}
+                </AnimatePresence>
+              </m.ul>
+            ) : (
+              <m.p
+                className={styles.noResultsMessage}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                No word pairs match your search.
+              </m.p>
+            )}
+          </>
         ) : (
           <Spinner />
         )}

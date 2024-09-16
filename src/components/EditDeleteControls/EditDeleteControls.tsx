@@ -6,6 +6,7 @@ import styles from "./EditDeleteControls.module.css";
 import { Check, Edit, Trash2, X } from "react-feather";
 
 interface EditDeleteControlsProps {
+  wrapperMargins?: string;
   isEditing: boolean;
   confirmDelete: boolean;
   onEditStart: () => void;
@@ -19,6 +20,7 @@ interface EditDeleteControlsProps {
 }
 
 const EditDeleteControls = ({
+  wrapperMargins = "1rem 0 1rem 0",
   isEditing,
   confirmDelete,
   onEditStart,
@@ -55,7 +57,10 @@ const EditDeleteControls = ({
   };
 
   return (
-    <div className={styles.controlsWrapper} style={{ justifyContent: centerIcons ? "center" : "flex-start" }}>
+    <div
+      className={styles.controlsWrapper}
+      style={{ margin: wrapperMargins, justifyContent: centerIcons ? "center" : "flex-start" }}
+    >
       <m.div
         className={styles.controlButton}
         onClick={handleEditClick}

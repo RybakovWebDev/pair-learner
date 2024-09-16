@@ -163,3 +163,20 @@
   cursor: pointer;
   user-select: none;
 }
+
+@media (max-width: 350px) {
+  .authOptionSelector button h3 {
+    font-size: 14px;
+  }
+
+  .inputsWrapper {
+    width: 95vw;
+  }
+
+  .emailInput,
+  .passwordInput,
+  .passwordInputWrapper {
+    width: 100%;
+    font-size: 14px;
+  }
+}

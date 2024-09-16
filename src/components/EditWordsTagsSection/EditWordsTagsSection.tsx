@@ -292,6 +292,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
                       </m.div>
                       <div className={styles.tagControlsWrapper}>
                         <EditDeleteControls
+                          wrapperMargins='0 0 0.5rem 0'
                           isEditing={editingTag === t.id}
                           confirmDelete={confirmDeleteTag === t.id}
                           onEditStart={() => handleEditTagStart(t)}
