@@ -11,18 +11,18 @@
 }
 
 .hero {
-  /* margin-bottom: 2rem; */
   text-align: center;
 }
 
 .hero p {
   margin: 5vh 0 1rem 0;
   font-size: 1.3rem;
-  /* font-weight: 800; */
-  /* font-weight: 600; */
-  /* font-family: "Montserrat"; */
   text-transform: uppercase;
   color: var(--color-text);
+}
+
+.pairsWrapper {
+  min-height: 26rem;
 }
 
 .features {

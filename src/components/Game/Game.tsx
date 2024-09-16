@@ -230,6 +230,10 @@ function Game() {
 
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
+  if (userLoading || state.isLoading) {
+    return <Spinner margin='0' borderWidth='3px' />;
+  }
+
   return (
     <LazyMotion features={loadFeatures}>
       <m.section className={styles.wrapperMain} initial='hidden' animate='show' variants={simpleFadeVariants}>

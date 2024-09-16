@@ -4,8 +4,10 @@ import styles from "./Welcome.module.css";
 
 import Auth from "../Auth";
 import PairsDemo from "../PairsDemo";
+import PairList from "../PairList";
 
 import { useUserContext } from "@/contexts/UserContext";
+import { DEMO_PAIRS_EMOJI } from "@/constants";
 
 function Welcome() {
   const { user, loading } = useUserContext();
@@ -19,7 +21,10 @@ function Welcome() {
         </p>
       </section>
 
-      <PairsDemo />
+      {/* <PairsDemo /> */}
+      <div className={styles.pairsWrapper}>
+        <PairList pairs={DEMO_PAIRS_EMOJI} isGameRunning emojis />
+      </div>
 
       <section className={styles.features}>
         <div className={styles.feature}>

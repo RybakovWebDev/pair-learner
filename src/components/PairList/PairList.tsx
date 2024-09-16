@@ -10,12 +10,13 @@ import Spinner from "../Spinner";
 import { Pair } from "@/constants";
 import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
 
-const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
+const loadFeatures = () => import("../../features").then((res) => res.default);
 
 interface PairListProps {
   numPairs?: number;
   isGameRunning: boolean;
-  refreshTrigger: number;
+  refreshTrigger?: number;
+  emojis?: boolean;
   pairs: Pair[];
 }
 
@@ -34,7 +35,7 @@ interface SelectedPair {
   matchResult: "correct" | "incorrect" | null;
 }
 
-function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairListProps) {
+function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }: PairListProps) {
   const [listKey, setListKey] = useState(0);
   const [leftColumn, setLeftColumn] = useState<WordState[]>([]);
   const [rightColumn, setRightColumn] = useState<WordState[]>([]);
@@ -252,17 +253,12 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
   const memoizedLeftColumn = useMemo(() => leftColumn, [leftColumn]);
   const memoizedRightColumn = useMemo(() => rightColumn, [rightColumn]);
 
-  if (isLoading) {
-    return (
-      <LazyMotion features={loadFeatures}>
-        <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-          <Spinner margin='5vh 0 0 0' />
-        </m.div>
-      </LazyMotion>
-    );
+  if (isLoading && !emojis) {
+    return <Spinner margin='5vh 0 0 0' />;
   }
 
-  const shouldRenderColumns = memoizedLeftColumn.length >= numPairs && memoizedRightColumn.length >= numPairs;
+  const shouldRenderColumns =
+    emojis || (memoizedLeftColumn.length >= numPairs && memoizedRightColumn.length >= numPairs);
 
   return (
     <LazyMotion features={loadFeatures}>
@@ -298,6 +294,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
                           isAnyIncorrectAnimating={isAnyIncorrectAnimating}
                           isAnyCorrectAnimating={isAnyCorrectAnimating}
                           isGameRunning={isGameRunning}
+                          isEmoji={emojis}
                         >
                           {wordState.word}
                         </WordCell>
@@ -327,6 +324,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, pairs }: PairLi
                           isAnyIncorrectAnimating={isAnyIncorrectAnimating}
                           isAnyCorrectAnimating={isAnyCorrectAnimating}
                           isGameRunning={isGameRunning}
+                          isEmoji={emojis}
                         >
                           {wordState.word}
                         </WordCell>

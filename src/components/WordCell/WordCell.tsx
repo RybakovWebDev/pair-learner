@@ -12,6 +12,7 @@ interface WordCellProps {
   isAnyIncorrectAnimating: boolean;
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
+  isEmoji?: boolean;
   children: string;
 }
 
@@ -23,12 +24,18 @@ function WordCell({
   isAnyIncorrectAnimating,
   isAnyCorrectAnimating,
   isGameRunning,
+  isEmoji,
   children,
 }: WordCellProps) {
-  const [fontSize, setFontSize] = useState(14);
+  const [fontSize, setFontSize] = useState(isEmoji ? 24 : 14);
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (isEmoji) {
+      setFontSize(24);
+      return;
+    }
+
     const resizeText = () => {
       if (textRef.current) {
         const containerWidth = textRef.current.offsetWidth;
@@ -51,7 +58,7 @@ function WordCell({
     window.addEventListener("resize", resizeText);
 
     return () => window.removeEventListener("resize", resizeText);
-  }, [children]);
+  }, [children, isEmoji]);
 
   const backgroundColor =
     isAnimating && matchResult === "correct"

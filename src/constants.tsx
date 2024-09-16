@@ -99,6 +99,17 @@ export const DEMO_PAIRS = [
   { word1: "Lære", word2: "Mācīties", id: "73ba4d0a-8c68-48ad-a2f3-e7b1f1e9e1d2" },
 ];
 
+export const DEMO_PAIRS_EMOJI = [
+  { word1: "🔥", word2: "💧", id: "a1b2c3d4-5678-90ab-cdef-1234567890ab", user_id: "user_abc123", tag_ids: [] },
+  { word1: "😀", word2: "😢", id: "b2c3d4e5-6789-01ab-cdef-2345678901bc", user_id: "user_def456", tag_ids: [] },
+  { word1: "🌞", word2: "🌧️", id: "c3d4e5f6-7890-12ab-cdef-3456789012cd", user_id: "user_ghi789", tag_ids: [] },
+  { word1: "👍", word2: "👎", id: "d4e5f6g7-8901-23ab-cdef-4567890123de", user_id: "user_jkl012", tag_ids: [] },
+  { word1: "😈", word2: "😇", id: "e5f6g7h8-9012-34ab-cdef-5678901234ef", user_id: "user_mno345", tag_ids: [] },
+  { word1: "🔑", word2: "🔒", id: "f6g7h8i9-0123-45ab-cdef-6789012345fg", user_id: "user_pqr678", tag_ids: [] },
+  { word1: "🍅", word2: "🍏", id: "g7h8i9j0-1234-56ab-cdef-7890123456gh", user_id: "user_stu901", tag_ids: [] },
+  { word1: "😼", word2: "🐶", id: "h8i9j0k1-2345-67ab-cdef-8901234567ij", user_id: "user_vwx234", tag_ids: [] },
+];
+
 export const MENU_ITEMS = [
   { title: "Learn", slug: "learn", href: "/learn", icon: <Play size={22} /> },
   { title: "Word Editor", slug: "words", href: "/edit", icon: <Edit size={22} /> },
