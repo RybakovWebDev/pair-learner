@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
@@ -56,10 +56,19 @@ function EditWords() {
   const [editedPair, setEditedPair] = useState<(Pair & { tempId?: string }) | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
   const [dataLoaded, setDataLoaded] = useState(false);
+  const searchInputRef = useRef<HTMLDivElement>(null);
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
   }, []);
+
+  const scrollToSearch = () => {
+    setTimeout(() => {
+      if (searchInputRef.current) {
+        searchInputRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, 300);
+  };
 
   const fetchAndUpdateData = useCallback(async () => {
     if (!user) return;
@@ -126,6 +135,8 @@ function EditWords() {
       await handleEditSave(editedPair);
     }
 
+    scrollToSearch();
+
     const tempId = "temp-" + Date.now();
     const newPair: Pair & { tempId: string } = {
       id: tempId,
@@ -179,6 +190,8 @@ function EditWords() {
             prevPairs.map((pair) => (pair.id === id ? { ...data[0], id: id, tempId: data[0].id } : pair))
           );
           clearAllErrors();
+
+          scrollToSearch();
         }
       } else {
         const { error } = await supabase
@@ -403,7 +416,7 @@ function EditWords() {
             tagsLoading={tagsLoading}
           />
 
-          <div className={styles.searchWrapper}>
+          <div className={styles.searchWrapper} ref={searchInputRef}>
             <label htmlFor='search-input' className={styles.visuallyHidden}>
               Search by word or tag
             </label>
@@ -575,6 +588,8 @@ function EditWords() {
                   ))}
                 </AnimatePresence>
               </m.ul>
+            ) : tagsLoading ? (
+              <Spinner />
             ) : (
               <m.p
                 className={styles.noResultsMessage}

@@ -295,7 +295,7 @@
   text-align: center;
   padding: 2rem;
   font-style: italic;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
 }
 
 .visuallyHidden {
