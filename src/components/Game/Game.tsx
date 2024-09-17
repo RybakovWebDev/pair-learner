@@ -231,7 +231,7 @@ function Game() {
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
   if (userLoading || state.isLoading) {
-    return <Spinner margin='0' borderWidth='3px' />;
+    return <Spinner margin='5vh 0 0 0' borderWidth='3px' />;
   }
 
   return (

@@ -1,5 +1,5 @@
 .mainWrapper {
-  margin: 0 0 3rem 0;
+  margin: 0 0 0 0;
   padding: 0 2rem;
   display: flex;
   flex-direction: column;
@@ -15,7 +15,7 @@
 }
 
 .hero p {
-  margin: 5vh 0 1rem 0;
+  margin: 1vh 0 1rem 0;
   font-size: 1.3rem;
   text-transform: uppercase;
   color: var(--color-text);
@@ -23,6 +23,30 @@
 
 .pairsWrapper {
   min-height: 26rem;
+}
+
+.mainStaticWrapper {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ulWrapperInner {
+  display: flex;
+}
+
+.mainStaticWrapper ul {
+  list-style: none;
+}
+
+.leftColumn {
+  padding: 0 1rem;
+}
+
+.rightColumn {
+  padding: 0 1rem;
 }
 
 .features {

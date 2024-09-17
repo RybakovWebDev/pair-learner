@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, ReactNode } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";
@@ -13,7 +13,7 @@ interface WordCellProps {
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
   isEmoji?: boolean;
-  children: string;
+  children: ReactNode;
 }
 
 function WordCell({

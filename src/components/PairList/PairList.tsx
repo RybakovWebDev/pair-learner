@@ -4,6 +4,7 @@ import { LazyMotion, m, AnimatePresence } from "framer-motion";
 
 import styles from "./PairList.module.css";
 
+import PairListStatic from "../PairListStatic";
 import WordCell from "../WordCell";
 import Spinner from "../Spinner";
 
@@ -43,6 +44,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }
   const [isAnyIncorrectAnimating, setIsAnyIncorrectAnimating] = useState(false);
   const [isAnyCorrectAnimating, setIsAnyCorrectAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [initialOpacity, setInitialOpacity] = useState(1);
   const matchQueue = useRef<SelectedPair[]>([]);
   const isProcessingQueue = useRef(false);
   const pendingSelections = useRef<{
@@ -52,6 +54,14 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }
     rightId: string | null;
   }>({ left: null, right: null, leftId: null, rightId: null });
   const currentRoundPairs = useRef<Pair[]>([]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setInitialOpacity(0);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const getRandomUniquePairs = useCallback((allPairs: Pair[], count: number) => {
     const shuffled = [...allPairs].sort(() => 0.5 - Math.random());
@@ -264,11 +274,13 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }
     <LazyMotion features={loadFeatures}>
       <AnimateChangeInHeight className={styles.ulWrapper} enterDuration={0.2} exitDuration={0.2}>
         <AnimatePresence mode='wait'>
-          {shouldRenderColumns ? (
+          {isLoading && emojis ? (
+            <PairListStatic key='static-list' />
+          ) : shouldRenderColumns ? (
             <m.section
               className={styles.mainWrapper}
               key={listKey}
-              initial={{ opacity: 0 }}
+              initial={{ opacity: initialOpacity }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}

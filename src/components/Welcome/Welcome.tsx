@@ -2,8 +2,8 @@
 
 import styles from "./Welcome.module.css";
 
+import Spinner from "../Spinner";
 import Auth from "../Auth";
-import PairsDemo from "../PairsDemo";
 import PairList from "../PairList";
 
 import { useUserContext } from "@/contexts/UserContext";
@@ -21,7 +21,6 @@ function Welcome() {
         </p>
       </section>
 
-      {/* <PairsDemo /> */}
       <div className={styles.pairsWrapper}>
         <PairList pairs={DEMO_PAIRS_EMOJI} isGameRunning emojis />
       </div>
@@ -52,6 +51,8 @@ function Welcome() {
           openButtonText='Get Started'
         />
       )}
+
+      {loading && <Spinner margin='3rem 0 0 0' />}
     </section>
   );
 }
