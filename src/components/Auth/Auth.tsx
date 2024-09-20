@@ -32,6 +32,7 @@ function Auth({
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -46,6 +47,7 @@ function Auth({
     setAuthOption(option);
     setError(null);
     setSuccessMessage(null);
+    setIsButtonDisabled(false);
   };
 
   const handleShowPassword = () => setShowPassword(!showPassword);
@@ -84,8 +86,10 @@ function Auth({
 
       if (authOption === "Register") {
         setSuccessMessage("Registration successful!\nPlease check your email to confirm your account.");
+        setIsButtonDisabled(true);
       } else if (authOption === "Magic Link") {
         setSuccessMessage("Magic link sent!\nPlease check your email to sign in.");
+        setIsButtonDisabled(true);
       } else {
         const {
           data: { user },
@@ -199,9 +203,19 @@ function Auth({
                     type='submit'
                     className={styles.authButton}
                     initial={{ backgroundColor: "var(--color-background)" }}
-                    whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
-                    whileHover={{ backgroundColor: "var(--color-background-highlight)" }}
-                    disabled={isLoading}
+                    animate={{ opacity: isLoading || isButtonDisabled ? 0.5 : 1 }}
+                    whileTap={
+                      isLoading || isButtonDisabled
+                        ? { backgroundColor: "var(--color-background)" }
+                        : { backgroundColor: "var(--color-background-highlight)" }
+                    }
+                    whileHover={
+                      isLoading || isButtonDisabled
+                        ? { backgroundColor: "var(--color-background)" }
+                        : { backgroundColor: "var(--color-background-highlight)" }
+                    }
+                    disabled={isLoading || isButtonDisabled}
+                    style={{ cursor: isLoading || isButtonDisabled ? "default" : "pointer" }}
                   >
                     {isLoading ? (
                       <Spinner margin='0' height='30px' width='30px' borderWidth='3px' />
