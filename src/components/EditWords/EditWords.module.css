@@ -291,11 +291,16 @@
   overflow: hidden;
 }
 
-.noResultsMessage {
+.noResultsMessage,
+.noPairsMessage {
   text-align: center;
   padding: 2rem;
   font-style: italic;
   color: var(--color-text);
+}
+
+.noPairsMessage {
+  font-style: normal;
 }
 
 .visuallyHidden {

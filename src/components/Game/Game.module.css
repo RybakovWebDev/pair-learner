@@ -108,3 +108,9 @@
 .spinnerWrapper {
   height: 26rem;
 }
+
+@media (max-width: 430px) {
+  .minPairsMessage {
+    border: none;
+  }
+}

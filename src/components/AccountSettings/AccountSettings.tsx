@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent, useEffect } from "react";
+import { useState, FormEvent, useEffect, useCallback } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
@@ -19,6 +19,7 @@ function AccountSettings() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const router = useRouter();
@@ -50,6 +51,7 @@ function AccountSettings() {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
+    setIsSubmitting(true);
 
     try {
       const trimmedEmail = email.trim();
@@ -61,6 +63,7 @@ function AccountSettings() {
 
       if (Object.keys(updates).length === 0) {
         setSuccessMessage("No changes to update.");
+        setIsSubmitting(false);
         return;
       }
 
@@ -70,13 +73,17 @@ function AccountSettings() {
 
       if (data.user) {
         setUser(data.user);
-        setSuccessMessage("Account settings updated successfully!");
+        setSuccessMessage(
+          "Account settings updated successfully! If you updated the email, please check the new address for confirmation link."
+        );
       }
 
       setEditing(false);
       setPassword("");
     } catch (error) {
       setError((error as Error).message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -88,7 +95,7 @@ function AccountSettings() {
     setSuccessMessage(null);
   };
 
-  if (!user) {
+  if (loading || !user) {
     return <Spinner />;
   }
 
@@ -102,7 +109,7 @@ function AccountSettings() {
         </p>
 
         <m.form key={"authDataForm"} onSubmit={handleEditConfirm} className={styles.form}>
-          <div className={styles.inputsWrapper}>
+          <m.div className={styles.inputsWrapper} initial={{ opacity: 0 }} animate={{ opacity: editing ? 1 : 0.5 }}>
             <input
               className={styles.emailInput}
               type='email'
@@ -133,40 +140,54 @@ function AccountSettings() {
                 )}
               </button>
             </div>
-          </div>
+          </m.div>
 
           <m.div
             className={styles.submitButton}
             onClick={!editing ? handleEditing : undefined}
-            initial={{ width: "4rem" }}
-            animate={{ width: editing ? "8rem" : "4rem" }}
+            initial={{ width: "4rem", opacity: 0 }}
+            animate={{ width: editing ? "8rem" : "4rem", opacity: 1 }}
           >
             <AnimatePresence mode='wait'>
               {editing ? (
-                <m.div
-                  key={"confirmEdit"}
-                  className={styles.submitButtonWrapper}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                >
-                  <m.button
-                    type='submit'
-                    initial={{ backgroundColor: "var(--color-background)" }}
-                    whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                isSubmitting ? (
+                  <m.div
+                    key={"spinnerWrapper"}
+                    className={styles.spinnerWrapper}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                   >
-                    <Check />
-                  </m.button>
-                  <span />
-                  <m.button
-                    type='button'
-                    initial={{ backgroundColor: "var(--color-background)" }}
-                    whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
-                    onClick={handleEditCancel}
+                    <Spinner height='25px' width='25px' borderWidth='2px' />
+                  </m.div>
+                ) : (
+                  <m.div
+                    key={"confirmEdit"}
+                    className={styles.submitButtonWrapper}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
                   >
-                    <X />
-                  </m.button>
-                </m.div>
+                    <m.button
+                      type='submit'
+                      initial={{ backgroundColor: "var(--color-background)" }}
+                      whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                      disabled={isSubmitting}
+                    >
+                      <Check />
+                    </m.button>
+                    <span />
+                    <m.button
+                      type='button'
+                      initial={{ backgroundColor: "var(--color-background)" }}
+                      whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+                      onClick={handleEditCancel}
+                      disabled={isSubmitting}
+                    >
+                      <X />
+                    </m.button>
+                  </m.div>
+                )
               ) : (
                 <m.div key={"editIcon"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                   <Edit />

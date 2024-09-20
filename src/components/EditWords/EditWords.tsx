@@ -592,12 +592,12 @@ function EditWords() {
               <Spinner />
             ) : (
               <m.p
-                className={styles.noResultsMessage}
+                className={pairs.length !== 0 ? styles.noResultsMessage : styles.noPairsMessage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                No word pairs match your search.
+                {pairs.length !== 0 ? "No word pairs match your search." : "No word pairs yet."}
               </m.p>
             )}
           </>

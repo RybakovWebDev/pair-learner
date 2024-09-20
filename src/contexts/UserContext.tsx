@@ -22,36 +22,62 @@ export function UserProvider({ children, initialUser }: { children: ReactNode; i
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     );
 
-    const fetchSession = async () => {
+    const syncSessionWithServer = async () => {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+
+      if (isMounted) {
+        if (session?.user && initialUser) {
+          if (session.user.email !== initialUser.email) {
+            setUser(initialUser);
+          }
+        } else if (!session?.user && initialUser) {
+          setUser(initialUser);
+        } else if (session?.user && !initialUser) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
     };
 
-    if (initialUser) {
-      setLoading(false);
-    } else {
-      fetchSession();
-    }
+    syncSessionWithServer();
 
     const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+      if (isMounted) {
+        if (session?.user) {
+          if (initialUser && session.user.email !== initialUser.email) {
+          } else {
+            setUser(session.user);
+          }
+        } else {
+          setUser(null);
+        }
+        setLoading(false);
+      }
     });
 
     return () => {
+      isMounted = false;
       authListener.subscription.unsubscribe();
     };
   }, [initialUser]);
 
-  return <UserContext.Provider value={{ user, loading, setUser }}>{children}</UserContext.Provider>;
+  const contextValue = {
+    user,
+    loading,
+    setUser,
+  };
+
+  return <UserContext.Provider value={contextValue}>{children}</UserContext.Provider>;
 }
 
 export function useUserContext() {
