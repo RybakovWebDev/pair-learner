@@ -41,6 +41,10 @@ function Welcome() {
           <h3>Interactive Learning</h3>
           <p>Reinforce memory through dynamic word-pair matching</p>
         </div>
+        <div className={styles.feature}>
+          <h3>100% Free</h3>
+          <p>Created for personal use, shared to benefit all who may find it useful</p>
+        </div>
       </section>
 
       {!user && !loading && (

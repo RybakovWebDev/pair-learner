@@ -1,6 +1,6 @@
 import { Variants } from "framer-motion";
 import { CSSProperties } from "react";
-import { Edit, Globe, Linkedin, Play, User } from "react-feather";
+import { DollarSign, Edit, Globe, Linkedin, Play, User } from "react-feather";
 
 export interface Pair {
   id: string;
@@ -138,11 +138,8 @@ export const LIGHT_COLORS: ThemeColors = {
   "--color-text-secondary": "hsl(0 0% 0%)",
   "--color-text-danger": "hsl(0, 100%, 52%)",
   "--color-underline": "0, 0, 0",
-  // "--color-background": "hsl(0 0% 92%)",
   "--color-background": "hsl(186, 51%, 92%)",
-  // "--color-background-highlight": "hsl(0, 0%, 65%)",
   "--color-background-highlight": "hsl(183, 23%, 53%)",
-  // "--color-background-highlight": "hsl(180, 92%, 30%)",
   "--color-background-highlight-win": "hsl(128, 100%, 70%)",
   "--color-background-highlight-fail": "hsl(0, 100%, 67%)",
   "--color-background-secondary": "hsla(0, 0%, 0%, 0.3)",
@@ -188,6 +185,11 @@ export const SOCIAL_LINKS = [
 ];
 
 export const supportEmail = "pairlearner.contact@gmail.com";
+
+export const donationLinks = {
+  paypal: "https://paypal.me/anryedit?country.x=GE&locale.x=en_US",
+  kofi: "https://ko-fi.com/rybakov",
+};
 
 export const simpleFadeVariants: Variants = {
   hidden: { opacity: 0 },

@@ -251,7 +251,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
       },
       isMatch ? exitAnimationDuration : 700
     );
-  }, [initializeColumns]);
+  }, [initializeColumns, onPairSolved]);
 
   useEffect(() => {
     const completePairs = selectedPairs.filter((pair) => pair.left && pair.right && pair.matchResult === null);

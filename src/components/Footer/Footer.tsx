@@ -1,5 +1,5 @@
 "use client";
-import { SOCIAL_LINKS, supportEmail } from "@/constants";
+import { donationLinks, SOCIAL_LINKS, supportEmail } from "@/constants";
 import styles from "./Footer.module.css";
 
 import { useRefsContext } from "@/contexts/RefsContext";
@@ -12,10 +12,25 @@ function Footer() {
 
   return (
     <footer className={styles.wrapper}>
-      <p>Support:</p>
+      <p className={styles.support}>Support email:</p>
       <p>
         <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
       </p>
+
+      <div className={styles.donateWrapper}>
+        <p>
+          {`If you enjoy Pair Learner, you can support me with a donation using `}
+          <a href={donationLinks.paypal} target='_blank' rel='noopener noreferrer'>
+            PayPal
+          </a>
+          {` or `}
+          <a href={donationLinks.kofi} target='_blank' rel='noopener noreferrer'>
+            Ko-Fi
+          </a>
+          <br />
+          ❤️
+        </p>
+      </div>
 
       <div className={styles.iconsWrapper}>
         {SOCIAL_LINKS.map((l) => {
@@ -26,7 +41,7 @@ function Footer() {
           );
         })}
       </div>
-      <p ref={footerRef} className={styles.name}>
+      <p ref={footerRef}>
         © <time dateTime={currentYear}>{currentYear}</time> Andrey Rybakov
       </p>
     </footer>

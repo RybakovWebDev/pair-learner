@@ -1,5 +1,5 @@
 .wrapper {
-  padding: 0.5rem;
+  padding: 0.5rem 0.5rem 2rem 0.5rem;
   width: 100%;
   max-width: 80rem;
   display: flex;
@@ -9,12 +9,29 @@
   margin-top: auto;
 }
 
-.wrapper p {
-  color: var(--color-text);
+.support {
+  margin: 1rem 0 0 0;
 }
 
-.name {
-  /* margin: 1rem 0 0 0; */
+.donateWrapper {
+  padding: 0.5rem 0.5rem;
+  margin: 1rem 0 0 0;
+  width: 21rem;
+  text-align: center;
+  border: 1px solid var(--color-text);
+  border-radius: 10px;
+}
+
+.donateWrapper a {
+  border-bottom: 1px solid var(--color-text);
+}
+
+.donateWrapper a:hover {
+  border-bottom: 3px solid var(--color-text);
+}
+
+.wrapper p {
+  color: var(--color-text);
 }
 
 .iconsWrapper {
