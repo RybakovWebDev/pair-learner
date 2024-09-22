@@ -1,5 +1,5 @@
 "use client";
-import { useState, FormEvent, useEffect, useCallback } from "react";
+import { useState, FormEvent, useEffect } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";

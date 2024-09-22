@@ -39,7 +39,6 @@
   width: 100%;
   display: flex;
   border: 1px solid var(--color-background-highlight);
-  /* border-radius: 20px; */
   overflow: hidden;
 }
 
@@ -114,7 +113,7 @@
 .passwordInputWrapper {
   position: relative;
   margin: 1rem;
-  /* padding: 1rem; */
+
   height: 3.5rem;
   width: 20rem;
   display: flex;

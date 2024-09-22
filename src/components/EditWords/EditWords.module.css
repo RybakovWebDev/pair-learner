@@ -40,7 +40,6 @@
 .searchWrapper {
   position: relative;
   margin: 2.5rem 0 0 0;
-  /* height: 5rem; */
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -102,15 +101,12 @@
 }
 
 .wordPairListItem {
-  /* margin: 1rem 0 0 0; */
   display: flex;
   flex-direction: column;
   align-items: center;
   font-size: 14px;
   border: 1px solid var(--color-background-secondary);
   border-radius: 20px;
-  /* box-shadow: 0 0px 5px var(--color-background-secondary); */
-  /* background-color: var(--color-background-highlight); */
 }
 
 .wordDetailsWrapper {

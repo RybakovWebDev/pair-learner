@@ -19,6 +19,7 @@ interface PairListProps {
   refreshTrigger?: number;
   emojis?: boolean;
   pairs: Pair[];
+  onPairSolved?: () => void;
 }
 
 interface WordState {
@@ -36,7 +37,7 @@ interface SelectedPair {
   matchResult: "correct" | "incorrect" | null;
 }
 
-function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }: PairListProps) {
+function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, onPairSolved }: PairListProps) {
   const [listKey, setListKey] = useState(0);
   const [leftColumn, setLeftColumn] = useState<WordState[]>([]);
   const [rightColumn, setRightColumn] = useState<WordState[]>([]);
@@ -200,6 +201,9 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs }
 
     if (isMatch) {
       setIsAnyCorrectAnimating(true);
+      if (onPairSolved) {
+        onPairSolved();
+      }
     } else {
       setIsAnyIncorrectAnimating(true);
     }

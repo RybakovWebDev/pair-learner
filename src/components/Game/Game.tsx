@@ -37,6 +37,7 @@ type GameState = {
   isGameRunning: boolean;
   timeRemaining: number;
   refreshTrigger: number;
+  solvedPairs: number;
 };
 
 const startVariants: Variants = {
@@ -78,6 +79,10 @@ function gameReducer(state: GameState, action: any): GameState {
       return { ...state, timeRemaining: action.payload };
     case "REFRESH_TRIGGER":
       return { ...state, refreshTrigger: state.refreshTrigger + 1 };
+    case "INCREMENT_SOLVED_PAIRS":
+      return { ...state, solvedPairs: state.solvedPairs + 1 };
+    case "RESET_SOLVED_PAIRS":
+      return { ...state, solvedPairs: 0 };
     default:
       return state;
   }
@@ -96,6 +101,7 @@ function Game() {
     isGameRunning: false,
     timeRemaining: 210,
     refreshTrigger: 0,
+    solvedPairs: 0,
   });
 
   const router = useRouter();
@@ -208,7 +214,14 @@ function Game() {
     [state.isGameRunning]
   );
 
+  const handlePairSolved = useCallback(() => {
+    dispatch({ type: "INCREMENT_SOLVED_PAIRS" });
+  }, []);
+
   const handleStart = useCallback(() => {
+    if (state.isGameRunning) {
+      dispatch({ type: "RESET_SOLVED_PAIRS" });
+    }
     dispatch({ type: "SET_GAME_RUNNING", payload: !state.isGameRunning });
   }, [state.isGameRunning]);
 
@@ -221,12 +234,18 @@ function Game() {
   const MemoizedPairListWrapper = useMemo(() => {
     const MemoizedComponent = memo<PairListProps>(({ numPairs, isGameRunning, refreshTrigger, pairs }) => {
       return (
-        <PairList numPairs={numPairs} isGameRunning={isGameRunning} refreshTrigger={refreshTrigger} pairs={pairs} />
+        <PairList
+          numPairs={numPairs}
+          isGameRunning={isGameRunning}
+          refreshTrigger={refreshTrigger}
+          pairs={pairs}
+          onPairSolved={handlePairSolved}
+        />
       );
     });
     MemoizedComponent.displayName = "MemoizedPairListWrapper";
     return MemoizedComponent;
-  }, []);
+  }, [handlePairSolved]);
 
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
@@ -265,31 +284,40 @@ function Game() {
           )}
         </AnimateChangeInHeight>
 
-        <AnimateChangeInHeight className={styles.timerWrapper}>
+        <AnimateChangeInHeight>
           <AnimatePresence>
             {state.isGameRunning && state.roundLength !== 210 && (
-              <m.div key={"timer"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              <m.div
+                className={styles.timerWrapper}
+                key={"timer"}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
                 <m.p>{formatTime(state.timeRemaining)}</m.p>
               </m.div>
             )}
           </AnimatePresence>
         </AnimateChangeInHeight>
 
-        <m.div className={styles.controlsWrapper}>
-          <m.button
-            disabled={filteredPairs.length < 5}
-            className={styles.resetButton}
-            onClick={handleRefresh}
-            variants={controlsVariants}
-            initial={{ backgroundColor: "var(--color-background)" }}
-            animate={state.isGameRunning || filteredPairs.length < 5 ? "disabled" : "enabled"}
-            whileTap={{
-              backgroundColor: "var(--color-background-highlight)",
-            }}
-          >
-            Refresh list
-          </m.button>
+        <AnimateChangeInHeight>
+          <AnimatePresence>
+            {state.isGameRunning && (
+              <m.div
+                className={styles.solvedWrapper}
+                key={`solvedCount`}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <m.p>Solved pairs:</m.p>
+                <m.p>{state.solvedPairs}</m.p>
+              </m.div>
+            )}
+          </AnimatePresence>
+        </AnimateChangeInHeight>
 
+        <m.div className={styles.controlsWrapper}>
           <m.div
             className={styles.startWrapper}
             variants={controlsVariants}
@@ -309,6 +337,20 @@ function Game() {
               </AnimatePresence>
             </button>
           </m.div>
+
+          <m.button
+            disabled={filteredPairs.length < 5}
+            className={styles.resetButton}
+            onClick={handleRefresh}
+            variants={controlsVariants}
+            initial={{ backgroundColor: "var(--color-background)" }}
+            animate={state.isGameRunning || filteredPairs.length < 5 ? "disabled" : "enabled"}
+            whileTap={{
+              backgroundColor: "var(--color-background-highlight)",
+            }}
+          >
+            Refresh list
+          </m.button>
 
           <GameTagFilter
             tags={state.tags}
