@@ -187,6 +187,8 @@ export const SOCIAL_LINKS = [
   },
 ];
 
+export const supportEmail = "pairlearner.contact@gmail.com";
+
 export const simpleFadeVariants: Variants = {
   hidden: { opacity: 0 },
   show: {

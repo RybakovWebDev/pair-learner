@@ -10,11 +10,14 @@
 }
 
 .wrapper p {
-  margin: 1rem 0 0 0;
   color: var(--color-text);
 }
 
+.name {
+  /* margin: 1rem 0 0 0; */
+}
+
 .iconsWrapper {
-  margin: 0.5rem 0 1rem 0;
+  margin: 0.5rem 0 0.5rem 0;
   display: flex;
 }

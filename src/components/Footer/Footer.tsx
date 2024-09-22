@@ -1,5 +1,5 @@
 "use client";
-import { SOCIAL_LINKS } from "@/constants";
+import { SOCIAL_LINKS, supportEmail } from "@/constants";
 import styles from "./Footer.module.css";
 
 import { useRefsContext } from "@/contexts/RefsContext";
@@ -12,9 +12,11 @@ function Footer() {
 
   return (
     <footer className={styles.wrapper}>
-      <p ref={footerRef}>
-        © <time dateTime={currentYear}>{currentYear}</time> Andrey Rybakov
+      <p>Support:</p>
+      <p>
+        <a href={`mailto:${supportEmail}`}>{supportEmail}</a>
       </p>
+
       <div className={styles.iconsWrapper}>
         {SOCIAL_LINKS.map((l) => {
           return (
@@ -24,6 +26,9 @@ function Footer() {
           );
         })}
       </div>
+      <p ref={footerRef} className={styles.name}>
+        © <time dateTime={currentYear}>{currentYear}</time> Andrey Rybakov
+      </p>
     </footer>
   );
 }
