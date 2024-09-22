@@ -28,7 +28,7 @@
 .helpOuterWrapper {
   padding: 0.5rem 2rem 1rem 2rem;
   margin: 1rem 0 0 0;
-  width: 21rem;
+  width: 30rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -329,4 +329,15 @@
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+@media (max-width: 530px) {
+  .introWrapper {
+    padding: 0.5rem 0 0.5rem 0;
+    width: 100%;
+    min-width: 0;
+  }
+  .helpOuterWrapper {
+    width: 100%;
+  }
 }
