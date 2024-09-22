@@ -63,7 +63,6 @@ const EditDeleteControls = ({
     >
       <m.div
         className={styles.controlButton}
-        onClick={handleEditClick}
         initial={{ width: "4rem" }}
         animate={{
           width: isEditing ? "8rem" : "4rem",
@@ -84,6 +83,7 @@ const EditDeleteControls = ({
               exit={{ opacity: 0 }}
             >
               <m.button
+                aria-label='Confirm edit'
                 initial={{ backgroundColor: "var(--color-background)" }}
                 whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                 onClick={(e) => {
@@ -95,6 +95,7 @@ const EditDeleteControls = ({
               </m.button>
               <span />
               <m.button
+                aria-label='Cancel edit'
                 initial={{ backgroundColor: "var(--color-background)" }}
                 whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                 onClick={(e) => {
@@ -106,9 +107,16 @@ const EditDeleteControls = ({
               </m.button>
             </m.div>
           ) : (
-            <m.div key={"editIcon"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <m.button
+              key={"editIcon"}
+              aria-label='Edit'
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleEditClick}
+            >
               <Edit />
-            </m.div>
+            </m.button>
           )}
         </AnimatePresence>
       </m.div>
@@ -129,6 +137,7 @@ const EditDeleteControls = ({
               exit={{ opacity: 0 }}
             >
               <m.button
+                aria-label='Confirm delete'
                 initial={{ backgroundColor: "var(--color-background)" }}
                 whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                 onClick={(e) => {
@@ -140,6 +149,7 @@ const EditDeleteControls = ({
               </m.button>
               <span />
               <m.button
+                aria-label='Cancel delete'
                 initial={{ backgroundColor: "var(--color-background)" }}
                 whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                 onClick={(e) => {
@@ -153,6 +163,7 @@ const EditDeleteControls = ({
           ) : (
             <m.button
               key={"deleteIcon"}
+              aria-label='Delete'
               initial={{ opacity: 0, backgroundColor: "var(--color-background)" }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

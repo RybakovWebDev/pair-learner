@@ -228,19 +228,20 @@ function EditWords() {
   const handleEditStart = useCallback(
     (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
-        if (editedPair.id.startsWith("temp-") && (!editedPair.word1.trim() || !editedPair.word2.trim())) {
-          setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
-          setIsAddingNewPair(false);
-        } else {
-          handleEditSave(editedPair);
-        }
+        handleEditSave(editedPair).then(() => {
+          setEditing(pair.id);
+          setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+          setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+          setConfirmDelete("");
+          clearAllErrors();
+        });
+      } else {
+        setEditing(pair.id);
+        setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+        setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+        setConfirmDelete("");
+        clearAllErrors();
       }
-
-      setEditing(pair.id);
-      setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
-      setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
-      setConfirmDelete("");
-      clearAllErrors();
     },
     [editing, editedPair, handleEditSave, clearAllErrors]
   );
