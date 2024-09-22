@@ -6,7 +6,7 @@ import { supabase } from "@/utils/supabase/client";
 
 import styles from "./EditWords.module.css";
 
-import { Check, ChevronDown, Plus, Search } from "react-feather";
+import { Check, ChevronDown, HelpCircle, Plus, Search } from "react-feather";
 import EditWordsTagsSection from "../EditWordsTagsSection";
 import EditDeleteControls from "../EditDeleteControls";
 import Spinner from "../Spinner";
@@ -47,6 +47,7 @@ function EditWords() {
   const [pairs, setPairs] = useState<(Pair & { tempId?: string })[]>([]);
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
   const [isAddingNewPair, setIsAddingNewPair] = useState(false);
   const [editing, setEditing] = useState("");
@@ -395,15 +396,39 @@ function EditWords() {
       <section className={styles.wrapperMain}>
         <div className={styles.introWrapper}>
           <h3>Word Editor</h3>
-          <p>Here you can add, edit and remove your word pairs.</p>
-          <p>
-            Each pair also has <b>Tags</b> that can be used for all kinds of purposes.
-          </p>
-          <p>
-            For example, you can create tags for different languages (English, German, Japanese), or sort the words by
-            type (Family, Food, Animals) if you are only learning a single language.
-          </p>
-          <p>Experiment to find what works best for you!</p>
+
+          <m.div
+            className={styles.helpOuterWrapper}
+            onClick={() => setHelpOpen(!helpOpen)}
+            whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
+          >
+            <p>Help</p>
+            <HelpCircle />
+
+            <AnimateChangeInHeight>
+              <AnimatePresence>
+                {helpOpen && (
+                  <m.div
+                    key={"help"}
+                    className={styles.helpInnerWrapper}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <p>Here you can add, edit and remove your word pairs.</p>
+                    <p>
+                      Each pair also has <b>Tags</b> that can be used for all kinds of purposes.
+                    </p>
+                    <p>
+                      For example, you can create tags for different languages (English, German, Japanese etc.), or sort
+                      the words by type (Family, Food, Animals and so on) if you are only learning a single language.
+                    </p>
+                    <p>Experiment to find what works best for you!</p>
+                  </m.div>
+                )}
+              </AnimatePresence>
+            </AnimateChangeInHeight>
+          </m.div>
         </div>
 
         <m.div className={styles.mainControlsWrapper} variants={simpleFadeVariants} initial='hidden' animate='show'>
