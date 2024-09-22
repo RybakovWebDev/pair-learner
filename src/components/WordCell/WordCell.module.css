@@ -19,3 +19,9 @@
   overflow: hidden;
   -webkit-tap-highlight-color: transparent;
 }
+
+@media (max-width: 360px) {
+  .mainWrapper {
+    width: 8rem;
+  }
+}
