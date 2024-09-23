@@ -425,7 +425,7 @@ function EditWords() {
                       the words by type (Family, Food, Animals and so on) if you are only learning a single language.
                     </p>
                     <p>Experiment to find what works best for you!</p>
-                    <p>Hint: You can press "Enter" to confirm changes to a word pair</p>
+                    <p>Hint: You can press &quot;Enter&quot; to confirm changes to a word pair</p>
                   </m.div>
                 )}
               </AnimatePresence>
