@@ -19,15 +19,15 @@
   width: 21rem;
   text-align: center;
   border: 1px solid var(--color-background-secondary);
-  border-radius: 10px;
+  border-radius: 20px;
 }
 
 .donateWrapper a {
-  border-bottom: 1px solid var(--color-text);
+  border-bottom: 2px solid var(--color-background-highlight);
 }
 
 .donateWrapper a:hover {
-  border-bottom: 3px solid var(--color-text);
+  border-bottom: 4px solid var(--color-background-highlight);
 }
 
 .wrapper p {

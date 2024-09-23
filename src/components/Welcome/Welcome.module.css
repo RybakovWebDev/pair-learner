@@ -11,14 +11,23 @@
 }
 
 .hero {
+  padding: 0 1rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
   text-align: center;
+  /* font-family: "Roboto Mono"; */
 }
 
 .hero p {
   margin: 1vh 0 1rem 0;
-  font-size: 1.3rem;
-  text-transform: uppercase;
+  font-size: clamp(20px, 9vw, 40px);
+  font-weight: 800;
   color: var(--color-text);
+}
+
+.hero span {
+  border-bottom: 3px solid var(--color-background-highlight);
 }
 
 .pairsWrapper {
@@ -63,19 +72,20 @@
   padding: 1.5rem;
   width: 21rem;
   flex-basis: calc(33% - 2rem);
+  text-align: center;
   background-color: var(--color-background-highlight);
   border-radius: 20px;
-  text-align: center;
 }
 
 .feature h3 {
-  margin-bottom: 0.5rem;
-  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-size: 22px;
+  font-weight: 800;
   color: var(--color-text);
 }
 
 .feature p {
-  font-size: 1rem;
+  font-size: 16px;
   color: var(--color-text);
   opacity: 0.8;
 }

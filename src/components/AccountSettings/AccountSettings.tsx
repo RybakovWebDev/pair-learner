@@ -105,7 +105,7 @@ function AccountSettings() {
         <h2>Update account information</h2>
         <p>
           You can update your email address and password here. If you&apos;re using Magic Link authentication, you can
-          add or update a password to enable email/password login as well.
+          add a password to enable email/password login as well.
         </p>
 
         <m.form key={"authDataForm"} onSubmit={handleEditConfirm} className={styles.form}>

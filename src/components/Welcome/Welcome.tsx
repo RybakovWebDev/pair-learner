@@ -16,8 +16,7 @@ function Welcome() {
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
         <p>
-          Learn anything with <br />
-          customizable word pairs
+          Learn <span>anything</span> <br /> with customizable <br /> word pairs
         </p>
       </section>
 

@@ -2,12 +2,12 @@
   margin: 3rem 0 0 0;
   padding: 0 1rem;
   width: 100vw;
-  max-width: 40rem;
+  max-width: 35rem;
 }
 
 .mainWrapper h2,
 .mainWrapper p {
-  text-align: center;
+  /* text-align: center; */
   text-wrap: pretty;
 }
 

@@ -21,8 +21,8 @@
 
 .introWrapper h3 {
   text-align: center;
-  font-size: 28px;
-  font-weight: 400;
+  font-size: 30px;
+  font-weight: 800;
 }
 
 .helpOuterWrapper {
@@ -35,7 +35,7 @@
   align-items: center;
   gap: 0.5rem;
   border: 1px solid var(--color-background-secondary);
-  border-radius: 10px;
+  border-radius: 20px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
