@@ -10,6 +10,7 @@ import Spinner from "../Spinner";
 
 import { Pair } from "@/constants";
 import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
+import Sparkles from "../Sparkles";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
@@ -18,6 +19,7 @@ interface PairListProps {
   isGameRunning: boolean;
   refreshTrigger?: number;
   emojis?: boolean;
+  showSparkles?: boolean;
   pairs: Pair[];
   onPairSolved?: () => void;
 }
@@ -37,7 +39,15 @@ interface SelectedPair {
   matchResult: "correct" | "incorrect" | null;
 }
 
-function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, onPairSolved }: PairListProps) {
+function PairList({
+  numPairs = 5,
+  isGameRunning,
+  refreshTrigger,
+  emojis,
+  showSparkles = true,
+  pairs,
+  onPairSolved,
+}: PairListProps) {
   const [listKey, setListKey] = useState(0);
   const [leftColumn, setLeftColumn] = useState<WordState[]>([]);
   const [rightColumn, setRightColumn] = useState<WordState[]>([]);
@@ -46,6 +56,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
   const [isAnyCorrectAnimating, setIsAnyCorrectAnimating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [initialOpacity, setInitialOpacity] = useState(1);
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const matchQueue = useRef<SelectedPair[]>([]);
   const isProcessingQueue = useRef(false);
   const pendingSelections = useRef<{
@@ -221,9 +232,11 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
               w.id === pair.leftId ? { ...w, isMatched: true, isAnimating: false } : w
             );
             if (newColumn.every((w) => w.isMatched)) {
+              setIsTransitioning(true);
               setTimeout(() => {
                 setListKey((prevKey) => prevKey + 1);
                 initializeColumns();
+                setIsTransitioning(false);
               }, 500);
             }
             return newColumn;
@@ -310,6 +323,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
                           isAnyIncorrectAnimating={isAnyIncorrectAnimating}
                           isAnyCorrectAnimating={isAnyCorrectAnimating}
                           isGameRunning={isGameRunning}
+                          enableSparkles={showSparkles}
                           isEmoji={emojis}
                         >
                           {wordState.word}
@@ -319,6 +333,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
                   </m.li>
                 ))}
               </ul>
+
               <ul className={styles.rightColumn}>
                 {memoizedRightColumn.map((wordState, i) => (
                   <m.li key={i} onClick={() => handleSelectWord(wordState.word, wordState.id, "right")}>
@@ -340,6 +355,7 @@ function PairList({ numPairs = 5, isGameRunning, refreshTrigger, emojis, pairs, 
                           isAnyIncorrectAnimating={isAnyIncorrectAnimating}
                           isAnyCorrectAnimating={isAnyCorrectAnimating}
                           isGameRunning={isGameRunning}
+                          enableSparkles={showSparkles}
                           isEmoji={emojis}
                         >
                           {wordState.word}

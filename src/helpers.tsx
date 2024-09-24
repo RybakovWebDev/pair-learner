@@ -100,3 +100,20 @@ export const formatTime = (seconds: number) => {
   const remainingSeconds = seconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
 };
+
+export const range = (start: number, end?: number, step = 1): number[] => {
+  let output: number[] = [];
+
+  if (end === undefined) {
+    end = start;
+    start = 0;
+  }
+
+  for (let i = start; i < end; i += step) {
+    output.push(i);
+  }
+
+  return output;
+};
+
+export const random = (min: number, max: number): number => Math.floor(Math.random() * (max - min)) + min;

@@ -1,8 +1,9 @@
 "use client";
-import React, { useRef, useEffect, useState, ReactNode } from "react";
+import React, { useRef, useEffect, useState, ReactNode, useCallback } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";
+import Sparkles from "../Sparkles";
 
 interface WordCellProps {
   isSelected?: boolean;
@@ -13,6 +14,7 @@ interface WordCellProps {
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
   isEmoji?: boolean;
+  enableSparkles?: boolean;
   children: ReactNode;
 }
 
@@ -25,10 +27,30 @@ function WordCell({
   isAnyCorrectAnimating,
   isGameRunning,
   isEmoji,
+  enableSparkles = true,
   children,
 }: WordCellProps) {
   const [fontSize, setFontSize] = useState(isEmoji ? 24 : 14);
+  const [showSparkles, setShowSparkles] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isAnimating && matchResult === "correct" && enableSparkles) {
+      setShowSparkles(true);
+    }
+  }, [isAnimating, matchResult]);
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (showSparkles) {
+      timer = setTimeout(() => {
+        setShowSparkles(false);
+      }, 1000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [showSparkles]);
 
   useEffect(() => {
     if (isEmoji) {
@@ -79,45 +101,47 @@ function WordCell({
   const opacity = isMatched ? 0.2 : isGameRunning ? 1 : 0.5;
 
   return (
-    <m.div
-      className={styles.mainWrapper}
-      style={{ pointerEvents: isGameRunning ? "auto" : "none" }}
-      animate={{
-        backgroundColor,
-        borderColor,
-        opacity,
-      }}
-      initial={{
-        backgroundColor: "var(--color-background)",
-        borderColor: "var(--color-text)",
-        opacity: isGameRunning ? 1 : 0.5,
-      }}
-      transition={{
-        duration: isAnimating ? 0.3 : 0.1,
-      }}
-      whileTap={
-        isGameRunning && !isMatched && !isAnimating && !isAnyIncorrectAnimating && !isAnyCorrectAnimating
-          ? {
-              borderBottomWidth: "1px",
-              y: 2,
-            }
-          : {}
-      }
-    >
-      <div
-        ref={textRef}
-        style={{
-          fontSize: `${fontSize}px`,
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
+    <Sparkles isActive={showSparkles}>
+      <m.div
+        className={styles.mainWrapper}
+        style={{ pointerEvents: isGameRunning ? "auto" : "none" }}
+        animate={{
+          backgroundColor,
+          borderColor,
+          opacity,
         }}
+        initial={{
+          backgroundColor: "var(--color-background)",
+          borderColor: "var(--color-text)",
+          opacity: isGameRunning ? 1 : 0.5,
+        }}
+        transition={{
+          duration: isAnimating ? 0.3 : 0.1,
+        }}
+        whileTap={
+          isGameRunning && !isMatched && !isAnimating && !isAnyIncorrectAnimating && !isAnyCorrectAnimating
+            ? {
+                borderBottomWidth: "1px",
+                y: 2,
+              }
+            : {}
+        }
       >
-        {children}
-      </div>
-    </m.div>
+        <div
+          ref={textRef}
+          style={{
+            fontSize: `${fontSize}px`,
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          {children}
+        </div>
+      </m.div>
+    </Sparkles>
   );
 }
 

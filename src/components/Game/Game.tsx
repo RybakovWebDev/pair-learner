@@ -1,5 +1,5 @@
 "use client";
-import { memo, useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { memo, useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { LazyMotion, m, Variants, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -16,6 +16,7 @@ import GameRoundLengthSelector from "../GameRoundLengthSelector";
 import { useUserContext } from "@/contexts/UserContext";
 import { controlsVariants, Pair, rowCountOptions, simpleFadeVariants, Tag } from "@/constants";
 import { AnimateChangeInHeight, formatTime } from "@/helpers";
+import GameToggles from "../GameToggles";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -24,6 +25,7 @@ interface PairListProps {
   isGameRunning: boolean;
   refreshTrigger: number;
   pairs: Pair[];
+  showSparkles: boolean;
 }
 
 type GameState = {
@@ -103,6 +105,7 @@ function Game() {
     refreshTrigger: 0,
     solvedPairs: 0,
   });
+  const [showSparkles, setShowSparkles] = useState(true);
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -214,6 +217,10 @@ function Game() {
     [state.isGameRunning]
   );
 
+  const handleSparklesToggle = useCallback(() => {
+    setShowSparkles((prev) => !prev);
+  }, []);
+
   const handlePairSolved = useCallback(() => {
     dispatch({ type: "INCREMENT_SOLVED_PAIRS" });
   }, []);
@@ -232,17 +239,20 @@ function Game() {
   }, [state.isGameRunning]);
 
   const MemoizedPairListWrapper = useMemo(() => {
-    const MemoizedComponent = memo<PairListProps>(({ numPairs, isGameRunning, refreshTrigger, pairs }) => {
-      return (
-        <PairList
-          numPairs={numPairs}
-          isGameRunning={isGameRunning}
-          refreshTrigger={refreshTrigger}
-          pairs={pairs}
-          onPairSolved={handlePairSolved}
-        />
-      );
-    });
+    const MemoizedComponent = memo<PairListProps>(
+      ({ numPairs, isGameRunning, refreshTrigger, pairs, showSparkles }) => {
+        return (
+          <PairList
+            numPairs={numPairs}
+            isGameRunning={isGameRunning}
+            refreshTrigger={refreshTrigger}
+            pairs={pairs}
+            onPairSolved={handlePairSolved}
+            showSparkles={showSparkles}
+          />
+        );
+      }
+    );
     MemoizedComponent.displayName = "MemoizedPairListWrapper";
     return MemoizedComponent;
   }, [handlePairSolved]);
@@ -280,6 +290,7 @@ function Game() {
               isGameRunning={state.isGameRunning}
               refreshTrigger={state.refreshTrigger}
               pairs={filteredPairs}
+              showSparkles={showSparkles}
             />
           )}
         </AnimateChangeInHeight>
@@ -372,6 +383,12 @@ function Game() {
             roundLength={state.roundLength}
             isDisabled={areControlsDisabled}
             onChange={handleRoundLengthChange}
+          />
+
+          <GameToggles
+            showSparkles={showSparkles}
+            onSparklesToggle={handleSparklesToggle}
+            isDisabled={areControlsDisabled}
           />
         </m.div>
       </m.section>

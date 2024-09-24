@@ -1,0 +1,43 @@
+.wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.sparkleWrapper {
+  position: absolute;
+  display: block;
+  animation: comeInOut 700ms forwards;
+  z-index: 2;
+}
+
+.sparkleSvg {
+  display: block;
+  animation: spin 1000ms linear;
+}
+
+.childWrapper {
+  position: relative;
+  z-index: 1;
+  font-weight: bold;
+}
+
+@keyframes comeInOut {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+  }
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(180deg);
+  }
+}
