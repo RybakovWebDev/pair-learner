@@ -31,7 +31,7 @@ function WordCell({
   children,
 }: WordCellProps) {
   const [fontSize, setFontSize] = useState(isEmoji ? 24 : 14);
-  const [showSparkles, setShowSparkles] = useState(true);
+  const [showSparkles, setShowSparkles] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,7 +44,7 @@ function WordCell({
     let timer: NodeJS.Timeout;
     if (showSparkles) {
       timer = setTimeout(() => {
-        // setShowSparkles(false);
+        setShowSparkles(false);
       }, 1000);
     }
     return () => {
