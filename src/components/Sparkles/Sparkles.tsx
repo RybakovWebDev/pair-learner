@@ -6,7 +6,7 @@ import styles from "./Sparkles.module.css";
 import { random } from "@/helpers";
 import { useRandomInterval } from "@/hooks/useRandomInterval";
 
-const DEFAULT_COLOR = "#FFC700";
+const DEFAULT_COLOR = "var(--color-sparkles)";
 
 interface SparkleType {
   id: string;
