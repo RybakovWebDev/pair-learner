@@ -15,36 +15,36 @@ function Welcome() {
   return (
     <section className={styles.mainWrapper}>
       <section className={styles.hero}>
-        <p>
+        <h1>
           Learn <span>anything</span> <br /> with customizable <br /> word pairs
-        </p>
+        </h1>
       </section>
 
       <div className={styles.pairsWrapper}>
         <PairList pairs={DEMO_PAIRS_EMOJI} isGameRunning emojis />
       </div>
 
-      <section className={styles.features}>
-        <div className={styles.feature}>
+      <ul className={styles.features}>
+        <li className={styles.feature}>
           <h3>Custom Word Pairs</h3>
           <p>
             Add and organize your own <br />
             custom word pairs
           </p>
-        </div>
-        <div className={styles.feature}>
+        </li>
+        <li className={styles.feature}>
           <h3>Flexible Tag System</h3>
           <p>Filter words by language, topic, or anything you want</p>
-        </div>
-        <div className={styles.feature}>
+        </li>
+        <li className={styles.feature}>
           <h3>Interactive Learning</h3>
           <p>Reinforce memory through dynamic word-pair matching</p>
-        </div>
-        <div className={styles.feature}>
+        </li>
+        <li className={styles.feature}>
           <h3>100% Free</h3>
           <p>Created for personal use, shared to benefit all who may find it useful</p>
-        </div>
-      </section>
+        </li>
+      </ul>
 
       {!user && !loading && (
         <Auth

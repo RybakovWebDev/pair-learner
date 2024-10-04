@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState, ReactNode, useCallback } from "react";
+import React, { useRef, useEffect, useState, ReactNode } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";
@@ -37,8 +37,9 @@ function WordCell({
   useEffect(() => {
     if (isAnimating && matchResult === "correct" && enableSparkles) {
       setShowSparkles(true);
+      console.log("sparkles");
     }
-  }, [isAnimating, matchResult]);
+  }, [isAnimating, matchResult, enableSparkles]);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
