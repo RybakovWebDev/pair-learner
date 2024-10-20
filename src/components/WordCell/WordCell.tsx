@@ -13,7 +13,7 @@ interface WordCellProps {
   isAnyIncorrectAnimating: boolean;
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
-  callback: () => void;
+  callback?: () => void;
   isEmoji?: boolean;
   enableSparkles?: boolean;
   children: ReactNode;

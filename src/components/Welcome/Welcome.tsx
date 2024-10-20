@@ -31,22 +31,22 @@ function Welcome() {
 
       <ul className={styles.features}>
         <li className={styles.feature}>
-          <h3>Custom Word Pairs</h3>
+          <h2>Custom Word Pairs</h2>
           <p>
             Add and organize your own <br />
             custom word pairs
           </p>
         </li>
         <li className={styles.feature}>
-          <h3>Flexible Tag System</h3>
+          <h2>Flexible Tag System</h2>
           <p>Filter words by language, topic, or anything you want</p>
         </li>
         <li className={styles.feature}>
-          <h3>Interactive Learning</h3>
+          <h2>Interactive Learning</h2>
           <p>Reinforce memory through dynamic word-pair matching</p>
         </li>
         <li className={styles.feature}>
-          <h3>100% Free</h3>
+          <h2>100% Free</h2>
           <p>Created for personal use, shared to benefit all who may find it useful</p>
         </li>
       </ul>
