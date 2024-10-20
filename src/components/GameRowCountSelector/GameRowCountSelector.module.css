@@ -17,6 +17,7 @@
   border: 1px solid var(--color-background-highlight);
   border-radius: 20px;
   overflow: hidden;
+  user-select: none;
 }
 
 .rowsSelector button:nth-child(2) {

@@ -1,16 +1,19 @@
 "use client";
+import { useState } from "react";
 
 import styles from "./Welcome.module.css";
 
 import Spinner from "../Spinner";
 import Auth from "../Auth";
 import PairList from "../PairList";
+import Toggle from "../Toggle";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { DEMO_PAIRS_EMOJI } from "@/constants";
 
 function Welcome() {
   const { user, loading } = useUserContext();
+  const [endless, setEndless] = useState(true);
 
   return (
     <section className={styles.mainWrapper}>
@@ -21,8 +24,10 @@ function Welcome() {
       </section>
 
       <div className={styles.pairsWrapper}>
-        <PairList pairs={DEMO_PAIRS_EMOJI} isGameRunning emojis />
+        <PairList pairs={DEMO_PAIRS_EMOJI} isGameRunning emojis endlessMode={endless} />
       </div>
+
+      <Toggle column={true} labelText='Endless mode' checked={endless} onChange={() => setEndless(!endless)} />
 
       <ul className={styles.features}>
         <li className={styles.feature}>

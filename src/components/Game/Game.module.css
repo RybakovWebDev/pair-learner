@@ -53,6 +53,8 @@
   gap: 1rem;
   font-size: 18px;
   font-weight: 600;
+  background-color: var(--color-background);
+  z-index: 100;
 }
 
 .resetButton {

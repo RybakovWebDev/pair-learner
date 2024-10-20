@@ -25,6 +25,7 @@ interface PairListProps {
   isGameRunning: boolean;
   refreshTrigger: number;
   pairs: Pair[];
+  endlessMode: boolean;
   showSparkles: boolean;
 }
 
@@ -105,6 +106,7 @@ function Game() {
     refreshTrigger: 0,
     solvedPairs: 0,
   });
+  const [endlessMode, setEndlessMode] = useState(false);
   const [showSparkles, setShowSparkles] = useState(true);
 
   const router = useRouter();
@@ -217,6 +219,11 @@ function Game() {
     [state.isGameRunning]
   );
 
+  const handleEndlessToggle = useCallback(() => {
+    setEndlessMode((prev) => !prev);
+    dispatch({ type: "REFRESH_TRIGGER" });
+  }, []);
+
   const handleSparklesToggle = useCallback(() => {
     setShowSparkles((prev) => !prev);
   }, []);
@@ -240,7 +247,7 @@ function Game() {
 
   const MemoizedPairListWrapper = useMemo(() => {
     const MemoizedComponent = memo<PairListProps>(
-      ({ numPairs, isGameRunning, refreshTrigger, pairs, showSparkles }) => {
+      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles }) => {
         return (
           <PairList
             numPairs={numPairs}
@@ -248,6 +255,7 @@ function Game() {
             refreshTrigger={refreshTrigger}
             pairs={pairs}
             onPairSolved={handlePairSolved}
+            endlessMode={endlessMode}
             showSparkles={showSparkles}
           />
         );
@@ -290,6 +298,7 @@ function Game() {
               isGameRunning={state.isGameRunning}
               refreshTrigger={state.refreshTrigger}
               pairs={filteredPairs}
+              endlessMode={endlessMode}
               showSparkles={showSparkles}
             />
           )}
@@ -388,6 +397,8 @@ function Game() {
           <GameToggles
             showSparkles={showSparkles}
             onSparklesToggle={handleSparklesToggle}
+            endless={endlessMode}
+            onEndlessToggle={handleEndlessToggle}
             isDisabled={areControlsDisabled}
           />
         </m.div>

@@ -13,6 +13,7 @@ interface WordCellProps {
   isAnyIncorrectAnimating: boolean;
   isAnyCorrectAnimating: boolean;
   isGameRunning: boolean;
+  callback: () => void;
   isEmoji?: boolean;
   enableSparkles?: boolean;
   children: ReactNode;
@@ -26,6 +27,7 @@ function WordCell({
   isAnyIncorrectAnimating,
   isAnyCorrectAnimating,
   isGameRunning,
+  callback,
   isEmoji,
   enableSparkles = true,
   children,
@@ -37,7 +39,6 @@ function WordCell({
   useEffect(() => {
     if (isAnimating && matchResult === "correct" && enableSparkles) {
       setShowSparkles(true);
-      console.log("sparkles");
     }
   }, [isAnimating, matchResult, enableSparkles]);
 
@@ -103,7 +104,7 @@ function WordCell({
 
   return (
     <Sparkles isActive={showSparkles}>
-      <m.div
+      <m.button
         className={styles.mainWrapper}
         style={{ pointerEvents: isGameRunning ? "auto" : "none" }}
         animate={{
@@ -127,6 +128,10 @@ function WordCell({
               }
             : {}
         }
+        onClick={callback}
+        aria-pressed={isSelected}
+        aria-disabled={!isGameRunning || isMatched}
+        aria-label={`${children} ${isMatched ? "matched" : ""} ${isSelected ? "selected" : ""}`}
       >
         <div
           ref={textRef}
@@ -141,7 +146,7 @@ function WordCell({
         >
           {children}
         </div>
-      </m.div>
+      </m.button>
     </Sparkles>
   );
 }
