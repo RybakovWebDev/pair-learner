@@ -13,7 +13,7 @@ import { DEMO_PAIRS_EMOJI } from "@/constants";
 
 function Welcome() {
   const { user, loading } = useUserContext();
-  const [endless, setEndless] = useState(true);
+  const [endless, setEndless] = useState(false);
 
   return (
     <section className={styles.mainWrapper}>
