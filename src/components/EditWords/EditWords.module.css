@@ -26,7 +26,7 @@
 }
 
 .helpOuterWrapper {
-  padding: 0.5rem 2rem 1rem 2rem;
+  padding: 1rem 2rem;
   margin: 1rem 0 0 0;
   width: 30rem;
   display: flex;
@@ -47,6 +47,40 @@
 .helpInnerWrapper p:last-child {
   padding: 0 0 1.5rem 0;
   margin: 1rem 0;
+}
+
+.importWrapper {
+  padding: 1rem 2rem;
+  margin: 1rem 0 0 0;
+  width: 30rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+}
+
+.importButton {
+  margin: 1rem 0 0 0;
+  height: 3rem;
+  width: 14rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text);
+  background-color: var(--color-background);
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 20px;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.importMessageWrapper p {
+  margin: 0 0 1rem 0;
 }
 
 .mainControlsWrapper {
@@ -285,10 +319,16 @@
   justify-content: center;
 }
 
-.errorMessage {
+.errorMessage,
+.successMessage {
   margin-top: 1rem;
   color: var(--color-text-danger);
   font-size: 12px;
+  text-align: center;
+}
+
+.successMessage {
+  color: var(--color-text);
 }
 
 .controlsWrapper {
@@ -337,7 +377,8 @@
     width: 100%;
     min-width: 0;
   }
-  .helpOuterWrapper {
+  .helpOuterWrapper,
+  .importWrapper {
     width: 100%;
   }
 }

@@ -17,6 +17,11 @@ import { AnimateChangeInHeight } from "@/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
+type ImportedPair = {
+  word1: string;
+  word2: string;
+};
+
 const tagsUlVariants: Variants = {
   hidden: {
     height: 0,
@@ -48,6 +53,7 @@ function EditWords() {
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   const [shakeEditButton, setShakeEditButton] = useState<string | null>(null);
   const [isAddingNewPair, setIsAddingNewPair] = useState(false);
   const [editing, setEditing] = useState("");
@@ -56,8 +62,14 @@ function EditWords() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editedPair, setEditedPair] = useState<(Pair & { tempId?: string }) | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { word1?: string; word2?: string; general?: string } }>({});
+  const [importError, setImportError] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLDivElement>(null);
+
+  const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+  const MAX_PAIRS = 300;
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
@@ -73,7 +85,6 @@ function EditWords() {
 
   const fetchAndUpdateData = useCallback(async () => {
     if (!user) return;
-
     try {
       const { data: pairsData, error: pairsError } = await supabase
         .from("word-pairs")
@@ -322,6 +333,7 @@ function EditWords() {
         ...prev,
         [editedPair.id]: { ...prev[editedPair.id], [field]: undefined },
       }));
+      console.log(value);
     }
   };
 
@@ -375,6 +387,130 @@ function EditWords() {
     setSearchQuery(e.target.value);
   };
 
+  const handleImport = () => {
+    setImportSuccess("");
+    setImportError("");
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user) {
+      return;
+    }
+    setImportSuccess("");
+    setImportError("");
+    setIsImporting(true);
+    const file = event.target.files?.[0];
+    if (!file) {
+      setIsImporting(false);
+      return;
+    }
+
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+
+    if (!fileExtension || !["csv", "xlsx", "xls"].includes(fileExtension)) {
+      setImportError("Please select a CSV or Excel file");
+      setIsImporting(false);
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      setImportError("File is too large. Maximum size is 1MB.");
+      setIsImporting(false);
+      return;
+    }
+
+    try {
+      const XLSX = await import("xlsx");
+
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      const rows = XLSX.utils.sheet_to_json(worksheet, {
+        header: 1,
+        raw: false,
+        defval: "", // Set empty cells to empty string
+      }) as unknown[][];
+
+      const hasExtraColumns = rows.some(
+        (row) => row.filter((cell) => cell !== "" && cell !== null && cell !== undefined).length > 2
+      );
+
+      if (hasExtraColumns) {
+        setImportError(
+          "File contains more than 2 columns. Please ensure your file has exactly two columns for word pairs."
+        );
+        return;
+      }
+
+      const validPairs: ImportedPair[] = rows
+        .filter(
+          (row: unknown[]): row is [string, string, ...unknown[]] =>
+            Array.isArray(row) &&
+            row.length >= 2 &&
+            typeof row[0] === "string" &&
+            typeof row[1] === "string" &&
+            Boolean(row[0].trim()) &&
+            Boolean(row[1].trim())
+        )
+        .map((row) => ({
+          word1: String(row[0]).trim().slice(0, 35),
+          word2: String(row[1]).trim().slice(0, 35),
+        }))
+        .slice(0, MAX_PAIRS);
+
+      if (validPairs.length === 0) {
+        setImportError("No valid word pairs found in file. Make sure each row has exactly two words.");
+        setIsImporting(false);
+        return;
+      }
+
+      if (rows.length > MAX_PAIRS) {
+        setImportError(`File contains too many rows. Only the first ${MAX_PAIRS} valid pairs will be imported.`);
+      }
+
+      const pairsToInsert = validPairs.map((pair) => ({
+        ...pair,
+        user_id: user.id,
+        tag_ids: [],
+      }));
+
+      const { data: insertedPairs, error: insertError } = await supabase
+        .from("word-pairs")
+        .insert(pairsToInsert)
+        .select();
+
+      if (insertError) {
+        console.error("Error inserting pairs:", insertError);
+        setImportError("Failed to import pairs. Please try again.");
+        setIsImporting(false);
+        return;
+      }
+
+      if (insertedPairs) {
+        setPairs((prevPairs) => [
+          ...insertedPairs.map((pair) => ({
+            ...pair,
+            tempId: pair.id,
+          })),
+          ...prevPairs,
+        ]);
+        setImportSuccess(`Success! Imported ${validPairs.length} pairs.`);
+        setTimeout(() => {
+          scrollToSearch();
+        }, 100);
+      }
+    } catch (error) {
+      console.error("Error processing file:", error);
+      setImportError("Error reading file. Please make sure it's a valid file format.");
+      setImportSuccess("");
+    } finally {
+      setIsImporting(false);
+      event.target.value = "";
+    }
+  };
+
   const filteredPairs = pairs.filter((pair) => {
     const searchLower = searchQuery.toLowerCase();
     const matchesWord =
@@ -403,7 +539,7 @@ function EditWords() {
             onClick={() => setHelpOpen(!helpOpen)}
             whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
           >
-            <p>Help</p>
+            <p>View Help</p>
             <HelpCircle />
 
             <AnimateChangeInHeight>
@@ -431,6 +567,66 @@ function EditWords() {
               </AnimatePresence>
             </AnimateChangeInHeight>
           </m.div>
+
+          <div className={styles.importWrapper}>
+            <p>
+              You can also import a list of word pairs from a file. It has to be a table formatted with two columns,
+              where each row is a pair of words.
+            </p>
+
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='.csv,.xlsx,.xls'
+              onChange={handleFileSelect}
+              style={{ display: "none" }}
+              aria-label='Import word pairs from CSV or Excel file'
+            />
+
+            <m.button
+              className={styles.importButton}
+              initial={{ backgroundColor: "var(--color-background)" }}
+              animate={{
+                opacity: isAddingNewPair || Boolean(searchQuery) || isImporting ? 0.5 : 1,
+              }}
+              style={{
+                pointerEvents: isAddingNewPair || Boolean(searchQuery) || isImporting ? "none" : "auto",
+              }}
+              whileTap={
+                user && !isAddingNewPair && !isImporting ? { backgroundColor: "var(--color-background-highlight)" } : {}
+              }
+              onClick={handleImport}
+              disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery) || isImporting}
+            >
+              <p>{isImporting ? "Importing..." : "Import word pairs"}</p>
+              {isImporting ? <Spinner height='20px' width='20px' borderWidth='2px' /> : <Plus size={25} />}
+            </m.button>
+
+            <AnimateChangeInHeight className={styles.importMessageWrapper}>
+              <AnimatePresence>
+                {importError && (
+                  <m.p
+                    className={styles.errorMessage}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {importError}
+                  </m.p>
+                )}
+                {importSuccess && (
+                  <m.p
+                    className={styles.successMessage}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    {importSuccess}
+                  </m.p>
+                )}
+              </AnimatePresence>
+            </AnimateChangeInHeight>
+          </div>
         </div>
 
         <m.div className={styles.mainControlsWrapper} variants={simpleFadeVariants} initial='hidden' animate='show'>
@@ -455,7 +651,7 @@ function EditWords() {
               placeholder='Search pairs by word or tag'
               maxLength={25}
               onChange={handleSearch}
-              disabled={!user || tagsLoading}
+              disabled={!user || tagsLoading || isImporting}
             />
           </div>
 
@@ -466,7 +662,7 @@ function EditWords() {
             style={{ pointerEvents: isAddingNewPair || Boolean(searchQuery) ? "none" : "auto" }}
             whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
             onClick={handleAdd}
-            disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery)}
+            disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery) || isImporting}
           >
             <p>Add word pair</p>
             <Plus size={25} />

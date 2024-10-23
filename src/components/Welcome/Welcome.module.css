@@ -16,12 +16,11 @@
   display: flex;
   justify-content: center;
   text-align: center;
-  /* font-family: "Roboto Mono"; */
 }
 
 .hero h1 {
   margin: 1vh 0 1rem 0;
-  font-size: clamp(20px, 9vw, 40px);
+  font-size: clamp(20px, 8.4vw, 40px);
   font-weight: 800;
   color: var(--color-text);
 }

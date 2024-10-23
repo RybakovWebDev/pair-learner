@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, m } from "framer-motion";
 import { supabase } from "@/utils/supabase/client";
 
@@ -35,6 +35,19 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
   const [confirmDeleteTag, setConfirmDeleteTag] = useState("");
   const [editedTag, setEditedTag] = useState<Tag | null>(null);
   const [errors, setErrors] = useState<{ [key: string]: { general?: string } }>({});
+  const [isAnimationReady, setIsAnimationReady] = useState(false);
+
+  // Prevents wrapper animation stutter on page load
+  useEffect(() => {
+    if (tagsLoading) {
+      setIsAnimationReady(false);
+    } else {
+      const timer = setTimeout(() => {
+        setIsAnimationReady(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [tagsLoading]);
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
@@ -246,7 +259,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
           <Plus size={25} />
         </m.button>
       </div>
-      {tagsLoading ? (
+      {tagsLoading || !isAnimationReady ? (
         <Spinner margin='4rem calc(50% - 2rem)' />
       ) : (
         <AnimatePresence mode='wait'>

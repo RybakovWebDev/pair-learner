@@ -88,6 +88,7 @@
   width: 100%;
   max-width: 17.5rem;
   color: var(--color-text);
+  font-weight: 600;
   background: transparent;
   border: 1px solid var(--color-background-secondary);
   border-radius: 10px;

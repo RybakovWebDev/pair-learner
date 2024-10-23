@@ -42,8 +42,12 @@ function Welcome() {
           <p>Filter words by language, topic, or anything you want</p>
         </li>
         <li className={styles.feature}>
-          <h2>Interactive Learning</h2>
-          <p>Reinforce memory through dynamic word-pair matching</p>
+          <h2>Easy Word Import</h2>
+          <p>Quickly import word lists from CSV or Excel files</p>
+        </li>
+        <li className={styles.feature}>
+          <h2>Memory Game</h2>
+          <p>Learn anything through an engaging word-matching game</p>
         </li>
         <li className={styles.feature}>
           <h2>100% Free</h2>
