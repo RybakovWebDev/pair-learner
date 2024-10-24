@@ -341,15 +341,12 @@ function EditWords() {
     (e: React.KeyboardEvent<HTMLInputElement>, field: "word1" | "word2") => {
       if (editing && editedPair) {
         if (e.key === "Enter" || e.key === "Return") {
-          // Handle both Enter and Return
           e.preventDefault();
 
           if (field === "word1") {
-            // When in first input, find and focus the second input
             const nextInput = document.getElementById(`word2-${editedPair.id}`);
             nextInput?.focus();
           } else {
-            // When in second input, save changes
             handleEditSave(editedPair);
           }
         } else if (e.key === "Escape") {
@@ -439,7 +436,7 @@ function EditWords() {
       const rows = XLSX.utils.sheet_to_json(worksheet, {
         header: 1,
         raw: false,
-        defval: "", // Set empty cells to empty string
+        defval: "",
       }) as unknown[][];
 
       const hasExtraColumns = rows.some(
@@ -594,8 +591,8 @@ function EditWords() {
 
           <div className={styles.importWrapper}>
             <p>
-              You can also import a list of word pairs from a file. It has to be a Excel or CSV table formatted with two
-              columns, where each row is a pair of words.
+              You can also import a list of word pairs from a file. It has to be an Excel or CSV table formatted with
+              two columns, where each row is a pair of words.
             </p>
 
             <input
