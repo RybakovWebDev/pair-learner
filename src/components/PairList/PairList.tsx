@@ -18,8 +18,9 @@ interface PairListProps {
   isGameRunning: boolean;
   refreshTrigger?: number;
   emojis?: boolean;
-  endlessMode: boolean;
   showSparkles?: boolean;
+  endlessMode: boolean;
+  mixColumns?: boolean;
   pairs: Pair[];
   onPairSolved?: () => void;
 }
@@ -172,8 +173,9 @@ function PairList({
   isGameRunning,
   refreshTrigger,
   emojis,
-  endlessMode,
   showSparkles = true,
+  endlessMode,
+  mixColumns = false,
   pairs,
   onPairSolved,
 }: PairListProps) {
@@ -216,29 +218,48 @@ function PairList({
     const selectedPairs = getRandomUniquePairs(pairs, numPairs);
     currentRoundPairs.current = selectedPairs;
 
-    const newLeftColumn = selectedPairs.map((pair) => ({
-      word: pair.word1,
-      isMatched: false,
-      isAnimating: false,
-      id: pair.id,
-    }));
-
-    const newRightColumn = selectedPairs.map((pair) => ({
-      word: pair.word2,
-      isMatched: false,
-      isAnimating: false,
-      id: pair.id,
-    }));
+    const columnWords = selectedPairs.map((pair) => {
+      if (mixColumns && Math.random() < 0.5) {
+        return {
+          left: {
+            word: pair.word2,
+            isMatched: false,
+            isAnimating: false,
+            id: pair.id,
+          },
+          right: {
+            word: pair.word1,
+            isMatched: false,
+            isAnimating: false,
+            id: pair.id,
+          },
+        };
+      }
+      return {
+        left: {
+          word: pair.word1,
+          isMatched: false,
+          isAnimating: false,
+          id: pair.id,
+        },
+        right: {
+          word: pair.word2,
+          isMatched: false,
+          isAnimating: false,
+          id: pair.id,
+        },
+      };
+    });
 
     dispatch({
       type: "INITIALIZE_COLUMNS",
       payload: {
-        left: shuffleArray(newLeftColumn),
-        right: shuffleArray(newRightColumn),
+        left: shuffleArray(columnWords.map((p) => p.left)),
+        right: shuffleArray(columnWords.map((p) => p.right)),
       },
     });
     dispatch({ type: "INCREMENT_LIST_KEY" });
-  }, [numPairs, pairs, getRandomUniquePairs, dispatch]);
+  }, [numPairs, pairs, getRandomUniquePairs, mixColumns]);
 
   useEffect(() => {
     dispatch({ type: "SET_LOADING", payload: true });
@@ -282,6 +303,7 @@ function PairList({
     isProcessingQueue.current = true;
     const pair = matchQueue.current[0];
 
+    // Updated matching logic
     const isMatch = currentRoundPairs.current.some(
       (testPair) =>
         (testPair.word1 === pair.left && testPair.word2 === pair.right) ||
@@ -313,7 +335,6 @@ function PairList({
               let newLeftColumn = [...updatedLeftColumn];
               let newRightColumn = [...updatedRightColumn];
 
-              // Find positions of matched pairs in both columns
               const matchedLeftPositions = updatedLeftColumn
                 .map((w, index) => (w.isMatched ? index : -1))
                 .filter((index) => index !== -1);
@@ -323,7 +344,10 @@ function PairList({
 
               // Get current pairs and words in the list
               const currentPairs = currentRoundPairs.current.filter(
-                (p) => !matchedLeftPositions.some((pos) => updatedLeftColumn[pos].word === p.word1)
+                (p) =>
+                  !matchedLeftPositions.some(
+                    (pos) => updatedLeftColumn[pos].word === p.word1 || updatedLeftColumn[pos].word === p.word2
+                  )
               );
               const currentWords = new Set(currentPairs.flatMap((p) => [p.word1, p.word2]));
 
@@ -334,18 +358,11 @@ function PairList({
                   newPair = getRandomPair();
                 } while (
                   currentPairs.some(
-                    (p) =>
-                      (p.word1 === newPair.word1 && p.word2 === newPair.word2) ||
-                      (p.word1 === newPair.word2 && p.word2 === newPair.word1)
+                    (p) => p.id === newPair.id || currentWords.has(newPair.word1) || currentWords.has(newPair.word2)
                   ) ||
                   newPair.word1 === replacedLeftWord ||
-                  newPair.word2 === replacedRightWord ||
-                  currentWords.has(newPair.word1) ||
-                  currentWords.has(newPair.word2)
+                  newPair.word2 === replacedRightWord
                 );
-                currentPairs.push(newPair);
-                currentWords.add(newPair.word1);
-                currentWords.add(newPair.word2);
                 return newPair;
               };
 
@@ -357,28 +374,38 @@ function PairList({
                 const replacedRightWord = updatedRightColumn[rightPosition].word;
 
                 const newPair = getUniquePair(replacedLeftWord, replacedRightWord);
+                const newLeftId = `${newPair.id}_${makeid(4)}`;
+                const newRightId = `${newPair.id}_${makeid(4)}`;
+
+                // Determine word placement
+                const shouldSwap = mixColumns && Math.random() < 0.5;
+                const leftWord = shouldSwap ? newPair.word2 : newPair.word1;
+                const rightWord = shouldSwap ? newPair.word1 : newPair.word2;
 
                 newLeftColumn[leftPosition] = {
-                  word: newPair.word1,
+                  word: leftWord,
                   isMatched: false,
                   isAnimating: false,
-                  id: newPair.id + "_left",
+                  id: newLeftId,
                 };
 
                 newRightColumn[rightPosition] = {
-                  word: newPair.word2,
+                  word: rightWord,
                   isMatched: false,
                   isAnimating: false,
-                  id: newPair.id + "_right",
+                  id: newRightId,
                 };
 
                 // Update currentRoundPairs
-                const indexToReplace = currentRoundPairs.current.findIndex(
-                  (p) => p.word1 === replacedLeftWord || p.word2 === replacedRightWord
+                currentRoundPairs.current = currentRoundPairs.current.filter(
+                  (p) => p.word1 !== replacedLeftWord && p.word2 !== replacedRightWord
                 );
-                if (indexToReplace !== -1) {
-                  currentRoundPairs.current[indexToReplace] = newPair;
-                }
+                currentRoundPairs.current.push({
+                  ...newPair,
+                  id: newPair.id,
+                  word1: leftWord,
+                  word2: rightWord,
+                });
               });
 
               dispatch({
@@ -440,7 +467,16 @@ function PairList({
       },
       isMatch ? exitAnimationDuration : 700
     );
-  }, [state.leftColumn, state.rightColumn, endlessMode, getRandomPair, initializeColumns, onPairSolved, dispatch]);
+  }, [
+    state.leftColumn,
+    state.rightColumn,
+    endlessMode,
+    getRandomPair,
+    initializeColumns,
+    onPairSolved,
+    dispatch,
+    mixColumns,
+  ]);
 
   useEffect(() => {
     const completePairs = state.selectedPairs.filter((pair) => pair.left && pair.right && pair.matchResult === null);

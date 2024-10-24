@@ -12,10 +12,20 @@ interface GameTogglesProps {
   onSparklesToggle: () => void;
   endless: boolean;
   onEndlessToggle: () => void;
+  mixColumns: boolean;
+  onMixToggle: () => void;
   isDisabled: boolean;
 }
 
-function GameToggles({ showSparkles, onSparklesToggle, endless, onEndlessToggle, isDisabled }: GameTogglesProps) {
+function GameToggles({
+  showSparkles,
+  onSparklesToggle,
+  endless,
+  onEndlessToggle,
+  mixColumns,
+  onMixToggle,
+  isDisabled,
+}: GameTogglesProps) {
   return (
     <m.div className={styles.mainWrapper} variants={controlsVariants} animate={isDisabled ? "disabled" : "enabled"}>
       <ul>
@@ -24,6 +34,9 @@ function GameToggles({ showSparkles, onSparklesToggle, endless, onEndlessToggle,
         </li>
         <li className={styles.toggleWrapper}>
           <Toggle labelText='Endless mode' checked={endless} onChange={onEndlessToggle} />
+        </li>
+        <li className={styles.toggleWrapper}>
+          <Toggle labelText='Mix columns' checked={mixColumns} onChange={onMixToggle} />
         </li>
       </ul>
     </m.div>

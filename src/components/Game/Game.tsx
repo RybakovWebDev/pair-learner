@@ -27,6 +27,7 @@ interface PairListProps {
   pairs: Pair[];
   endlessMode: boolean;
   showSparkles: boolean;
+  mixColumns: boolean;
 }
 
 type GameState = {
@@ -106,8 +107,9 @@ function Game() {
     refreshTrigger: 0,
     solvedPairs: 0,
   });
-  const [endlessMode, setEndlessMode] = useState(false);
   const [showSparkles, setShowSparkles] = useState(true);
+  const [endlessMode, setEndlessMode] = useState(false);
+  const [mixColumns, setMixColumns] = useState(false);
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -219,13 +221,18 @@ function Game() {
     [state.isGameRunning]
   );
 
+  const handleSparklesToggle = useCallback(() => {
+    setShowSparkles((prev) => !prev);
+  }, []);
+
   const handleEndlessToggle = useCallback(() => {
     setEndlessMode((prev) => !prev);
     dispatch({ type: "REFRESH_TRIGGER" });
   }, []);
 
-  const handleSparklesToggle = useCallback(() => {
-    setShowSparkles((prev) => !prev);
+  const handleMixToggle = useCallback(() => {
+    setMixColumns((prev) => !prev);
+    dispatch({ type: "REFRESH_TRIGGER" });
   }, []);
 
   const handlePairSolved = useCallback(() => {
@@ -247,7 +254,7 @@ function Game() {
 
   const MemoizedPairListWrapper = useMemo(() => {
     const MemoizedComponent = memo<PairListProps>(
-      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles }) => {
+      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles, mixColumns }) => {
         return (
           <PairList
             numPairs={numPairs}
@@ -257,6 +264,7 @@ function Game() {
             onPairSolved={handlePairSolved}
             endlessMode={endlessMode}
             showSparkles={showSparkles}
+            mixColumns={mixColumns}
           />
         );
       }
@@ -300,6 +308,7 @@ function Game() {
               pairs={filteredPairs}
               endlessMode={endlessMode}
               showSparkles={showSparkles}
+              mixColumns={mixColumns}
             />
           )}
         </AnimateChangeInHeight>
@@ -399,6 +408,8 @@ function Game() {
             onSparklesToggle={handleSparklesToggle}
             endless={endlessMode}
             onEndlessToggle={handleEndlessToggle}
+            mixColumns={mixColumns}
+            onMixToggle={handleMixToggle}
             isDisabled={areControlsDisabled}
           />
         </m.div>
