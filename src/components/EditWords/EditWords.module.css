@@ -26,6 +26,7 @@
 }
 
 .helpOuterWrapper {
+  position: relative;
   padding: 1rem 2rem;
   margin: 1rem 0 0 0;
   width: 30rem;
@@ -44,9 +45,20 @@
   margin: 0.5rem 0 1.5rem 0;
 }
 
-.helpInnerWrapper p:last-child {
-  padding: 0 0 1.5rem 0;
-  margin: 1rem 0;
+.helpInnerWrapper ul {
+  list-style-type: none;
+  padding: 0 0 0.5rem 1rem;
+}
+
+.helpInnerWrapper ul li {
+  margin: 0.5rem 0;
+}
+
+.helpInnerWrapper ul li::before {
+  position: absolute;
+  left: 2rem;
+  content: "- ";
+  margin-right: 2px;
 }
 
 .importWrapper {

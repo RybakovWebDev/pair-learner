@@ -338,11 +338,20 @@ function EditWords() {
   };
 
   const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLInputElement>) => {
+    (e: React.KeyboardEvent<HTMLInputElement>, field: "word1" | "word2") => {
       if (editing && editedPair) {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" || e.key === "Return") {
+          // Handle both Enter and Return
           e.preventDefault();
-          handleEditSave(editedPair);
+
+          if (field === "word1") {
+            // When in first input, find and focus the second input
+            const nextInput = document.getElementById(`word2-${editedPair.id}`);
+            nextInput?.focus();
+          } else {
+            // When in second input, save changes
+            handleEditSave(editedPair);
+          }
         } else if (e.key === "Escape") {
           e.preventDefault();
           handleEditCancel();
@@ -454,10 +463,18 @@ function EditWords() {
             Boolean(row[0].trim()) &&
             Boolean(row[1].trim())
         )
-        .map((row) => ({
-          word1: String(row[0]).trim().slice(0, 35),
-          word2: String(row[1]).trim().slice(0, 35),
-        }))
+        .map((row) => {
+          const word1 = row[0].trim().split(",")[0].trim().slice(0, 35);
+          const processedWord1 = word1.charAt(0).toUpperCase() + word1.slice(1);
+
+          const word2 = row[1].trim().split(",")[0].trim().slice(0, 35);
+          const processedWord2 = word2.charAt(0).toUpperCase() + word2.slice(1);
+
+          return {
+            word1: processedWord1,
+            word2: processedWord2,
+          };
+        })
         .slice(0, MAX_PAIRS);
 
       if (validPairs.length === 0) {
@@ -561,7 +578,14 @@ function EditWords() {
                       the words by type (Family, Food, Animals and so on) if you are only learning a single language.
                     </p>
                     <p>Experiment to find what works best for you!</p>
-                    <p>Hint: You can press &quot;Enter&quot; to confirm changes to a word pair</p>
+                    <span>Hints:</span>
+                    <ul>
+                      <li>You can press &quot;Enter&quot; to confirm changes to a word pair</li>
+                      <li>
+                        You can use browser extensions like Duolingo Ninja to download all of your known Duolingo words
+                        into a table and import them here
+                      </li>
+                    </ul>
                   </m.div>
                 )}
               </AnimatePresence>
@@ -570,8 +594,8 @@ function EditWords() {
 
           <div className={styles.importWrapper}>
             <p>
-              You can also import a list of word pairs from a file. It has to be a table formatted with two columns,
-              where each row is a pair of words.
+              You can also import a list of word pairs from a file. It has to be a Excel or CSV table formatted with two
+              columns, where each row is a pair of words.
             </p>
 
             <input
@@ -706,7 +730,7 @@ function EditWords() {
                               disabled={editing !== p.id}
                               value={editing === p.id ? editedPair?.word1 : p.word1}
                               onChange={(e) => handleInputChange("word1", e.target.value)}
-                              onKeyDown={handleKeyDown}
+                              onKeyDown={(e) => handleKeyDown(e, "word1")}
                               style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                             />
                           </div>
@@ -727,7 +751,7 @@ function EditWords() {
                               disabled={editing !== p.id}
                               value={editing === p.id ? editedPair?.word2 : p.word2}
                               onChange={(e) => handleInputChange("word2", e.target.value)}
-                              onKeyDown={handleKeyDown}
+                              onKeyDown={(e) => handleKeyDown(e, "word2")}
                               style={{ pointerEvents: editing !== p.id ? "none" : "auto" }}
                             />
                           </div>
