@@ -10,7 +10,7 @@ import EditDeleteControls from "../EditDeleteControls";
 import Spinner from "../Spinner";
 
 import { Tag, Pair } from "@/constants";
-import { AnimateChangeInHeight } from "@/helpers";
+import { AnimateChangeInHeight } from "@/utils/helpers";
 
 interface EditWordsTagsSectionProps {
   user: any;

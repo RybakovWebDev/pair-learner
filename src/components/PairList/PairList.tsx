@@ -9,7 +9,7 @@ import WordCell from "../WordCell";
 import Spinner from "../Spinner";
 
 import { Pair } from "@/constants";
-import { AnimateChangeInHeight, makeid, shuffleArray } from "@/helpers";
+import { AnimateChangeInHeight, makeid, shuffleArray } from "@/utils/helpers";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 

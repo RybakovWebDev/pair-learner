@@ -3,7 +3,7 @@ import React, { useState, ReactNode, useEffect, useRef, useCallback } from "reac
 
 import styles from "./Sparkles.module.css";
 
-import { random } from "@/helpers";
+import { random } from "@/utils/helpers";
 import { useRandomInterval } from "@/hooks/useRandomInterval";
 
 const DEFAULT_COLOR = "var(--color-sparkles)";

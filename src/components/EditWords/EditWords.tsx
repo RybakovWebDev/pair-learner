@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
@@ -13,7 +13,8 @@ import Spinner from "../Spinner";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, simpleFadeVariants, Tag } from "@/constants";
-import { AnimateChangeInHeight } from "@/helpers";
+import { AnimateChangeInHeight } from "@/utils/helpers";
+import { handleFileImport } from "@/utils/fileUtils";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -50,6 +51,8 @@ function EditWords() {
   const router = useRouter();
 
   const [pairs, setPairs] = useState<(Pair & { tempId?: string })[]>([]);
+  const [loadedPairs, setLoadedPairs] = useState<(Pair & { tempId?: string })[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
   const [tags, setTags] = useState<(Tag & { tempId?: string })[]>([]);
   const [tagsLoading, setTagsLoading] = useState(true);
   const [helpOpen, setHelpOpen] = useState(false);
@@ -65,11 +68,15 @@ function EditWords() {
   const [importError, setImportError] = useState<string | null>(null);
   const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLDivElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
-  const MAX_FILE_SIZE = 1024 * 1024; // 1MB
-  const MAX_PAIRS = 300;
+  const LIMIT = 50;
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
@@ -86,11 +93,23 @@ function EditWords() {
   const fetchAndUpdateData = useCallback(async () => {
     if (!user) return;
     try {
+      const { count: totalCount, error: countError } = await supabase
+        .from("word-pairs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      if (countError) {
+        console.error("Error fetching count:", countError);
+        return;
+      }
+
+      setTotalCount(totalCount || 0);
       const { data: pairsData, error: pairsError } = await supabase
         .from("word-pairs")
         .select("*")
         .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .range(0, LIMIT - 1);
 
       if (pairsError) {
         console.error("Error fetching word pairs:", pairsError);
@@ -102,7 +121,10 @@ function EditWords() {
         tempId: pair.id,
       }));
 
-      setPairs(updatedPairsData as (Pair & { tempId?: string })[]);
+      setPairs(updatedPairsData);
+      setLoadedPairs(updatedPairsData);
+      setHasMore(pairsData.length === LIMIT);
+      setOffset(LIMIT);
 
       const { data: tagsData, error: tagsError } = await supabase
         .from("tags")
@@ -389,10 +411,6 @@ function EditWords() {
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
-  };
-
   const handleImport = () => {
     setImportSuccess("");
     setImportError("");
@@ -406,137 +424,127 @@ function EditWords() {
     setImportSuccess("");
     setImportError("");
     setIsImporting(true);
+
     const file = event.target.files?.[0];
     if (!file) {
       setIsImporting(false);
       return;
     }
 
-    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const result = await handleFileImport(file, user, supabase);
 
-    if (!fileExtension || !["csv", "xlsx", "xls"].includes(fileExtension)) {
-      setImportError("Please select a CSV or Excel file");
-      setIsImporting(false);
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setImportError("File is too large. Maximum size is 1MB.");
-      setIsImporting(false);
-      return;
-    }
-
-    try {
-      const XLSX = await import("xlsx");
-
-      const buffer = await file.arrayBuffer();
-      const workbook = XLSX.read(buffer, { type: "array" });
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-
-      const rows = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        raw: false,
-        defval: "",
-      }) as unknown[][];
-
-      const hasExtraColumns = rows.some(
-        (row) => row.filter((cell) => cell !== "" && cell !== null && cell !== undefined).length > 2
-      );
-
-      if (hasExtraColumns) {
-        setImportError(
-          "File contains more than 2 columns. Please ensure your file has exactly two columns for word pairs."
-        );
-        return;
-      }
-
-      const validPairs: ImportedPair[] = rows
-        .filter(
-          (row: unknown[]): row is [string, string, ...unknown[]] =>
-            Array.isArray(row) &&
-            row.length >= 2 &&
-            typeof row[0] === "string" &&
-            typeof row[1] === "string" &&
-            Boolean(row[0].trim()) &&
-            Boolean(row[1].trim())
-        )
-        .map((row) => {
-          const word1 = row[0].trim().split(",")[0].trim().slice(0, 35);
-          const processedWord1 = word1.charAt(0).toUpperCase() + word1.slice(1);
-
-          const word2 = row[1].trim().split(",")[0].trim().slice(0, 35);
-          const processedWord2 = word2.charAt(0).toUpperCase() + word2.slice(1);
-
-          return {
-            word1: processedWord1,
-            word2: processedWord2,
-          };
-        })
-        .slice(0, MAX_PAIRS);
-
-      if (validPairs.length === 0) {
-        setImportError("No valid word pairs found in file. Make sure each row has exactly two words.");
-        setIsImporting(false);
-        return;
-      }
-
-      if (rows.length > MAX_PAIRS) {
-        setImportError(`File contains too many rows. Only the first ${MAX_PAIRS} valid pairs will be imported.`);
-      }
-
-      const pairsToInsert = validPairs.map((pair) => ({
-        ...pair,
-        user_id: user.id,
-        tag_ids: [],
-      }));
-
-      const { data: insertedPairs, error: insertError } = await supabase
-        .from("word-pairs")
-        .insert(pairsToInsert)
-        .select();
-
-      if (insertError) {
-        console.error("Error inserting pairs:", insertError);
-        setImportError("Failed to import pairs. Please try again.");
-        setIsImporting(false);
-        return;
-      }
-
-      if (insertedPairs) {
+    if (!result.success) {
+      setImportError(result.error || "");
+      setImportSuccess("");
+    } else {
+      if (result.insertedPairs) {
         setPairs((prevPairs) => [
-          ...insertedPairs.map((pair) => ({
+          ...result.insertedPairs.map((pair) => ({
             ...pair,
             tempId: pair.id,
           })),
           ...prevPairs,
         ]);
-        setImportSuccess(`Success! Imported ${validPairs.length} pairs.`);
-        setTimeout(() => {
-          scrollToSearch();
-        }, 100);
       }
-    } catch (error) {
-      console.error("Error processing file:", error);
-      setImportError("Error reading file. Please make sure it's a valid file format.");
-      setImportSuccess("");
-    } finally {
-      setIsImporting(false);
-      event.target.value = "";
+      setImportSuccess(result.successMessage || "");
+      setTimeout(() => {
+        scrollToSearch();
+      }, 100);
     }
+
+    setIsImporting(false);
+    event.target.value = "";
   };
 
-  const filteredPairs = pairs.filter((pair) => {
-    const searchLower = searchQuery.toLowerCase();
-    const matchesWord =
-      pair.word1.toLowerCase().includes(searchLower) || pair.word2.toLowerCase().includes(searchLower);
+  const handleSearch = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const query = e.target.value;
+      setSearchQuery(query);
 
-    const matchesTags = pair.tag_ids.some((tagId) => {
-      const tag = tags.find((t) => t.id === tagId);
-      return tag && tag.name.toLowerCase().includes(searchLower);
-    });
+      if (!user) return;
 
-    return matchesWord || matchesTags;
-  });
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      searchTimeoutRef.current = setTimeout(async () => {
+        setIsSearching(true);
+        setPairs([]);
+
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        if (query) {
+          try {
+            const { data, error } = await supabase
+              .from("word-pairs")
+              .select("*")
+              .eq("user_id", user.id)
+              .or(`word1.ilike.%${query}%,word2.ilike.%${query}%`)
+              .order("created_at", { ascending: false });
+
+            if (error) {
+              console.error("Error searching pairs:", error);
+              return;
+            }
+
+            const updatedData = data.map((pair: Pair) => ({
+              ...pair,
+              tempId: pair.id,
+            }));
+
+            setPairs(updatedData);
+            setHasMore(false);
+          } catch (error) {
+            console.error("Search error:", error);
+          }
+        } else {
+          setPairs(loadedPairs);
+          setHasMore(loadedPairs.length === offset);
+        }
+
+        setIsSearching(false);
+      }, 500);
+    },
+    [user, loadedPairs, offset]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleLoadMore = useCallback(async () => {
+    if (!user || isSearching) return;
+
+    try {
+      const { data: pairsData, error: pairsError } = await supabase
+        .from("word-pairs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + LIMIT - 1);
+
+      if (pairsError) {
+        console.error("Error fetching more pairs:", pairsError);
+        return;
+      }
+
+      const updatedPairsData = pairsData.map((pair: Pair) => ({
+        ...pair,
+        tempId: pair.id,
+      }));
+
+      setPairs((prev) => [...prev, ...updatedPairsData]);
+      setLoadedPairs((prev) => [...prev, ...updatedPairsData]);
+      setHasMore(pairsData.length === LIMIT);
+      setOffset((prev) => prev + LIMIT);
+    } catch (error) {
+      console.error("Error loading more pairs:", error);
+    }
+  }, [user, offset, isSearching]);
 
   if (!user) {
     return <Spinner />;
@@ -694,10 +702,14 @@ function EditWords() {
 
         {user ? (
           <>
-            {filteredPairs.length > 0 ? (
+            {tagsLoading ? (
+              <Spinner />
+            ) : isSearching ? (
+              <Spinner />
+            ) : pairs.length > 0 ? (
               <m.ul className={styles.list} layout>
                 <AnimatePresence>
-                  {filteredPairs.map((p, index) => (
+                  {pairs.map((p, index) => (
                     <m.li
                       layout
                       key={p.id}
@@ -826,7 +838,7 @@ function EditWords() {
                           shakeEditButton={shakeEditButton === p.id}
                           centerIcons={true}
                         />
-                        <p className={styles.pairCount}>{filteredPairs.length - index}</p>
+                        <p className={styles.pairCount}>{searchQuery ? pairs.length - index : totalCount - index}</p>
                       </div>
                     </m.li>
                   ))}
@@ -841,8 +853,22 @@ function EditWords() {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                {pairs.length !== 0 ? "No word pairs match your search." : "No word pairs yet."}
+                {loadedPairs.length === 0 ? "No word pairs yet." : "No word pairs match your search."}
               </m.p>
+            )}
+            {!tagsLoading && !searchQuery && hasMore && (
+              <m.button
+                className={styles.addButton}
+                initial={{ backgroundColor: "var(--color-background)" }}
+                animate={{ opacity: isAddingNewPair || isSearching ? 0.5 : 1 }}
+                style={{ pointerEvents: isAddingNewPair || isSearching ? "none" : "auto" }}
+                whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
+                onClick={handleLoadMore}
+                disabled={!user || tagsLoading || isAddingNewPair || isSearching}
+              >
+                <p>Load more pairs</p>
+                {isSearching && <Spinner height='20px' width='20px' borderWidth='2px' />}
+              </m.button>
             )}
           </>
         ) : (

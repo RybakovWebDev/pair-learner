@@ -7,7 +7,7 @@ import styles from "./PairsDemo.module.css";
 import WordCell from "../WordCell";
 
 import { DEMO_PAIRS } from "@/constants";
-import { makeid, shuffleArray } from "@/helpers";
+import { makeid, shuffleArray } from "@/utils/helpers";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 

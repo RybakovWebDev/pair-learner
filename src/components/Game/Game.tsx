@@ -15,7 +15,7 @@ import GameRoundLengthSelector from "../GameRoundLengthSelector";
 
 import { useUserContext } from "@/contexts/UserContext";
 import { controlsVariants, Pair, rowCountOptions, simpleFadeVariants, Tag } from "@/constants";
-import { AnimateChangeInHeight, formatTime } from "@/helpers";
+import { AnimateChangeInHeight, formatTime } from "@/utils/helpers";
 import GameToggles from "../GameToggles";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);

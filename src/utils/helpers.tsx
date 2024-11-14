@@ -11,14 +11,6 @@ interface AnimateChangeInHeightProps {
   exitDelay?: number;
 }
 
-export const scrollToRef = (ref: React.RefObject<HTMLElement>): void => {
-  ref.current?.scrollIntoView({
-    behavior: "smooth",
-    block: "center",
-  });
-  window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-};
-
 export const shuffleArray = <T,>(array: T[]): T[] => {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -99,21 +91,6 @@ export const formatTime = (seconds: number) => {
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
   return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
-};
-
-export const range = (start: number, end?: number, step = 1): number[] => {
-  let output: number[] = [];
-
-  if (end === undefined) {
-    end = start;
-    start = 0;
-  }
-
-  for (let i = start; i < end; i += step) {
-    output.push(i);
-  }
-
-  return output;
 };
 
 export const random = (min: number, max: number): number => Math.floor(Math.random() * (max - min)) + min;

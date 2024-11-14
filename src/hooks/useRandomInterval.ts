@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 
-import { random } from "@/helpers";
+import { random } from "@/utils/helpers";
 
 interface UseRandomIntervalProps {
   callback: () => void;
