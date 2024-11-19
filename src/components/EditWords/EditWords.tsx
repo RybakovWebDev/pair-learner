@@ -187,6 +187,7 @@ function EditWords() {
     setEditing(tempId);
     setEditedPair(newPair);
     setConfirmDelete("");
+    setTotalCount(totalCount + 1);
     setIsAddingNewPair(true);
   };
 
@@ -264,6 +265,7 @@ function EditWords() {
       if (editing && editedPair) {
         if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
           setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
+          setTotalCount(totalCount - 1);
           setIsAddingNewPair(false);
           setEditing(pair.id);
           setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
@@ -287,25 +289,27 @@ function EditWords() {
         clearAllErrors();
       }
     },
-    [editing, editedPair, handleEditSave, clearAllErrors]
+    [editing, editedPair, handleEditSave, clearAllErrors, totalCount]
   );
 
   const handleEditCancel = useCallback(() => {
     if (editedPair) {
       if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
         setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== editedPair.id));
+        setTotalCount(totalCount - 1);
       }
     }
     setEditing("");
     setEditedPair(null);
     setIsAddingNewPair(false);
-  }, [editedPair]);
+  }, [editedPair, totalCount]);
 
   const handleDeleteStart = useCallback(
     (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
         if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
           setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
+          setTotalCount(totalCount - 1);
           setIsAddingNewPair(false);
           setEditing("");
           setEditedPair(null);
@@ -317,7 +321,7 @@ function EditWords() {
       clearAllErrors();
       setConfirmDelete(pair.id);
     },
-    [editing, editedPair, handleEditSave, clearAllErrors]
+    [editing, editedPair, handleEditSave, clearAllErrors, totalCount]
   );
 
   const handleConfirmDelete = useCallback(
@@ -349,10 +353,10 @@ function EditWords() {
       } else {
         setErrors({});
       }
-
+      setTotalCount(totalCount - 1);
       setConfirmDelete("");
     },
-    [pairs]
+    [pairs, totalCount]
   );
 
   const handleCancelDelete = () => {
@@ -366,7 +370,6 @@ function EditWords() {
         ...prev,
         [editedPair.id]: { ...prev[editedPair.id], [field]: undefined },
       }));
-      console.log(value);
     }
   };
 
