@@ -186,6 +186,7 @@ function EditWords() {
     setPairTagsOpened(tempId);
     setEditing(tempId);
     setEditedPair(newPair);
+    setConfirmDelete("");
     setIsAddingNewPair(true);
   };
 
@@ -261,13 +262,23 @@ function EditWords() {
   const handleEditStart = useCallback(
     (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
-        handleEditSave(editedPair).then(() => {
+        if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
+          setPairs((prevPairs) => prevPairs.filter((p) => p.id !== editedPair.id));
+          setIsAddingNewPair(false);
           setEditing(pair.id);
           setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
           setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
           setConfirmDelete("");
           clearAllErrors();
-        });
+        } else {
+          handleEditSave(editedPair).then(() => {
+            setEditing(pair.id);
+            setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
+            setPairTagsOpened((prev) => (prev !== pair.id ? pair.id : prev));
+            setConfirmDelete("");
+            clearAllErrors();
+          });
+        }
       } else {
         setEditing(pair.id);
         setEditedPair({ ...pair, tag_ids: [...pair.tag_ids] });
@@ -290,7 +301,7 @@ function EditWords() {
     setIsAddingNewPair(false);
   }, [editedPair]);
 
-  const handlePairDelete = useCallback(
+  const handleDeleteStart = useCallback(
     (pair: Pair & { tempId?: string }) => {
       if (editing && editedPair) {
         if (editedPair.id.startsWith("temp-") && editedPair.tempId?.startsWith("temp-")) {
@@ -832,7 +843,7 @@ function EditWords() {
                           onEditStart={() => handleEditStart(p)}
                           onEditConfirm={handleEditConfirm}
                           onEditCancel={handleEditCancel}
-                          onDeleteStart={() => handlePairDelete(p)}
+                          onDeleteStart={() => handleDeleteStart(p)}
                           onDeleteConfirm={() => handleConfirmDelete(p.id)}
                           onDeleteCancel={handleCancelDelete}
                           shakeEditButton={shakeEditButton === p.id}
