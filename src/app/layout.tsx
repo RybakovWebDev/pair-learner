@@ -22,12 +22,28 @@ const inter = Inter({
 
 export const metadata = {
   title: "Pair Learner",
-  description: "Learn new words in any language",
+  description:
+    "Language learning memory game where you match word pairs. Create custom word pairs, organize with tags, and import word lists to practice any language.",
+  openGraph: {
+    title: "Pair Learner",
+    description:
+      "Language learning memory game where you match word pairs. Create custom word pairs, organize with tags, and import word lists to practice any language.",
+    type: "website",
+    locale: "en_US",
+    url: "https://www.pairlearner.app",
+    siteName: "Pair Learner",
+  },
   manifest: "/manifest.json",
   appleWebApp: {
     title: "Pair Learner",
     statusBarStyle: "default",
     capable: true,
+  },
+  keywords:
+    "language learning, vocabulary practice, word pairs, memory game, flashcards, word matching, custom flashcards",
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

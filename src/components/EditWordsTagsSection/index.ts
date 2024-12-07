@@ -1,2 +1,2 @@
-export * from './EditWordsTagsSection';
-export { default } from './EditWordsTagsSection';
+export * from "./EditWordsTagsSection";
+export { default } from "./EditWordsTagsSection";

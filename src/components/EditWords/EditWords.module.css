@@ -198,9 +198,18 @@
   width: 100%;
   font-weight: 600;
   color: var(--color-text);
+  -webkit-text-fill-color: var(--color-text);
   background: transparent;
   border: 1px solid var(--color-background-secondary);
   border-radius: 10px;
+}
+
+.wordDetailsWrapper input:disabled {
+  -webkit-text-fill-color: var(--color-text);
+  opacity: 1;
+  -webkit-opacity: 1;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .wordAttribute {
