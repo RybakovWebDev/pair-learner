@@ -6,10 +6,16 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
+  const code = searchParams.get("code");
 
-  if (token_hash && type) {
-    const supabase = createClient();
+  const supabase = createClient();
 
+  if (code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    if (!error) {
+      return NextResponse.redirect(new URL("/account?reset=true", request.url));
+    }
+  } else if (token_hash && type) {
     const { error } = await supabase.auth.verifyOtp({
       type,
       token_hash,

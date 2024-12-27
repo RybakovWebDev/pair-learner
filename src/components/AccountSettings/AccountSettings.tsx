@@ -33,6 +33,15 @@ function AccountSettings() {
     }
   }, [user, loading, router]);
 
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("reset") === "true") {
+      setEditing(true);
+
+      setSuccessMessage("Please set your new password below");
+    }
+  }, []);
+
   const handleEditing = () => {
     setEditing(!editing);
     if (!editing) {

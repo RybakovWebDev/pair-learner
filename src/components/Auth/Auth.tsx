@@ -6,7 +6,7 @@ import { supabase } from "@/utils/supabase/client";
 import styles from "./Auth.module.css";
 
 import { Eye, EyeOff } from "react-feather";
-import { login, register, sendMagicLink } from "@/app/actions/auth";
+import { login, register, resetPassword, sendMagicLink } from "@/app/actions/auth";
 import { useUserContext } from "@/contexts/UserContext";
 import Spinner from "../Spinner";
 
@@ -33,6 +33,7 @@ function Auth({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [hideForgot, setHideForgot] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -98,6 +99,36 @@ function Auth({
         setIsOpen(false);
         router.push("/learn");
       }
+    } catch (error) {
+      setError((error as Error).message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    setError(null);
+    setSuccessMessage(null);
+    setIsLoading(true);
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail) {
+      setError("Please enter your email address first.");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await resetPassword(trimmedEmail);
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      setSuccessMessage("Password reset email sent!\nPlease check your email to reset your password.");
+      setIsButtonDisabled(true);
+      setHideForgot(true);
     } catch (error) {
       setError((error as Error).message);
     } finally {
@@ -225,6 +256,25 @@ function Auth({
                       authOption
                     )}
                   </m.button>
+
+                  {authOption === "Login" && (
+                    <div className={styles.forgotWrapper}>
+                      <m.button
+                        type='button'
+                        className={styles.forgotButton}
+                        onClick={handleForgotPassword}
+                        disabled={isLoading || isButtonDisabled}
+                        style={{
+                          cursor: isLoading || isButtonDisabled ? "default" : "pointer",
+                        }}
+                        initial={{ opacity: 1 }}
+                        animate={{ opacity: hideForgot ? 0 : 1 }}
+                      >
+                        Forgot password?
+                      </m.button>
+                    </div>
+                  )}
+
                   <div className={styles.messageWrapper}>
                     {error && (
                       <m.p

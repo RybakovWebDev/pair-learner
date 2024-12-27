@@ -1,6 +1,6 @@
 import { Variants } from "framer-motion";
 import { CSSProperties } from "react";
-import { DollarSign, Edit, Globe, Linkedin, Play, User } from "react-feather";
+import { Edit, Globe, Linkedin, Play, User } from "react-feather";
 
 export interface Pair {
   id: string;
@@ -88,7 +88,6 @@ export const LIGHT_COLORS: ThemeColors = {
   "--color-border-success": "hsl(0, 0%, 0%)",
   "--color-border-failure": "hsl(0, 0%, 0%)",
   "--color-sparkles": "hsl(47, 100%, 50%)",
-  // "--color-sparkles": "hsl(182, 96%, 35%)",
 };
 
 export const DARK_COLORS: ThemeColors = {
@@ -105,7 +104,6 @@ export const DARK_COLORS: ThemeColors = {
   "--color-border-success": "hsl(120, 73%, 63%)",
   "--color-border-failure": "hsl(0, 100%, 63%)",
   "--color-sparkles": "hsl(47, 100%, 50%)",
-  // "--color-sparkles": "hsl(186, 69%, 35%)",
 };
 
 export const smoothSpring = {

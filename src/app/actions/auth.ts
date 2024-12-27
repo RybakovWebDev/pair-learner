@@ -76,3 +76,22 @@ export async function sendMagicLink(email: string) {
 
   return { success: true };
 }
+
+export async function resetPassword(email: string) {
+  const validationError = validateInput(email);
+  if (validationError) {
+    return { error: validationError };
+  }
+
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
