@@ -38,7 +38,7 @@ function AccountSettings() {
     if (params.get("reset") === "true") {
       setEditing(true);
 
-      setSuccessMessage("Please set your new password below");
+      setSuccessMessage("Please set your new password");
     }
   }, []);
 
