@@ -33,9 +33,7 @@
 }
 
 .list li {
-  padding: 0 1rem;
   height: 5rem;
-
   font-size: 30px;
 }
 
@@ -49,6 +47,7 @@
 }
 
 .iconWrapper {
+  margin: 0 1rem 0 0;
   height: 2.5rem;
   display: flex;
   border: 1px solid var(--color-background-secondary);

@@ -67,6 +67,7 @@ function HeaderMenu() {
           onClick={handleMenuOpen}
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
+          aria-controls='header-menu'
         >
           <svg width='30' height='30' viewBox='0 0 23 23'>
             <Path
@@ -101,6 +102,8 @@ function HeaderMenu() {
         <AnimatePresence>
           {isOpen && (
             <m.ul
+              id='header-menu'
+              role='menu'
               className={styles.list}
               initial={{ opacity: 1, x: "100vw" }}
               animate={{ opacity: 1, x: 0 }}
@@ -108,16 +111,27 @@ function HeaderMenu() {
               transition={{ duration: 0.3 }}
             >
               {MENU_ITEMS.map((item) => (
-                <m.li key={item.slug} initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                  <Link href={item.href} onClick={handleLinkClick}>
+                <m.li key={item.slug} role='none' initial='hidden' animate='show' exit='exit' variants={liVariants}>
+                  <Link
+                    role='menuitem'
+                    href={item.href}
+                    onKeyDown={(e) => {
+                      if (e.key === " ") {
+                        e.preventDefault();
+                        e.currentTarget.click();
+                      }
+                    }}
+                    onClick={handleLinkClick}
+                  >
                     <p>{item.title}</p>
                     <div className={styles.iconWrapper}>{item.icon}</div>
                   </Link>
                 </m.li>
               ))}
 
-              <m.li key='logout' initial='hidden' animate='show' exit='exit' variants={liVariants}>
+              <m.li key='logout' role='none' initial='hidden' animate='show' exit='exit' variants={liVariants}>
                 <div
+                  role='menuitem'
                   className={styles.logoutWrapper}
                   onClick={!logoutConfirm ? handleInitiateLogout : undefined}
                   style={{ cursor: logoutConfirm ? "default" : "pointer" }}
