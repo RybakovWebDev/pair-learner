@@ -20,7 +20,7 @@
 
 .hero h1 {
   margin: 1vh 0 1rem 0;
-  font-size: clamp(20px, 8.4vw, 40px);
+  font-size: clamp(20px, 8.4vw, 50px);
   font-weight: 800;
   color: var(--color-text);
 }
@@ -30,7 +30,7 @@
 }
 
 .pairsWrapper {
-  min-height: 26rem;
+  min-height: 28rem;
 }
 
 .mainStaticWrapper {
@@ -58,8 +58,9 @@
 }
 
 .features {
-  margin: 1rem 0 0 0;
-  display: flex;
+  margin: 2rem 0 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   flex-direction: column;
   justify-content: center;
   align-items: center;
@@ -70,28 +71,34 @@
 
 .feature {
   padding: 1.5rem;
-  width: 21rem;
+  min-height: 15.5rem;
+  width: 100%;
+  /* display: flex; */
+  /* flex-direction: column; */
   flex-basis: calc(33% - 2rem);
-  text-align: center;
-  background-color: var(--color-background-highlight);
+  /* text-align: center; */
+  background-color: var(--color-background-feature);
+  color: hsl(0 0% 92%);
   border-radius: 20px;
 }
 
 .feature h2 {
-  margin-bottom: 1rem;
-  font-size: 22px;
+  margin: 1rem 0 2rem 0;
+  font-size: 28px;
   font-weight: 800;
-  color: var(--color-text);
 }
 
 .feature p {
-  font-size: 16px;
-  color: var(--color-text);
-  opacity: 0.8;
+  font-size: 18px;
 }
 
 @media (max-width: 768px) {
+  .features {
+    margin: 1rem 0 0 0;
+    display: flex;
+  }
   .feature {
+    min-height: 12rem;
     flex-basis: 100%;
   }
 }

@@ -12,6 +12,7 @@
 
 .mainWrapper ul {
   list-style: none;
+  overflow: hidden;
 }
 
 .leftColumn,

@@ -65,6 +65,7 @@ interface ThemeColors extends CSSProperties {
   "--color-underline": string;
   "--color-background": string;
   "--color-background-highlight": string;
+  "--color-background-feature": string;
   "--color-background-highlight-win": string;
   "--color-background-highlight-fail": string;
   "--color-background-secondary": string;
@@ -81,6 +82,7 @@ export const LIGHT_COLORS: ThemeColors = {
   "--color-underline": "0, 0, 0",
   "--color-background": "hsl(186, 51%, 92%)",
   "--color-background-highlight": "hsl(183, 23%, 53%)",
+  "--color-background-feature": "hsl(180, 92%, 28%)",
   "--color-background-highlight-win": "hsl(128, 100%, 70%)",
   "--color-background-highlight-fail": "hsl(0, 100%, 67%)",
   "--color-background-secondary": "hsla(0, 0%, 0%, 0.3)",
@@ -97,6 +99,7 @@ export const DARK_COLORS: ThemeColors = {
   "--color-underline": "250, 250, 250",
   "--color-background": "hsl(186, 69%, 9%)",
   "--color-background-highlight": "hsl(186, 69%, 22%)",
+  "--color-background-feature": "hsl(186, 69%, 22%)",
   "--color-background-highlight-win": "hsl(186, 69%, 35%)",
   "--color-background-highlight-fail": "hsl(0, 50%, 22%)",
   "--color-background-secondary": "hsla(0, 0%, 80%, 0.4)",
