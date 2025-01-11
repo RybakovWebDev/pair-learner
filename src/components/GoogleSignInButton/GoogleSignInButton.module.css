@@ -1,30 +1,8 @@
-.googleButtonWrapper {
+.wrapper {
   margin: 0 0 1rem 0;
-}
-
-.googleButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  background-color: white;
-  border: 1px solid #dadce0;
-  border-radius: 24px;
-  font-family: "Google Sans", Roboto, Arial, sans-serif;
-  font-size: 14px;
-  color: #3c4043;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  width: 240px;
-  height: 40px;
-}
-
-.googleButton:hover {
-  background-color: #f8f9fa;
-}
-
-.googleLogo {
-  width: 18px;
-  height: 18px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: inherit;
 }
