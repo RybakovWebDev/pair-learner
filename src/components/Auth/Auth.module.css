@@ -74,7 +74,7 @@
 }
 
 .bottomWrapper {
-  height: 100%;
+  /* height: 100%; */
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -180,6 +180,26 @@
   border-radius: 20px;
   cursor: pointer;
   user-select: none;
+}
+
+@media (max-width: 700px) {
+  .modalWrapper {
+    height: 80vh;
+  }
+  .authOptionSelector button h3 {
+    font-size: 14px;
+  }
+
+  .inputsWrapper {
+    width: 95vw;
+  }
+
+  .emailInput,
+  .passwordInput,
+  .passwordInputWrapper {
+    width: 100%;
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 350px) {

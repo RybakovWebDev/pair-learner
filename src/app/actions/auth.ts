@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { User } from "@supabase/supabase-js";
 
 function validateInput(email: string, password?: string): string | null {
   if (email.length < 5 || email.length > 35) {
@@ -27,6 +28,21 @@ export async function login(email: string, password: string) {
 
   if (error) {
     return { error: error.message };
+  }
+
+  return { user: data.user };
+}
+
+export async function signInWithGoogle(credential: string): Promise<{ error?: string; user: User | null }> {
+  const supabase = createClient();
+
+  const { data, error } = await supabase.auth.signInWithIdToken({
+    provider: "google",
+    token: credential,
+  });
+
+  if (error) {
+    return { error: error.message, user: null };
   }
 
   return { user: data.user };

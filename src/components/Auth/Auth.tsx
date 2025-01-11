@@ -1,4 +1,5 @@
 import { FormEvent, useId, useState } from "react";
+import Script from "next/script";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
@@ -9,6 +10,8 @@ import { Eye, EyeOff } from "react-feather";
 import { login, register, resetPassword, sendMagicLink } from "@/app/actions/auth";
 import { useUserContext } from "@/contexts/UserContext";
 import Spinner from "../Spinner";
+import GoogleSignInButton from "../GoogleSignInButton";
+import { AnimateChangeInHeight } from "@/utils/helpers";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -138,6 +141,7 @@ function Auth({
 
   return (
     <LazyMotion features={loadFeatures}>
+      <Script src='https://accounts.google.com/gsi/client' async defer />
       <div className={styles.mainWrapper} style={{ margin: margin }}>
         <m.button
           style={{ fontSize: openButtonFontSize, padding: openButtonPadding }}
@@ -275,7 +279,7 @@ function Auth({
                     </div>
                   )}
 
-                  <div className={styles.messageWrapper}>
+                  <AnimateChangeInHeight className={styles.messageWrapper}>
                     {error && (
                       <m.p
                         key={"errormsg"}
@@ -298,8 +302,11 @@ function Auth({
                         ))}
                       </m.div>
                     )}
-                  </div>
+                  </AnimateChangeInHeight>
                 </form>
+                {authOption !== "Magic Link" && authOption !== "Register" && (
+                  <GoogleSignInButton onError={setError} onSuccess={() => setIsOpen(false)} />
+                )}
               </m.div>
             </m.div>
           )}
