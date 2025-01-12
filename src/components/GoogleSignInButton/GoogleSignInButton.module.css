@@ -3,6 +3,13 @@
   -webkit-appearance: none;
   -moz-appearance: none;
   appearance: none;
-  background: transparent;
+  background: transparent !important;
   border-radius: inherit;
+  overflow: hidden;
+  border-radius: 9999px !important;
+}
+
+.wrapper iframe {
+  background: transparent !important;
+  border-radius: 9999px !important;
 }
