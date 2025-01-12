@@ -7,9 +7,11 @@
   border-radius: inherit;
   overflow: hidden;
   border-radius: 9999px !important;
+  /* visibility: hidden; */
 }
 
 .wrapper iframe {
+  /* visibility: visible; */
   background: transparent !important;
   border-radius: 9999px !important;
 }

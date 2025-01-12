@@ -21,3 +21,10 @@
 .rightColumn {
   padding: 0 1rem;
 }
+
+@media (max-width: 450px) {
+  .leftColumn,
+  .rightColumn {
+    padding: 0 0.5rem;
+  }
+}
