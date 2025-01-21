@@ -1,21 +1,20 @@
 import { FormEvent, useId, useState } from "react";
-import Script from "next/script";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
+import { Eye, EyeOff } from "react-feather";
 
 import styles from "./Auth.module.css";
 
-import { Eye, EyeOff } from "react-feather";
+import GoogleSignInButton from "../GoogleSignInButton";
+import Spinner from "../Spinner";
+
 import { login, register, resetPassword, sendMagicLink } from "@/app/actions/auth";
 import { useUserContext } from "@/contexts/UserContext";
-import Spinner from "../Spinner";
-import GoogleSignInButton from "../GoogleSignInButton";
 import { AnimateChangeInHeight } from "@/utils/helpers";
+import { authOptions } from "@/constants";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
-
-const authOptions = ["Login", "Register", "Magic Link"];
 
 interface AuthProps {
   margin?: string;
@@ -141,7 +140,6 @@ function Auth({
 
   return (
     <LazyMotion features={loadFeatures}>
-      <Script src='https://accounts.google.com/gsi/client' async defer />
       <div className={styles.mainWrapper} style={{ margin: margin }}>
         <m.button
           style={{ fontSize: openButtonFontSize, padding: openButtonPadding }}
@@ -171,9 +169,15 @@ function Auth({
                 transition={{ duration: 0.3 }}
                 onClick={handleModalClick}
               >
-                <div className={styles.authOptionSelector}>
+                <div className={styles.authOptionSelector} role='tablist' aria-label='Authentication options'>
                   {authOptions.map((a) => (
-                    <button key={a} onClick={() => handleAuthOptionChange(a)}>
+                    <button
+                      key={a}
+                      onClick={() => handleAuthOptionChange(a)}
+                      role='tab'
+                      aria-selected={authOption === a}
+                      aria-controls={`${a.toLocaleLowerCase()}-form`}
+                    >
                       <h3>{a}</h3>
                       <AnimatePresence>
                         {authOption === a && (
@@ -192,38 +196,51 @@ function Auth({
                     </button>
                   ))}
                 </div>
-                <form onSubmit={handleSubmit} className={styles.bottomWrapper}>
+                <form
+                  onSubmit={handleSubmit}
+                  className={styles.bottomWrapper}
+                  role='tabpanel'
+                  id={`${authOption.toLocaleLowerCase()}-form`}
+                >
                   <div className={styles.inputsWrapper}>
-                    <input
-                      className={styles.emailInput}
-                      type='email'
-                      placeholder={
-                        authOption === "Login"
-                          ? "Login with your email"
-                          : authOption === "Register"
-                          ? "Sign up with your email"
-                          : "Enter your email for passwordless login"
-                      }
-                      minLength={5}
-                      maxLength={35}
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
+                    <label>
+                      E-Mail:
+                      <input
+                        className={styles.emailInput}
+                        type='email'
+                        autoComplete='email'
+                        placeholder={"Your email"}
+                        minLength={5}
+                        maxLength={35}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </label>
 
                     {authOption !== "Magic Link" && (
                       <div className={styles.passwordInputWrapper}>
-                        <input
-                          className={styles.passwordInput}
-                          type={showPassword ? "text" : "password"}
-                          placeholder={authOption === "Login" ? "Your password" : "Create a password"}
-                          minLength={6}
-                          maxLength={65}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                        />
-                        <button type='button' className={styles.passwordVisibilityWrapper} onClick={handleShowPassword}>
+                        <label>
+                          Password:
+                          <input
+                            className={styles.passwordInput}
+                            type={showPassword ? "text" : "password"}
+                            autoComplete={authOption === "Login" ? "current-password" : "new-password"}
+                            placeholder={authOption === "Login" ? "Your password" : "New password"}
+                            minLength={6}
+                            maxLength={65}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                          />
+                        </label>
+
+                        <button
+                          type='button'
+                          aria-label='Show password'
+                          className={styles.passwordVisibilityWrapper}
+                          onClick={handleShowPassword}
+                        >
                           {showPassword ? (
                             <Eye size={20} color='var(--color-background-secondary)' />
                           ) : (
@@ -233,6 +250,10 @@ function Auth({
                       </div>
                     )}
                   </div>
+
+                  {authOption === "Magic Link" && (
+                    <p className={styles.magicLinkDescription}>Sign in using a link sent to your email.</p>
+                  )}
 
                   <m.button
                     type='submit'
@@ -262,21 +283,19 @@ function Auth({
                   </m.button>
 
                   {authOption === "Login" && (
-                    <div className={styles.forgotWrapper}>
-                      <m.button
-                        type='button'
-                        className={styles.forgotButton}
-                        onClick={handleForgotPassword}
-                        disabled={isLoading || isButtonDisabled}
-                        style={{
-                          cursor: isLoading || isButtonDisabled ? "default" : "pointer",
-                        }}
-                        initial={{ opacity: 1 }}
-                        animate={{ opacity: hideForgot ? 0 : 1 }}
-                      >
-                        Forgot password?
-                      </m.button>
-                    </div>
+                    <m.button
+                      type='button'
+                      className={styles.forgotButton}
+                      onClick={handleForgotPassword}
+                      disabled={isLoading || isButtonDisabled}
+                      style={{
+                        cursor: isLoading || isButtonDisabled ? "default" : "pointer",
+                      }}
+                      initial={{ opacity: 1 }}
+                      animate={{ opacity: hideForgot ? 0 : 1 }}
+                    >
+                      Forgot password?
+                    </m.button>
                   )}
 
                   <AnimateChangeInHeight className={styles.messageWrapper}>

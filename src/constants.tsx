@@ -26,6 +26,8 @@ export interface UserCategory {
   created_at?: string;
 }
 
+export const authOptions = ["Login", "Register", "Magic Link"];
+
 export const DEMO_PAIRS = [
   { word1: "Learn", word2: "Aprender", id: "5e1b0c34-7b93-4126-aed5-2d54a39d7e36" },
   { word1: "Imparare", word2: "Oppia", id: "d9a9432c-299e-4d0c-9fbc-598c7dcf72d3" },
