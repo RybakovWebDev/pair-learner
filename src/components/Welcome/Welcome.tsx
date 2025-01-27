@@ -45,19 +45,17 @@ function Welcome() {
           <LazyMotion features={loadFeatures}>
             <div style={{ position: "relative", display: "inline-block" }}>
               <m.span>anything</m.span>
-              <LazyMotion features={loadFeatures}>
-                <m.div
-                  className={styles.spanBorder}
-                  initial={{ width: 0 }}
-                  animate={{ width: "100%" }}
-                  transition={{
-                    delay: 0.3,
-                    type: "spring",
-                    bounce: 0.1,
-                    duration: 1.2,
-                  }}
-                />
-              </LazyMotion>
+              <m.div
+                className={styles.spanBorder}
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{
+                  delay: 0.3,
+                  type: "spring",
+                  bounce: 0.1,
+                  duration: 1.2,
+                }}
+              />
             </div>{" "}
           </LazyMotion>
           <br /> with customizable <br /> word pairs
