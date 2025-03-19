@@ -85,11 +85,6 @@ function Welcome() {
             <h2>Easy Word Import</h2>
             <p>Quickly import lists of word pairs from CSV or Excel files</p>
           </m.li>
-          {/*  <m.li className={styles.feature} variants={item}>
-          <GitBranch color='hsl(0 0% 92%)' size={25} />
-          <h2>Memory Game</h2>
-          <p>Learn anything through an engaging word-matching game</p>
-          </m.li> */}
           <m.li className={styles.feature} variants={item}>
             <Heart color='hsl(0 0% 92%)' size={25} />
             <h2>100% Free</h2>

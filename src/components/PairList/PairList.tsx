@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef, useMemo, useReducer } from "react";
+import React, { useEffect, useCallback, useRef, useMemo, useReducer } from "react";
 import { LazyMotion, m, AnimatePresence } from "framer-motion";
 
 import styles from "./PairList.module.css";
@@ -303,7 +303,6 @@ function PairList({
     isProcessingQueue.current = true;
     const pair = matchQueue.current[0];
 
-    // Updated matching logic
     const isMatch = currentRoundPairs.current.some(
       (testPair) =>
         (testPair.word1 === pair.left && testPair.word2 === pair.right) ||
@@ -351,7 +350,6 @@ function PairList({
               );
               const currentWords = new Set(currentPairs.flatMap((p) => [p.word1, p.word2]));
 
-              // Function to get a unique random pair
               const getUniquePair = (replacedLeftWord: string, replacedRightWord: string) => {
                 let newPair: Pair;
                 do {
