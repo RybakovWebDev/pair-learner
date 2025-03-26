@@ -64,7 +64,7 @@ function WordCell({
       if (textRef.current) {
         const containerWidth = textRef.current.offsetWidth;
         const containerHeight = textRef.current.offsetHeight;
-        let size = 14;
+        let size = 15;
 
         while (size > 8) {
           textRef.current.style.fontSize = `${size}px`;
@@ -100,7 +100,7 @@ function WordCell({
       ? "var(--color-border-failure)"
       : "var(--color-text)";
 
-  const opacity = isMatched ? 0.2 : isGameRunning ? 1 : 0.5;
+  const opacity = isMatched ? 0.5 : isGameRunning ? 1 : 0.5;
 
   return (
     <Sparkles isActive={showSparkles}>
