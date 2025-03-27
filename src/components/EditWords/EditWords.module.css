@@ -35,6 +35,8 @@
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
+  background-color: var(--color-background);
+  color: var(--color-text);
   border: 1px solid var(--color-background-secondary);
   border-radius: 20px;
   cursor: pointer;
@@ -192,7 +194,7 @@
   gap: 0.5rem;
 }
 
-.wordDetailsWrapper input {
+.wordWrapperOuter input {
   padding: 1rem;
   height: 100%;
   width: 100%;
@@ -204,7 +206,7 @@
   border-radius: 10px;
 }
 
-.wordDetailsWrapper input:disabled {
+.wordWrapperOuter input:disabled {
   -webkit-text-fill-color: var(--color-text);
   opacity: 1;
   -webkit-opacity: 1;
@@ -256,16 +258,35 @@
 }
 
 .pairTagsWrapper ul li:last-child {
-  margin-bottom: 2rem;
-}
-
-.checkWrapperOuter {
-  border: 1px solid var(--color-text);
+  margin-bottom: 1rem;
 }
 
 .pairTagsWrapper li p {
   margin: 0 0 0 1rem;
   font-weight: 600;
+}
+
+.pairTagsWrapper input {
+  height: 100%;
+  width: 1.5rem;
+}
+
+.tagCheckbox {
+  cursor: pointer;
+}
+
+.tagCheckbox:checked {
+  accent-color: var(--color-background-highlight);
+}
+
+.pairTagsWrapper label {
+  padding: 0 0 0 1rem;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: inherit;
 }
 
 .pairControlButton {

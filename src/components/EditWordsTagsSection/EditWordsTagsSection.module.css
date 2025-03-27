@@ -101,11 +101,10 @@
 }
 
 .tagsWrapper li p {
-  margin: 0 0 0 1rem;
+  margin: 1rem 0 1rem 0;
 }
 
 .errorMessage {
-  margin-top: 1rem;
   color: var(--color-text-danger);
-  font-size: 12px;
+  font-size: 14px;
 }

@@ -7,7 +7,6 @@
 
 .mainWrapper h2,
 .mainWrapper p {
-  /* text-align: center; */
   text-wrap: pretty;
 }
 
@@ -24,18 +23,26 @@
 }
 
 .inputsWrapper {
-  margin: 1rem 0 0 0;
+  margin: 2rem 0 0 0;
+  max-width: 20rem;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
 }
 
+.emailInputWrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
 .emailInput,
 .passwordInput {
   padding: 1rem;
   height: 3.5rem;
-  width: 20rem;
+  width: 90vw;
+  max-width: 20rem;
   font-size: 14px;
   color: var(--color-text);
   background: transparent;
@@ -44,19 +51,18 @@
 }
 
 .emailInput {
-  margin: 1rem;
+  margin: 0.5rem 0 1rem 0;
 }
 
 .passwordInput {
   padding: 1rem 3rem 1rem 1rem;
+  margin: 0.5rem 0 0 0;
   font-size: 12px;
 }
 
 .passwordInputWrapper {
   position: relative;
-  margin: 1rem;
-  height: 3.5rem;
-  width: 20rem;
+  margin: 0 0 1rem 0;
   display: flex;
   align-items: center;
 }
@@ -64,6 +70,7 @@
 .passwordVisibilityWrapper {
   position: absolute;
   right: 1rem;
+  margin: 2rem 0 0 0;
   color: var(--color-background-secondary);
   background-color: var(--color-background);
   border: none;
@@ -80,7 +87,7 @@
   justify-content: center;
 }
 
-.submitButton {
+.buttonsWrapper {
   height: 3rem;
   display: flex;
   justify-content: center;
@@ -91,7 +98,7 @@
   border-radius: 20px;
   text-wrap: nowrap;
   cursor: pointer;
-  overflow: hidden;
+  /* overflow: hidden; */
 }
 
 .submitButtonWrapper {
@@ -107,8 +114,7 @@
   border-right: 1px solid var(--color-background-secondary);
 }
 
-.submitButtonWrapper button,
-.submitButton button {
+.buttonsWrapper button {
   height: 100%;
   width: 100%;
   display: flex;
@@ -117,5 +123,18 @@
   color: var(--color-text);
   background: transparent;
   border: transparent;
+  border-radius: 20px;
   cursor: pointer;
+}
+
+.buttonsWrapper button:focus-visible {
+  outline-color: var(--color-text);
+}
+
+.submitButtonWrapper button:first-of-type {
+  border-radius: 20px 0 0 20px;
+}
+
+.submitButtonWrapper button:last-of-type {
+  border-radius: 0 20px 20px 0;
 }

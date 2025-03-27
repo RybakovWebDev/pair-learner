@@ -22,6 +22,7 @@ function AccountSettings() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [shakeEditButton, setShakeEditButton] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -41,6 +42,13 @@ function AccountSettings() {
       setSuccessMessage("Please set your new password");
     }
   }, []);
+
+  const handleDisabledInputClick = (e: React.MouseEvent) => {
+    console.log("shaking");
+    e.stopPropagation();
+    setShakeEditButton(true);
+    setTimeout(() => setShakeEditButton(false), 500);
+  };
 
   const handleEditing = () => {
     setEditing(!editing);
@@ -71,7 +79,8 @@ function AccountSettings() {
       if (trimmedPassword) updates.password = trimmedPassword;
 
       if (Object.keys(updates).length === 0) {
-        setSuccessMessage("No changes to update.");
+        setSuccessMessage("No changes made.");
+        setEditing(false);
         setIsSubmitting(false);
         return;
       }
@@ -113,47 +122,73 @@ function AccountSettings() {
       <section className={styles.mainWrapper}>
         <h2>Update account information</h2>
         <p>
-          Here you can change your email address and password. If you use Magic Link login, you can also add a password
-          to enable email/password login.
+          Here you can change your email address and password. If you are using Magic Link or Google to login, you can
+          also add a password to enable email/password login.
         </p>
 
         <m.form key={"authDataForm"} onSubmit={handleEditConfirm} className={styles.form}>
-          <m.div className={styles.inputsWrapper} initial={{ opacity: 0 }} animate={{ opacity: editing ? 1 : 0.5 }}>
-            <input
-              className={styles.emailInput}
-              type='email'
-              placeholder='Your email'
-              maxLength={30}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={!editing}
-            />
+          <m.div
+            className={styles.inputsWrapper}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            onClick={(e) => !editing && handleDisabledInputClick(e)}
+            style={{ pointerEvents: editing ? "none" : "auto" }}
+          >
+            <div className={styles.emailInputWrapper}>
+              <label>
+                Email:
+                <m.input
+                  className={styles.emailInput}
+                  type='email'
+                  animate={{ opacity: editing ? 1 : 0.5 }}
+                  placeholder='Your email'
+                  maxLength={30}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={!editing}
+                  style={{ pointerEvents: editing ? "auto" : "none" }}
+                />
+              </label>
+            </div>
 
             <div className={styles.passwordInputWrapper}>
-              <input
-                className={styles.passwordInput}
-                type={showPassword ? "text" : "password"}
-                placeholder='New password (leave blank to keep current)'
-                minLength={6}
-                maxLength={45}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+              <label>
+                Password:
+                <m.input
+                  className={styles.passwordInput}
+                  type={showPassword ? "text" : "password"}
+                  animate={{ opacity: editing ? 1 : 0.5 }}
+                  placeholder='New password (leave blank to keep current)'
+                  minLength={6}
+                  maxLength={45}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={!editing}
+                  style={{ pointerEvents: editing ? "auto" : "none" }}
+                />
+              </label>
+              <m.button
+                className={styles.passwordVisibilityWrapper}
+                type='button'
+                animate={{ opacity: editing ? 1 : 0.5 }}
+                onClick={handleShowPassword}
                 disabled={!editing}
-              />
-              <button type='button' className={styles.passwordVisibilityWrapper} onClick={handleShowPassword}>
+                style={{ pointerEvents: editing ? "auto" : "none" }}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                aria-pressed={showPassword}
+              >
                 {showPassword ? (
                   <Eye size={20} color='var(--color-background-secondary)' />
                 ) : (
                   <EyeOff size={20} color='var(--color-background-secondary)' />
                 )}
-              </button>
+              </m.button>
             </div>
           </m.div>
 
           <m.div
-            className={styles.submitButton}
-            onClick={!editing ? handleEditing : undefined}
+            className={styles.buttonsWrapper}
             initial={{ width: "4rem", opacity: 0 }}
             animate={{ width: editing ? "8rem" : "4rem", opacity: 1 }}
           >
@@ -167,7 +202,7 @@ function AccountSettings() {
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
                   >
-                    <Spinner height='25px' width='25px' borderWidth='2px' />
+                    <Spinner height='25px' width='25px' borderWidth='2px' aria-label='Submitting changes' />
                   </m.div>
                 ) : (
                   <m.div
@@ -182,6 +217,7 @@ function AccountSettings() {
                       initial={{ backgroundColor: "var(--color-background)" }}
                       whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                       disabled={isSubmitting}
+                      aria-label='Confirm changes'
                     >
                       <Check />
                     </m.button>
@@ -192,20 +228,35 @@ function AccountSettings() {
                       whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                       onClick={handleEditCancel}
                       disabled={isSubmitting}
+                      aria-label='Cancel changes'
                     >
                       <X />
                     </m.button>
                   </m.div>
                 )
               ) : (
-                <m.div key={"editIcon"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                <m.button
+                  type='button'
+                  key={"editIcon"}
+                  initial={{ opacity: 0 }}
+                  animate={{
+                    opacity: 1,
+                    x: shakeEditButton ? [0, -5, 5, -5, 5, 0] : 0,
+                  }}
+                  transition={{
+                    x: { duration: 0.4, ease: "easeInOut" },
+                  }}
+                  exit={{ opacity: 0 }}
+                  onClick={!editing ? handleEditing : undefined}
+                  aria-label='Edit account information'
+                >
                   <Edit />
-                </m.div>
+                </m.button>
               )}
             </AnimatePresence>
           </m.div>
 
-          <div className={styles.messageWrapper}>
+          <div className={styles.messageWrapper} aria-live='polite' aria-atomic='true'>
             <p>{error && error}</p>
             <p>{successMessage && successMessage}</p>
           </div>

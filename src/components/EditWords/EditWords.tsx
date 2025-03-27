@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, LazyMotion, m, Variants } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
@@ -17,11 +17,6 @@ import { AnimateChangeInHeight } from "@/utils/helpers";
 import { handleFileImport } from "@/utils/fileUtils";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
-
-type ImportedPair = {
-  word1: string;
-  word2: string;
-};
 
 const tagsUlVariants: Variants = {
   hidden: {
@@ -570,7 +565,7 @@ function EditWords() {
         <div className={styles.introWrapper}>
           <h3>Word Editor</h3>
 
-          <m.div
+          <m.button
             className={styles.helpOuterWrapper}
             onClick={() => setHelpOpen(!helpOpen)}
             whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
@@ -609,7 +604,7 @@ function EditWords() {
                 )}
               </AnimatePresence>
             </AnimateChangeInHeight>
-          </m.div>
+          </m.button>
 
           <div className={styles.importWrapper}>
             <p>
@@ -803,30 +798,27 @@ function EditWords() {
                               <m.ul initial='hidden' animate='show' exit='hidden' variants={tagsUlVariants}>
                                 {tags.map((t) => {
                                   const realTagId = t.tempId || t.id;
+                                  const isChecked =
+                                    editing === p.id && editedPair
+                                      ? editedPair.tag_ids.includes(realTagId)
+                                      : p.tag_ids.includes(realTagId);
+
                                   return (
-                                    <li
-                                      key={realTagId}
-                                      onClick={() => handleTagToggle(p.id, realTagId)}
-                                      style={{ cursor: editing === p.id ? "pointer" : "default" }}
-                                    >
-                                      <m.div className={styles.checkWrapperOuter}>
-                                        <m.div
-                                          initial={{ opacity: 0 }}
-                                          animate={{
-                                            opacity:
-                                              editing === p.id && editedPair
-                                                ? editedPair.tag_ids.includes(realTagId)
-                                                  ? 1
-                                                  : 0
-                                                : p.tag_ids.includes(realTagId)
-                                                ? 1
-                                                : 0,
-                                          }}
-                                        >
-                                          <Check />
-                                        </m.div>
-                                      </m.div>
-                                      <p>{t.name}</p>
+                                    <li key={realTagId}>
+                                      <input
+                                        type='checkbox'
+                                        id={`tag-${p.id}-${realTagId}`}
+                                        className={styles.tagCheckbox}
+                                        checked={isChecked}
+                                        onChange={() => editing === p.id && handleTagToggle(p.id, realTagId)}
+                                        disabled={editing !== p.id}
+                                      />
+                                      <label
+                                        htmlFor={`tag-${p.id}-${realTagId}`}
+                                        style={{ cursor: editing === p.id ? "pointer" : "default" }}
+                                      >
+                                        {t.name}
+                                      </label>
                                     </li>
                                   );
                                 })}

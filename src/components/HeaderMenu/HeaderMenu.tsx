@@ -130,7 +130,7 @@ function HeaderMenu() {
               ))}
 
               <m.li key='logout' role='none' initial='hidden' animate='show' exit='exit' variants={liVariants}>
-                <div
+                <button
                   role='menuitem'
                   className={styles.logoutWrapper}
                   onClick={!logoutConfirm ? handleInitiateLogout : undefined}
@@ -167,23 +167,23 @@ function HeaderMenu() {
                           animate={{ opacity: 1 }}
                           exit={{ opacity: 0 }}
                         >
-                          <m.div
+                          <m.button
                             className={styles.iconInnerWrapper}
                             onClick={handleConfirmLogout}
                             initial={{ backgroundColor: "var(--color-background)" }}
                             whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                           >
                             <Check size={22} />
-                          </m.div>
+                          </m.button>
                           <span />
-                          <m.div
+                          <m.button
                             className={styles.iconInnerWrapper}
                             onClick={handleCancelLogout}
                             initial={{ backgroundColor: "var(--color-background)" }}
                             whileTap={{ backgroundColor: "var(--color-background-highlight)" }}
                           >
                             <X size={22} />
-                          </m.div>
+                          </m.button>
                         </m.div>
                       ) : (
                         <m.div
@@ -198,7 +198,7 @@ function HeaderMenu() {
                       )}
                     </AnimatePresence>
                   </m.div>
-                </div>
+                </button>
               </m.li>
             </m.ul>
           )}

@@ -52,5 +52,18 @@
 .controlsWrapper button {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  border-radius: 20px;
   overflow: hidden;
+}
+
+.controlsWrapper button:focus-visible {
+  outline-color: var(--color-text);
+}
+
+.controlButtonWrapper button:first-of-type {
+  border-radius: 20px 0 0 20px;
+}
+
+.controlButtonWrapper button:last-of-type {
+  border-radius: 0 20px 20px 0;
 }

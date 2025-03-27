@@ -62,6 +62,19 @@
   cursor: pointer;
 }
 
+.iconInnerWrapper:focus-visible {
+  outline-color: var(--color-text);
+  border-radius: 10px;
+}
+
+.iconInnerWrapper:first-of-type {
+  border-radius: 10px 0 0 10px;
+}
+
+.iconInnerWrapper:last-of-type {
+  border-radius: 0 10px 10px 0;
+}
+
 .list li a,
 .list li button,
 .logoutWrapper {
