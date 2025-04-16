@@ -123,7 +123,7 @@ function WordCell({
         whileTap={
           isGameRunning && !isMatched && !isAnimating && !isAnyIncorrectAnimating && !isAnyCorrectAnimating
             ? {
-                borderBottomWidth: "1px",
+                borderBottomWidth: "2px",
                 y: 2,
               }
             : {}
@@ -137,11 +137,7 @@ function WordCell({
           ref={textRef}
           style={{
             fontSize: `${fontSize}px`,
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
+            fontWeight: isMatched ? 400 : 600,
           }}
         >
           {children}
