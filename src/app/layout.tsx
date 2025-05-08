@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { Inter } from "next/font/google";
 import { Viewport } from "next";
 import { createClient } from "@/utils/supabase/server";
+import { Analytics } from "@vercel/analytics/next";
 
 import "./globals.css";
 
@@ -71,6 +72,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <RefsProvider>
             <Header initialTheme={theme} />
             {children}
+            <Analytics />
           </RefsProvider>
         </UserProvider>
       </body>
