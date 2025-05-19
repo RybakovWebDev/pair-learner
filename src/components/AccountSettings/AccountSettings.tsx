@@ -44,7 +44,6 @@ function AccountSettings() {
   }, []);
 
   const handleDisabledInputClick = (e: React.MouseEvent) => {
-    console.log("shaking");
     e.stopPropagation();
     setShakeEditButton(true);
     setTimeout(() => setShakeEditButton(false), 500);

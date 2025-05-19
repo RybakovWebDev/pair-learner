@@ -23,6 +23,7 @@ interface PairListProps {
   mixColumns?: boolean;
   pairs: Pair[];
   onPairSolved?: () => void;
+  onPairMistake?: () => void;
 }
 
 interface WordState {
@@ -178,6 +179,7 @@ function PairList({
   mixColumns = false,
   pairs,
   onPairSolved,
+  onPairMistake,
 }: PairListProps) {
   const [state, dispatch] = useReducer(gameReducer, {
     leftColumn: [],
@@ -313,6 +315,10 @@ function PairList({
 
     if (isMatch && onPairSolved) {
       onPairSolved();
+    }
+
+    if (!isMatch && onPairMistake) {
+      onPairMistake();
     }
 
     const exitAnimationDuration = 500;
@@ -472,6 +478,7 @@ function PairList({
     getRandomPair,
     initializeColumns,
     onPairSolved,
+    onPairMistake,
     dispatch,
     mixColumns,
   ]);

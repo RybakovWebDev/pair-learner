@@ -14,6 +14,8 @@ interface GameTogglesProps {
   onEndlessToggle: () => void;
   mixColumns: boolean;
   onMixToggle: () => void;
+  showMistakes: boolean;
+  onMistakeToggle: () => void;
   isDisabled: boolean;
 }
 
@@ -24,6 +26,8 @@ function GameToggles({
   onEndlessToggle,
   mixColumns,
   onMixToggle,
+  showMistakes,
+  onMistakeToggle,
   isDisabled,
 }: GameTogglesProps) {
   return (
@@ -37,6 +41,9 @@ function GameToggles({
         </li>
         <li className={styles.toggleWrapper}>
           <Toggle labelText='Mix columns' checked={mixColumns} onChange={onMixToggle} />
+        </li>
+        <li className={styles.toggleWrapper}>
+          <Toggle labelText='Show mistake count' checked={showMistakes} onChange={onMistakeToggle} />
         </li>
       </ul>
     </m.div>

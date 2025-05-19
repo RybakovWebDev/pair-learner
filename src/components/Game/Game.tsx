@@ -42,6 +42,7 @@ type GameState = {
   timeRemaining: number;
   refreshTrigger: number;
   solvedPairs: number;
+  mistakePairs: number;
 };
 
 const startVariants: Variants = {
@@ -85,8 +86,12 @@ function gameReducer(state: GameState, action: any): GameState {
       return { ...state, refreshTrigger: state.refreshTrigger + 1 };
     case "INCREMENT_SOLVED_PAIRS":
       return { ...state, solvedPairs: state.solvedPairs + 1 };
+    case "INCREMENT_MISTAKE_PAIRS":
+      return { ...state, mistakePairs: state.mistakePairs + 1 };
     case "RESET_SOLVED_PAIRS":
       return { ...state, solvedPairs: 0 };
+    case "RESET_MISTAKE_PAIRS":
+      return { ...state, mistakePairs: 0 };
     default:
       return state;
   }
@@ -106,10 +111,12 @@ function Game() {
     timeRemaining: 210,
     refreshTrigger: 0,
     solvedPairs: 0,
+    mistakePairs: 0,
   });
   const [showSparkles, setShowSparkles] = useState(true);
   const [endlessMode, setEndlessMode] = useState(false);
   const [mixColumns, setMixColumns] = useState(false);
+  const [showMistakes, setShowMistakes] = useState(false);
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -235,13 +242,22 @@ function Game() {
     dispatch({ type: "REFRESH_TRIGGER" });
   }, []);
 
+  const handleMistakesToggle = useCallback(() => {
+    setShowMistakes((prev) => !prev);
+  }, []);
+
   const handlePairSolved = useCallback(() => {
     dispatch({ type: "INCREMENT_SOLVED_PAIRS" });
+  }, []);
+
+  const handlePairMistake = useCallback(() => {
+    dispatch({ type: "INCREMENT_MISTAKE_PAIRS" });
   }, []);
 
   const handleStart = useCallback(() => {
     if (state.isGameRunning) {
       dispatch({ type: "RESET_SOLVED_PAIRS" });
+      dispatch({ type: "RESET_MISTAKE_PAIRS" });
     }
     dispatch({ type: "SET_GAME_RUNNING", payload: !state.isGameRunning });
   }, [state.isGameRunning]);
@@ -262,6 +278,7 @@ function Game() {
             refreshTrigger={refreshTrigger}
             pairs={pairs}
             onPairSolved={handlePairSolved}
+            onPairMistake={handlePairMistake}
             endlessMode={endlessMode}
             showSparkles={showSparkles}
             mixColumns={mixColumns}
@@ -271,7 +288,7 @@ function Game() {
     );
     MemoizedComponent.displayName = "MemoizedPairListWrapper";
     return MemoizedComponent;
-  }, [handlePairSolved]);
+  }, [handlePairSolved, handlePairMistake]);
 
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
@@ -333,14 +350,25 @@ function Game() {
           <AnimatePresence>
             {state.isGameRunning && (
               <m.div
-                className={styles.solvedWrapper}
-                key={`solvedCount`}
+                className={styles.statisticsWrapper}
+                key={`statistics`}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               >
-                <m.p>Solved pairs:</m.p>
-                <m.p>{state.solvedPairs}</m.p>
+                <div className={styles.solvedWrapper}>
+                  <p>Matches:</p>
+                  <p className={styles.solvedCount}>{state.solvedPairs}</p>
+                </div>
+                {showMistakes && (
+                  <>
+                    <span>|</span>
+                    <div className={styles.mistakesWrapper}>
+                      <p>Mistakes:</p>
+                      <p className={styles.mistakesCount}>{state.mistakePairs}</p>
+                    </div>
+                  </>
+                )}
               </m.div>
             )}
           </AnimatePresence>
@@ -410,6 +438,8 @@ function Game() {
             onEndlessToggle={handleEndlessToggle}
             mixColumns={mixColumns}
             onMixToggle={handleMixToggle}
+            showMistakes={showMistakes}
+            onMistakeToggle={handleMistakesToggle}
             isDisabled={areControlsDisabled}
           />
         </m.div>
