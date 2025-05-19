@@ -1,0 +1,62 @@
+.sectionSelector {
+  height: 3.5rem;
+  width: 100%;
+  max-width: 20rem;
+  margin: 1rem 0 1.5rem 0;
+  display: flex;
+  border: 1px solid var(--color-background-secondary);
+  border-radius: 15px;
+  overflow: hidden;
+  position: relative;
+}
+
+.sectionSelector button {
+  position: relative;
+  display: flex;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sectionSelector button:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 0px;
+  z-index: 5;
+}
+
+.sectionSelector button:first-child:focus-visible {
+  border-radius: 15px 0 0 15px;
+}
+
+.sectionSelector button:last-child:focus-visible {
+  border-radius: 0 15px 15px 0;
+}
+
+.sectionSelector button:first-child {
+  border-right: 1px solid var(--color-background-secondary);
+}
+
+.sectionSelector button h3 {
+  color: var(--color-text);
+  font-size: 18px;
+  font-weight: 600;
+  z-index: 10;
+}
+
+.selected {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-background-highlight);
+  z-index: 1;
+}
+
+@media (max-width: 530px) {
+  .sectionSelector {
+    max-width: 100%;
+  }
+}

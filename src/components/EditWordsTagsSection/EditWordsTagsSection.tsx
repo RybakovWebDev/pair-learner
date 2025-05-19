@@ -1,7 +1,6 @@
 "use client";
 import React, { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, m } from "framer-motion";
-import { supabase } from "@/utils/supabase/client";
 
 import styles from "./EditWordsTagsSection.module.css";
 
@@ -10,7 +9,7 @@ import EditDeleteControls from "../EditDeleteControls";
 import Spinner from "../Spinner";
 
 import { Tag, Pair } from "@/constants";
-import { AnimateChangeInHeight } from "@/utils/helpers";
+import { supabase } from "@/utils/supabase/client";
 
 interface EditWordsTagsSectionProps {
   user: any;
@@ -37,7 +36,6 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
   const [errors, setErrors] = useState<{ [key: string]: { general?: string } }>({});
   const [isAnimationReady, setIsAnimationReady] = useState(false);
 
-  // Prevents wrapper animation stutter on page load
   useEffect(() => {
     if (tagsLoading) {
       setIsAnimationReady(false);
@@ -242,7 +240,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
   );
 
   return (
-    <AnimateChangeInHeight className={styles.tagsWrapper}>
+    <div className={styles.tagsWrapper}>
       <div className={styles.tagsLabelWrapper}>
         <p>Edit tags</p>
       </div>
@@ -262,7 +260,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
       {tagsLoading || !isAnimationReady ? (
         <Spinner margin='4rem calc(50% - 2rem)' />
       ) : (
-        <AnimatePresence mode='wait'>
+        <AnimatePresence mode='popLayout'>
           {tags.length === 0 ? (
             <m.div
               key={"notagsyet"}
@@ -326,7 +324,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
           )}
         </AnimatePresence>
       )}
-    </AnimateChangeInHeight>
+    </div>
   );
 };
 

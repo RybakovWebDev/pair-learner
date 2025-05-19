@@ -16,6 +16,10 @@
   align-items: center;
 }
 
+.leftWrapper a:focus-visible {
+  outline: 3px solid var(--color-text);
+}
+
 .initials {
   margin: 0 1rem 0 0;
   font-weight: 400;

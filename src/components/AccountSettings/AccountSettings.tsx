@@ -120,7 +120,7 @@ function AccountSettings() {
   return (
     <LazyMotion features={loadFeatures}>
       <section className={styles.mainWrapper}>
-        <h2>Update account information</h2>
+        <h1>Update account information</h1>
         <p>
           Here you can change your email address and password. If you are using Magic Link or Google to login, you can
           also add a password to enable email/password login.

@@ -1,5 +1,4 @@
 .tagsWrapper {
-  margin: 1rem 0 0 0;
   position: relative;
   width: 100%;
   display: flex;
@@ -42,6 +41,10 @@
   border-radius: 20px;
   cursor: pointer;
   overflow: hidden;
+}
+
+.addTagButton:focus-visible {
+  outline: 3px solid var(--color-text);
 }
 
 .noTagsWrapper {
@@ -92,6 +95,10 @@
   background: transparent;
   border: 1px solid var(--color-background-secondary);
   border-radius: 10px;
+}
+
+.tagItemInnerWrapper input:focus-visible {
+  outline: 3px solid var(--color-text);
 }
 
 .checkWrapperOuter {
