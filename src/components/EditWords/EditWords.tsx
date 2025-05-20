@@ -633,7 +633,7 @@ function EditWords() {
                       )}
                       {!tagsLoading && !searchQuery && hasMore && (
                         <m.button
-                          className={styles.addButton}
+                          className={styles.loadMoreButton}
                           initial={{ backgroundColor: "var(--color-background)" }}
                           animate={{ opacity: isAddingNewPair || isSearching ? 0.5 : 1 }}
                           style={{ pointerEvents: isAddingNewPair || isSearching ? "none" : "auto" }}

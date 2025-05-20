@@ -28,6 +28,9 @@
 .sectionWrapper {
   min-height: 70vh;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .mainControlsWrapper {
@@ -37,7 +40,8 @@
   align-items: center;
 }
 
-.addButton {
+.addButton,
+.loadMoreButton {
   margin: 1rem 0 0 0;
   height: 3rem;
   width: 12rem;
