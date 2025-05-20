@@ -58,11 +58,28 @@ const EditWordsSearch = ({
 
         if (query) {
           try {
-            const { data, error } = await supabase
+            const { data: matchingTags, error: tagError } = await supabase
+              .from("tags")
+              .select("id")
+              .ilike("name", `%${query}%`)
+              .eq("user_id", user.id);
+
+            if (tagError) {
+              console.error("Error searching tags:", tagError);
+              return;
+            }
+
+            const matchingTagIds = matchingTags.map((tag) => tag.id);
+
+            let { data, error } = await supabase
               .from("word-pairs")
               .select("*")
               .eq("user_id", user.id)
-              .or(`word1.ilike.%${query}%,word2.ilike.%${query}%`)
+              .or(
+                `word1.ilike.%${query}%,word2.ilike.%${query}%${
+                  matchingTagIds.length > 0 ? `,tag_ids.cs.{${matchingTagIds.join(",")}}` : ""
+                }`
+              )
               .order("created_at", { ascending: false });
 
             if (error) {
@@ -70,10 +87,12 @@ const EditWordsSearch = ({
               return;
             }
 
-            const updatedData = data.map((pair: Pair) => ({
-              ...pair,
-              tempId: pair.id,
-            }));
+            const updatedData = data
+              ? data.map((pair: Pair) => ({
+                  ...pair,
+                  tempId: pair.id,
+                }))
+              : [];
 
             setPairs(updatedData);
             setHasMore(false);
