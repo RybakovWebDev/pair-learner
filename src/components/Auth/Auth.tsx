@@ -252,7 +252,9 @@ function Auth({
                   </div>
 
                   {authOption === "Magic Link" && (
-                    <p className={styles.magicLinkDescription}>Sign in using a link sent to your email.</p>
+                    <p className={styles.magicLinkDescription}>
+                      Sign in using a link sent to your email, no password needed.
+                    </p>
                   )}
 
                   <m.button
