@@ -28,6 +28,7 @@ interface PairListProps {
   endlessMode: boolean;
   showSparkles: boolean;
   mixColumns: boolean;
+  fastAnimations: boolean;
 }
 
 type GameState = {
@@ -117,6 +118,7 @@ function Game() {
   const [endlessMode, setEndlessMode] = useState(false);
   const [mixColumns, setMixColumns] = useState(false);
   const [showMistakes, setShowMistakes] = useState(false);
+  const [fastAnimations, setFastAnimations] = useState(false);
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -242,6 +244,10 @@ function Game() {
     dispatch({ type: "REFRESH_TRIGGER" });
   }, []);
 
+  const handleAnimationSpeedToggle = useCallback(() => {
+    setFastAnimations((prev) => !prev);
+  }, []);
+
   const handleMistakesToggle = useCallback(() => {
     setShowMistakes((prev) => !prev);
   }, []);
@@ -270,7 +276,7 @@ function Game() {
 
   const MemoizedPairListWrapper = useMemo(() => {
     const MemoizedComponent = memo<PairListProps>(
-      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles, mixColumns }) => {
+      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles, mixColumns, fastAnimations }) => {
         return (
           <PairList
             numPairs={numPairs}
@@ -282,6 +288,7 @@ function Game() {
             endlessMode={endlessMode}
             showSparkles={showSparkles}
             mixColumns={mixColumns}
+            fastAnimations={fastAnimations}
           />
         );
       }
@@ -326,6 +333,7 @@ function Game() {
               endlessMode={endlessMode}
               showSparkles={showSparkles}
               mixColumns={mixColumns}
+              fastAnimations={fastAnimations}
             />
           )}
         </AnimateChangeInHeight>
@@ -438,6 +446,8 @@ function Game() {
             onEndlessToggle={handleEndlessToggle}
             mixColumns={mixColumns}
             onMixToggle={handleMixToggle}
+            fastAnimations={fastAnimations}
+            onAnimationSpeedToggle={handleAnimationSpeedToggle}
             showMistakes={showMistakes}
             onMistakeToggle={handleMistakesToggle}
             isDisabled={areControlsDisabled}

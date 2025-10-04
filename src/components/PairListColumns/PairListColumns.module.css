@@ -1,0 +1,28 @@
+.mainWrapper {
+  width: 100%;
+  max-width: 1080px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ulWrapperInner {
+  display: flex;
+}
+
+.mainWrapper ul {
+  list-style: none;
+  overflow: hidden;
+}
+
+.leftColumn,
+.rightColumn {
+  padding: 0 1rem;
+}
+
+@media (max-width: 450px) {
+  .leftColumn,
+  .rightColumn {
+    padding: 0 0.5rem;
+  }
+}

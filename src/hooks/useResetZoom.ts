@@ -25,7 +25,6 @@ export const useResetZoom = () => {
     document.addEventListener("focus", handleFocus, true);
     document.addEventListener("blur", handleBlur, true);
 
-    // Clean up
     return () => {
       document.removeEventListener("focus", handleFocus, true);
       document.removeEventListener("blur", handleBlur, true);

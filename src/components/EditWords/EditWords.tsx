@@ -17,6 +17,7 @@ import Spinner from "../Spinner";
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, simpleFadeVariants, Tag } from "@/constants";
 import EditWordsImport from "../EditWordsImport";
+import EditWordsMainControlser from "../EditWordsMainControls";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -69,6 +70,8 @@ function EditWords() {
   const [hasMore, setHasMore] = useState(true);
   const [offset, setOffset] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
+  const [multipleSelection, setMultipleSelection] = useState(false);
+  const [selectedPairs, setSelectedPairs] = useState<string[]>([]);
 
   const searchInputRef = useRef<HTMLDivElement>(null);
 
@@ -172,6 +175,13 @@ function EditWords() {
         setShowContent(true);
         setIsAnimatingSections(false);
         setPendingSection(null);
+        setPairTagsOpened("");
+        setEditing("");
+        setEditedPair(null);
+        if (multipleSelection) {
+          setSelectedPairs([]);
+          setMultipleSelection(false);
+        }
       }, 50);
     }, 300);
   };
@@ -185,6 +195,60 @@ function EditWords() {
 
     return () => clearTimeout(timer);
   }, [currentSection]);
+
+  const handleMultipleSelection = () => {
+    setMultipleSelection((prev) => !prev);
+    if (multipleSelection) {
+      setSelectedPairs([]);
+    }
+  };
+
+  const handleMultipleDelete = useCallback(async () => {
+    if (selectedPairs.length === 0 || !user) return;
+
+    const pairsToDelete = pairs.filter((pair) => selectedPairs.includes(pair.id));
+
+    const tempPairs = pairsToDelete.filter(
+      (pair) => pair.id.startsWith("temp-") && (!pair.tempId || pair.tempId === pair.id)
+    );
+    const dbPairs = pairsToDelete.filter(
+      (pair) => !pair.id.startsWith("temp-") || (pair.tempId && !pair.tempId.startsWith("temp-"))
+    );
+
+    setPairs((prevPairs) => prevPairs.filter((pair) => !selectedPairs.includes(pair.id)));
+    setTotalCount(totalCount - pairsToDelete.length);
+
+    if (tempPairs.length > 0 && tempPairs.some((p) => p.id === editedPair?.id)) {
+      setIsAddingNewPair(false);
+      setEditing("");
+      setEditedPair(null);
+    }
+
+    if (dbPairs.length > 0) {
+      const dbIds = dbPairs.map((pair) => (pair.tempId && !pair.tempId.startsWith("temp-") ? pair.tempId : pair.id));
+
+      const { error } = await supabase.from("word-pairs").delete().in("id", dbIds);
+
+      if (error) {
+        console.error("Error deleting pairs:", error);
+        setPairs((prevPairs) => [...prevPairs, ...dbPairs]);
+        setTotalCount(totalCount);
+      }
+    }
+
+    setSelectedPairs([]);
+    setMultipleSelection(false);
+  }, [selectedPairs, pairs, user, totalCount, editedPair]);
+
+  const handleTogglePairSelection = useCallback((pairId: string) => {
+    setSelectedPairs((prev) => {
+      if (prev.includes(pairId)) {
+        return prev.filter((id) => id !== pairId);
+      } else {
+        return [...prev, pairId];
+      }
+    });
+  }, []);
 
   const handleAdd = async () => {
     if (!user || isAddingNewPair) return;
@@ -358,6 +422,8 @@ function EditWords() {
       }
 
       setPairs((prevPairs) => prevPairs.filter((pair) => pair.id !== id));
+
+      setSelectedPairs((prev) => prev.filter((pairId) => pairId !== id));
 
       if (id.startsWith("temp-") && (!pairToDelete.tempId || pairToDelete.tempId === id)) {
         setIsAddingNewPair(false);
@@ -559,21 +625,19 @@ function EditWords() {
                       searchInputRef={searchInputRef}
                     />
 
-                    {!isSearching && (
-                      <m.button
-                        className={styles.addButton}
-                        initial={{ backgroundColor: "var(--color-background)" }}
-                        animate={{ opacity: isAddingNewPair || Boolean(searchQuery) ? 0.5 : 1 }}
-                        style={{ pointerEvents: isAddingNewPair || Boolean(searchQuery) ? "none" : "auto" }}
-                        whileTap={
-                          user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}
-                        }
-                        onClick={handleAdd}
-                        disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery) || isImporting}
-                      >
-                        <p>Add word pair</p>
-                        <Plus size={25} />
-                      </m.button>
+                    {!isSearching && pairs.length > 0 && (
+                      <EditWordsMainControlser
+                        isAddingNewPair={isAddingNewPair}
+                        tagsLoading={tagsLoading}
+                        isImporting={isImporting}
+                        searchQuery={searchQuery}
+                        user={user}
+                        multipleSelection={multipleSelection}
+                        selectedPairs={selectedPairs}
+                        handleMultipleSelection={handleMultipleSelection}
+                        handleAdd={handleAdd}
+                        handleMultipleDelete={handleMultipleDelete}
+                      />
                     )}
                   </m.div>
 
@@ -615,6 +679,9 @@ function EditWords() {
                                 onInputChange={handleInputChange}
                                 onKeyDown={handleKeyDown}
                                 onDisabledInputClick={handleDisabledInputClick}
+                                multipleSelection={multipleSelection}
+                                isSelected={selectedPairs.includes(p.id)}
+                                onToggleSelection={() => handleTogglePairSelection(p.id)}
                               />
                             ))}
                           </AnimatePresence>

@@ -1,11 +1,11 @@
 "use client";
 import React, { useCallback } from "react";
-import { AnimatePresence, m } from "framer-motion";
+import { AnimatePresence, LayoutGroup, m } from "framer-motion";
 
 import styles from "./EditWordsPair.module.css";
 
 import { ChevronDown } from "react-feather";
-import EditDeleteControls from "../EditDeleteControls";
+import EditWordsPairControls from "../EditWordsPairControls";
 
 import { Pair, Tag } from "@/constants";
 
@@ -34,6 +34,9 @@ interface EditWordsPairProps {
   onInputChange: (field: keyof Pair, value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, field: "word1" | "word2") => void;
   onDisabledInputClick: (e: React.MouseEvent, pairId: string) => void;
+  multipleSelection?: boolean;
+  isSelected?: boolean;
+  onToggleSelection?: () => void;
 }
 
 const EditWordsPair: React.FC<EditWordsPairProps> = React.memo(
@@ -62,6 +65,9 @@ const EditWordsPair: React.FC<EditWordsPairProps> = React.memo(
     onInputChange,
     onKeyDown,
     onDisabledInputClick,
+    multipleSelection,
+    isSelected,
+    onToggleSelection,
   }) => {
     const handleEditStart = useCallback(() => onEditStart(p), [onEditStart, p]);
     const handleDeleteStart = useCallback(() => onDeleteStart(p), [onDeleteStart, p]);
@@ -172,7 +178,7 @@ const EditWordsPair: React.FC<EditWordsPairProps> = React.memo(
         {errors[p.id]?.general && <p className={styles.errorMessage}>{errors[p.id].general}</p>}
 
         <div className={styles.controlsWrapper}>
-          <EditDeleteControls
+          <EditWordsPairControls
             wrapperMargins='0'
             isEditing={editing === p.id}
             confirmDelete={confirmDelete === p.id}
@@ -184,7 +190,11 @@ const EditWordsPair: React.FC<EditWordsPairProps> = React.memo(
             onDeleteCancel={onDeleteCancel}
             shakeEditButton={shakeEditButton === p.id}
             centerIcons={true}
+            multipleSelection={multipleSelection}
+            isSelected={isSelected}
+            onToggleSelection={onToggleSelection}
           />
+
           <p className={styles.pairCount}>{searchQuery ? index + 1 : totalCount - index}</p>
         </div>
       </m.li>

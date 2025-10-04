@@ -5,7 +5,7 @@ import { AnimatePresence, m } from "framer-motion";
 import styles from "./EditWordsTagsSection.module.css";
 
 import { Plus } from "react-feather";
-import EditDeleteControls from "../EditDeleteControls";
+import EditWordsPairControls from "../EditWordsPairControls";
 import Spinner from "../Spinner";
 
 import { Tag, Pair } from "@/constants";
@@ -302,7 +302,7 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
                         {errors[t.id]?.general && <p className={styles.errorMessage}>{errors[t.id].general}</p>}
                       </m.div>
                       <div className={styles.tagControlsWrapper}>
-                        <EditDeleteControls
+                        <EditWordsPairControls
                           wrapperMargins='0 0 0.5rem 0'
                           isEditing={editingTag === t.id}
                           confirmDelete={confirmDeleteTag === t.id}
