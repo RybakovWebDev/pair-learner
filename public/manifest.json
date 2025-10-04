@@ -4,8 +4,8 @@
   "description": "Learn new words in any language",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "background_color": "#041d1f",
+  "theme_color": "#041d1f",
   "icons": [
     {
       "src": "/icon-192x192.png",
