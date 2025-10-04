@@ -26,8 +26,8 @@ export const metadata = {
   description:
     "Language learning memory game where you match word pairs. Create custom word pairs, organize with tags, and import word lists to practice any language.",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ddf2f0" },
-    { media: "(prefers-color-scheme: dark)", color: "#041d1f" },
+    { media: "(prefers-color-scheme: light)", color: "#e0f3f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#072427" },
   ],
   openGraph: {
     title: "Pair Learner",
