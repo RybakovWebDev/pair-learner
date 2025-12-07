@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { m, AnimatePresence } from "framer-motion";
 import WordCell from "../WordCell";
 import styles from "./PairListColumns.module.css";

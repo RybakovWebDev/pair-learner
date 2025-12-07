@@ -40,7 +40,8 @@
   align-items: center;
 }
 
-.loadMoreButton {
+.loadMoreButton,
+.retryButton {
   margin: 1rem 0 0 0;
   height: 3rem;
   width: 12rem;

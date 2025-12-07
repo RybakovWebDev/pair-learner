@@ -72,10 +72,11 @@ function EditWords() {
   const [isSearching, setIsSearching] = useState(false);
   const [multipleSelection, setMultipleSelection] = useState(false);
   const [selectedPairs, setSelectedPairs] = useState<string[]>([]);
+  const [fetchError, setFetchError] = useState(false);
 
   const searchInputRef = useRef<HTMLDivElement>(null);
 
-  const LIMIT = 50;
+  const LIMIT = 30;
 
   const clearAllErrors = useCallback(() => {
     setErrors({});
@@ -99,6 +100,7 @@ function EditWords() {
 
       if (countError) {
         console.error("Error fetching count:", countError);
+        setFetchError(true);
         return;
       }
 
@@ -142,6 +144,8 @@ function EditWords() {
       }));
 
       setTags(updatedTagsData as (Tag & { tempId?: string })[]);
+
+      fetchError && setFetchError(false);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -645,7 +649,23 @@ function EditWords() {
 
                   {user ? (
                     <>
-                      {tagsLoading ? (
+                      {fetchError ? (
+                        <m.div className={styles.errorWrapper} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <p className={styles.errorMessage}>
+                            Failed to load your data. Please check your connection and try again.
+                          </p>
+                          <button
+                            className={styles.retryButton}
+                            onClick={() => {
+                              setFetchError(false);
+                              setTagsLoading(true);
+                              fetchAndUpdateData();
+                            }}
+                          >
+                            Retry
+                          </button>
+                        </m.div>
+                      ) : tagsLoading ? (
                         <Spinner />
                       ) : isSearching ? (
                         <Spinner />

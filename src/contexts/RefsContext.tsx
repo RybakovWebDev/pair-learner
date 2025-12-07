@@ -2,8 +2,8 @@
 import { createContext, useRef, useContext, RefObject, ReactNode } from "react";
 
 interface RefsContextType {
-  headerRef: RefObject<HTMLElement>;
-  footerRef: RefObject<HTMLParagraphElement>;
+  headerRef: RefObject<HTMLElement | null>;
+  footerRef: RefObject<HTMLParagraphElement | null>;
 }
 
 const defaultValue: RefsContextType = {

@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { AnimatePresence, m, Variants } from "framer-motion";
 
 import styles from "./GameTagFilter.module.css";

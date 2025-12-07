@@ -1,6 +1,6 @@
 "use client";
 import React, { useCallback } from "react";
-import { AnimatePresence, LayoutGroup, m } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 
 import styles from "./EditWordsPair.module.css";
 

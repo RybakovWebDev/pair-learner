@@ -1,2 +1,2 @@
-export * from './AccountSettings';
-export { default } from './AccountSettings';
+export * from "./AccountSettings";
+export { default } from "./AccountSettings";

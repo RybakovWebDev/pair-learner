@@ -1,5 +1,5 @@
 "use client";
-import React, { useId } from "react";
+import { useId } from "react";
 import { AnimatePresence, m } from "framer-motion";
 
 import styles from "./GameRowCountSelector.module.css";

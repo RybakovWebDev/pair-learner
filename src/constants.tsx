@@ -115,7 +115,7 @@ export const smoothSpring = {
   type: "spring",
   damping: 60,
   stiffness: 500,
-};
+} as const;
 
 export const SOCIAL_LINKS = [
   {

@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useCallback, useRef, useMemo } from "react";
+import { useEffect, useCallback, useRef, useMemo } from "react";
 import { LazyMotion, m, AnimatePresence } from "framer-motion";
 
 import styles from "./PairList.module.css";

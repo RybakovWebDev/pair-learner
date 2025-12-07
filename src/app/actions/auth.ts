@@ -19,7 +19,7 @@ export async function login(email: string, password: string) {
     return { error: validationError };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
@@ -34,7 +34,7 @@ export async function login(email: string, password: string) {
 }
 
 export async function signInWithGoogle(credential: string): Promise<{ error?: string; user: User | null }> {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signInWithIdToken({
     provider: "google",
@@ -54,7 +54,7 @@ export async function register(email: string, password: string) {
     return { error: validationError };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -77,7 +77,7 @@ export async function sendMagicLink(email: string) {
     return { error: validationError };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -99,7 +99,7 @@ export async function resetPassword(email: string) {
     return { error: validationError };
   }
 
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/confirm`,

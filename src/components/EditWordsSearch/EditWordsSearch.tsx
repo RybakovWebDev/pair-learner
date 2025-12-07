@@ -21,7 +21,7 @@ interface EditWordsSearchProps {
   loadedPairs: (Pair & { tempId?: string })[];
   setHasMore: (hasMore: boolean) => void;
   offset: number;
-  searchInputRef: React.RefObject<HTMLDivElement>;
+  searchInputRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const EditWordsSearch = ({
@@ -37,7 +37,7 @@ const EditWordsSearch = ({
   offset,
   searchInputRef,
 }: EditWordsSearchProps) => {
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const searchTimeoutRef = useRef<NodeJS.Timeout>(null);
 
   const handleSearch = useCallback(
     async (e: React.ChangeEvent<HTMLInputElement>) => {

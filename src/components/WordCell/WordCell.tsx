@@ -1,5 +1,5 @@
 "use client";
-import React, { useRef, useEffect, useState, ReactNode } from "react";
+import { useRef, useEffect, useState, ReactNode } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";

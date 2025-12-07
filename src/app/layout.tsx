@@ -25,10 +25,6 @@ export const metadata = {
   title: "Pair Learner",
   description:
     "Language learning memory game where you match word pairs. Create custom word pairs, organize with tags, and import word lists to practice any language.",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#e0f3f5" },
-    { media: "(prefers-color-scheme: dark)", color: "#072427" },
-  ],
   openGraph: {
     title: "Pair Learner",
     description:
@@ -57,14 +53,18 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: false,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#e0f3f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#072427" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const savedTheme = cookies().get("color-theme");
+  const savedTheme = (await cookies()).get("color-theme");
   const theme = savedTheme?.value || "dark";
   const themeColors = theme === "light" ? LIGHT_COLORS : DARK_COLORS;
 
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

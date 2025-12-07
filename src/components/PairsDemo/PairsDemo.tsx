@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { AnimatePresence, LazyMotion, m } from "framer-motion";
 
 import styles from "./PairsDemo.module.css";
