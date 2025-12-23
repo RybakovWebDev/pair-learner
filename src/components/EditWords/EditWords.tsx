@@ -6,7 +6,6 @@ import { supabase } from "@/utils/supabase/client";
 
 import styles from "./EditWords.module.css";
 
-import { Plus } from "react-feather";
 import EditWordsHelp from "../EditWordsHelp";
 import EditWordsSectionSwitcher from "../EditWordsSectionSwitch";
 import EditWordsTagsSection from "../EditWordsTagsSection";
@@ -629,7 +628,7 @@ function EditWords() {
                       searchInputRef={searchInputRef}
                     />
 
-                    {!isSearching && pairs.length > 0 && (
+                    {!isSearching && (
                       <EditWordsMainControlser
                         isAddingNewPair={isAddingNewPair}
                         tagsLoading={tagsLoading}
