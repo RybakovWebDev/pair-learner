@@ -16,7 +16,7 @@ import Spinner from "../Spinner";
 import { useUserContext } from "@/contexts/UserContext";
 import { Pair, simpleFadeVariants, Tag } from "@/constants";
 import EditWordsImport from "../EditWordsImport";
-import EditWordsMainControlser from "../EditWordsMainControls";
+import EditWordsMainControls from "../EditWordsMainControls";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -212,10 +212,10 @@ function EditWords() {
     const pairsToDelete = pairs.filter((pair) => selectedPairs.includes(pair.id));
 
     const tempPairs = pairsToDelete.filter(
-      (pair) => pair.id.startsWith("temp-") && (!pair.tempId || pair.tempId === pair.id)
+      (pair) => pair.id.startsWith("temp-") && (!pair.tempId || pair.tempId === pair.id),
     );
     const dbPairs = pairsToDelete.filter(
-      (pair) => !pair.id.startsWith("temp-") || (pair.tempId && !pair.tempId.startsWith("temp-"))
+      (pair) => !pair.id.startsWith("temp-") || (pair.tempId && !pair.tempId.startsWith("temp-")),
     );
 
     setPairs((prevPairs) => prevPairs.filter((pair) => !selectedPairs.includes(pair.id)));
@@ -314,7 +314,7 @@ function EditWords() {
           setErrors({ [id]: { general: "Failed to add new pair. Please try again." } });
         } else if (data && data[0]) {
           setPairs((prevPairs) =>
-            prevPairs.map((pair) => (pair.id === id ? { ...data[0], id: id, tempId: data[0].id } : pair))
+            prevPairs.map((pair) => (pair.id === id ? { ...data[0], id: id, tempId: data[0].id } : pair)),
           );
           clearAllErrors();
 
@@ -331,7 +331,7 @@ function EditWords() {
           setErrors({ [id]: { general: "Failed to update pair. Please try again." } });
         } else {
           setPairs((prevPairs) =>
-            prevPairs.map((pair) => (pair.id === id ? { ...updatedPair, id, tempId: tempId || id } : pair))
+            prevPairs.map((pair) => (pair.id === id ? { ...updatedPair, id, tempId: tempId || id } : pair)),
           );
           clearAllErrors();
         }
@@ -342,7 +342,7 @@ function EditWords() {
       setEditedPair(null);
       setIsAddingNewPair(false);
     },
-    [user, clearAllErrors]
+    [user, clearAllErrors],
   );
 
   const handleEditConfirm = useCallback(() => {
@@ -380,7 +380,7 @@ function EditWords() {
         clearAllErrors();
       }
     },
-    [editing, editedPair, handleEditSave, clearAllErrors, totalCount]
+    [editing, editedPair, handleEditSave, clearAllErrors, totalCount],
   );
 
   const handleEditCancel = useCallback(() => {
@@ -412,7 +412,7 @@ function EditWords() {
       clearAllErrors();
       setConfirmDelete(pair.id);
     },
-    [editing, editedPair, handleEditSave, clearAllErrors, totalCount]
+    [editing, editedPair, handleEditSave, clearAllErrors, totalCount],
   );
 
   const handleConfirmDelete = useCallback(
@@ -449,7 +449,7 @@ function EditWords() {
       setTotalCount(totalCount - 1);
       setConfirmDelete("");
     },
-    [pairs, totalCount]
+    [pairs, totalCount],
   );
 
   const handleCancelDelete = () => {
@@ -484,7 +484,7 @@ function EditWords() {
         }
       }
     },
-    [editing, editedPair, handleEditSave, handleEditCancel]
+    [editing, editedPair, handleEditSave, handleEditCancel],
   );
 
   const handleDisabledInputClick = useCallback(
@@ -495,7 +495,7 @@ function EditWords() {
         setTimeout(() => setShakeEditButton(null), 500);
       }
     },
-    [editing]
+    [editing],
   );
 
   const handlePairTagsOpen = (pairId: string) => {
@@ -629,7 +629,7 @@ function EditWords() {
                     />
 
                     {!isSearching && (
-                      <EditWordsMainControlser
+                      <EditWordsMainControls
                         isAddingNewPair={isAddingNewPair}
                         tagsLoading={tagsLoading}
                         isImporting={isImporting}

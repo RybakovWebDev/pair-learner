@@ -57,7 +57,7 @@ const EditWordsMainControls = ({
     <>
       <div className={styles.controlButtonsWrapper}>
         <LayoutGroup>
-          <AnimatePresence>
+          <AnimatePresence initial={false} mode='popLayout'>
             {multipleSelection && (
               <m.button
                 layoutId={"multiple-delete"}
@@ -106,19 +106,25 @@ const EditWordsMainControls = ({
             {!isMobile && <p>{multipleSelection ? "Cancel selection" : "Select multiple"}</p>}
             {multipleSelection ? <X size={25} /> : <CheckSquare size={25} />}
           </m.button>
-          <m.button
-            layoutId={"add-pair"}
-            className={styles.button}
-            initial={{ backgroundColor: "var(--color-background)" }}
-            animate={{ opacity: isAddingNewPair || Boolean(searchQuery) ? 0.5 : 1 }}
-            style={{ pointerEvents: isAddingNewPair || Boolean(searchQuery) ? "none" : "auto" }}
-            whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
-            onClick={handleAdd}
-            disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery) || isImporting}
-          >
-            {!isMobile && <p>Add word pair</p>}
-            <Plus size={25} />
-          </m.button>
+
+          <AnimatePresence initial={false} mode='popLayout'>
+            {!multipleSelection && (
+              <m.button
+                layoutId={"add-pair"}
+                className={styles.button}
+                initial={{ backgroundColor: "var(--color-background)", opacity: 0 }}
+                animate={{ opacity: isAddingNewPair || Boolean(searchQuery) ? 0.5 : 1 }}
+                exit={{ opacity: 0 }}
+                style={{ pointerEvents: isAddingNewPair || Boolean(searchQuery) ? "none" : "auto" }}
+                whileTap={user && !isAddingNewPair ? { backgroundColor: "var(--color-background-highlight)" } : {}}
+                onClick={handleAdd}
+                disabled={!user || tagsLoading || isAddingNewPair || Boolean(searchQuery) || isImporting}
+              >
+                {!isMobile && <p>Add word pair</p>}
+                <Plus size={25} />
+              </m.button>
+            )}
+          </AnimatePresence>
         </LayoutGroup>
       </div>
 
