@@ -58,7 +58,7 @@ export const MENU_ITEMS = [
   { title: "Account", slug: "account", href: "/account", icon: <User size={22} /> },
 ];
 
-export const rowCountOptions = [3, 4, 5];
+export const rowCountOptions = [3, 4, 5, 6, 7, 8];
 
 interface ThemeColors extends CSSProperties {
   "--color-text": string;

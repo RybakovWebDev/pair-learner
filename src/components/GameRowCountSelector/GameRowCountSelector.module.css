@@ -20,9 +20,8 @@
   user-select: none;
 }
 
-.rowsSelector button:nth-child(2) {
+.rowsSelector button + button {
   border-left: 1px solid var(--color-background-highlight);
-  border-right: 1px solid var(--color-background-highlight);
 }
 
 .rowsSelector button {

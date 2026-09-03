@@ -27,10 +27,10 @@ export function processEndlessMode({
   mixColumns,
 }: ProcessEndlessModeProps): ProcessEndlessModeResult | null {
   const updatedLeftColumn = leftColumn.map((w) =>
-    w.id === pair.leftId ? { ...w, isMatched: true, isAnimating: false } : w
+    w.id === pair.leftId ? { ...w, isMatched: true, isAnimating: false } : w,
   );
   const updatedRightColumn = rightColumn.map((w) =>
-    w.id === pair.rightId ? { ...w, isMatched: true, isAnimating: false } : w
+    w.id === pair.rightId ? { ...w, isMatched: true, isAnimating: false } : w,
   );
 
   const matchedPairsCount = updatedLeftColumn.filter((w) => w.isMatched).length;
@@ -50,21 +50,25 @@ export function processEndlessMode({
     const currentPairs = updatedRoundPairs.filter(
       (p) =>
         !matchedLeftPositions.some(
-          (pos) => updatedLeftColumn[pos].word === p.word1 || updatedLeftColumn[pos].word === p.word2
-        )
+          (pos) => updatedLeftColumn[pos].word === p.word1 || updatedLeftColumn[pos].word === p.word2,
+        ),
     );
     const currentWords = new Set(currentPairs.flatMap((p) => [p.word1, p.word2]));
 
     const getUniquePair = (replacedLeftWord: string, replacedRightWord: string) => {
-      let newPair: Pair;
+      let newPair: Pair | undefined;
+      let attempts = 0;
       do {
         newPair = getRandomPair(pairs, updatedRoundPairs);
+        if (!newPair) return null;
+        attempts += 1;
       } while (
-        currentPairs.some(
-          (p) => p.id === newPair.id || currentWords.has(newPair.word1) || currentWords.has(newPair.word2)
+        attempts < 50 &&
+        (currentPairs.some(
+          (p) => p.id === newPair!.id || currentWords.has(newPair!.word1) || currentWords.has(newPair!.word2),
         ) ||
-        newPair.word1 === replacedLeftWord ||
-        newPair.word2 === replacedRightWord
+          newPair.word1 === replacedLeftWord ||
+          newPair.word2 === replacedRightWord)
       );
       return newPair;
     };
@@ -76,6 +80,7 @@ export function processEndlessMode({
       const replacedRightWord = updatedRightColumn[rightPosition].word;
 
       const newPair = getUniquePair(replacedLeftWord, replacedRightWord);
+      if (!newPair) return;
       const newLeftId = `${newPair.id}_${makeid(4)}`;
       const newRightId = `${newPair.id}_${makeid(4)}`;
 
@@ -98,7 +103,7 @@ export function processEndlessMode({
       };
 
       updatedRoundPairs = updatedRoundPairs.filter(
-        (p) => p.word1 !== replacedLeftWord && p.word2 !== replacedRightWord
+        (p) => p.word1 !== replacedLeftWord && p.word2 !== replacedRightWord,
       );
       updatedRoundPairs.push({
         ...newPair,

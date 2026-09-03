@@ -17,6 +17,7 @@ import { useUserContext } from "@/contexts/UserContext";
 import { controlsVariants, Pair, rowCountOptions, simpleFadeVariants, Tag } from "@/constants";
 import { AnimateChangeInHeight, formatTime } from "@/utils/helpers";
 import GameToggles from "../GameToggles";
+import { usePersistentState, readPersisted, writePersisted } from "@/hooks/usePersistentState";
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
@@ -98,13 +99,13 @@ function gameReducer(state: GameState, action: any): GameState {
   }
 }
 
-function Game() {
-  const { user, loading: userLoading } = useUserContext();
-  const [state, dispatch] = useReducer(gameReducer, {
+function createInitialState(): GameState {
+  const storedRowCount = readPersisted("pl-row-count", 5);
+  return {
     isLoading: true,
     pairs: [],
     tags: [],
-    rowCount: 5,
+    rowCount: rowCountOptions.includes(storedRowCount) ? storedRowCount : 5,
     tagsOpen: false,
     enabledTags: [],
     roundLength: 210,
@@ -113,12 +114,17 @@ function Game() {
     refreshTrigger: 0,
     solvedPairs: 0,
     mistakePairs: 0,
-  });
-  const [showSparkles, setShowSparkles] = useState(true);
-  const [endlessMode, setEndlessMode] = useState(false);
-  const [mixColumns, setMixColumns] = useState(false);
-  const [showMistakes, setShowMistakes] = useState(false);
-  const [fastAnimations, setFastAnimations] = useState(false);
+  };
+}
+
+function Game() {
+  const { user, loading: userLoading } = useUserContext();
+  const [state, dispatch] = useReducer(gameReducer, null, createInitialState);
+  const [showSparkles, setShowSparkles] = usePersistentState("pl-show-sparkles", true);
+  const [endlessMode, setEndlessMode] = usePersistentState("pl-endless-mode", false);
+  const [mixColumns, setMixColumns] = usePersistentState("pl-mix-columns", false);
+  const [showMistakes, setShowMistakes] = usePersistentState("pl-show-mistakes", false);
+  const [fastAnimations, setFastAnimations] = usePersistentState("pl-fast-animations", false);
 
   const router = useRouter();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -128,6 +134,20 @@ function Game() {
     if (state.enabledTags.length === 0) return state.pairs;
     return state.pairs.filter((pair) => pair.tag_ids.some((tagId) => state.enabledTags.includes(tagId)));
   }, [state.pairs, state.enabledTags]);
+
+  const maxRowCount = endlessMode ? filteredPairs.length - 1 : filteredPairs.length;
+
+  const availableRowCountOptions = useMemo(
+    () => (filteredPairs.length < 5 ? rowCountOptions : rowCountOptions.filter((r) => r <= maxRowCount)),
+    [filteredPairs.length, maxRowCount],
+  );
+
+  useEffect(() => {
+    if (state.isLoading || filteredPairs.length < 5) return;
+    if (state.rowCount > maxRowCount) {
+      dispatch({ type: "SET_ROW_COUNT", payload: Math.max(rowCountOptions[0], maxRowCount) });
+    }
+  }, [maxRowCount, state.rowCount, state.isLoading, filteredPairs.length]);
 
   const fetchData = useCallback(async () => {
     if (!user || fetchDataRef.current) return;
@@ -195,9 +215,10 @@ function Game() {
     (rows: number) => {
       if (!state.isGameRunning) {
         dispatch({ type: "SET_ROW_COUNT", payload: rows });
+        writePersisted("pl-row-count", rows);
       }
     },
-    [state.isGameRunning]
+    [state.isGameRunning],
   );
 
   const handleTagsOpen = useCallback(() => {
@@ -217,7 +238,7 @@ function Game() {
         });
       }
     },
-    [state.isGameRunning, state.enabledTags]
+    [state.isGameRunning, state.enabledTags],
   );
 
   const handleRoundLengthChange = useCallback(
@@ -227,7 +248,7 @@ function Game() {
         dispatch({ type: "SET_ROUND_LENGTH", payload: newLength });
       }
     },
-    [state.isGameRunning]
+    [state.isGameRunning],
   );
 
   const handleSparklesToggle = useCallback(() => {
@@ -291,7 +312,7 @@ function Game() {
             fastAnimations={fastAnimations}
           />
         );
-      }
+      },
     );
     MemoizedComponent.displayName = "MemoizedPairListWrapper";
     return MemoizedComponent;
@@ -428,7 +449,7 @@ function Game() {
 
           <GameRowCountSelector
             rowCount={state.rowCount}
-            rowCountOptions={rowCountOptions}
+            rowCountOptions={availableRowCountOptions}
             isDisabled={areControlsDisabled}
             onRowCountChange={handleRowCountChange}
           />

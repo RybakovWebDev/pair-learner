@@ -15,6 +15,8 @@ interface GameRowCountSelectorProps {
 
 function GameRowCountSelector({ rowCount, rowCountOptions, isDisabled, onRowCountChange }: GameRowCountSelectorProps) {
   const id = useId();
+  const firstOption = rowCountOptions[0];
+  const lastOption = rowCountOptions[rowCountOptions.length - 1];
   return (
     <m.div className={styles.rowCountWrapper} variants={controlsVariants} animate={isDisabled ? "disabled" : "enabled"}>
       <label htmlFor='row-count-select'>Number of rows:</label>
@@ -31,8 +33,8 @@ function GameRowCountSelector({ rowCount, rowCountOptions, isDisabled, onRowCoun
                   initial={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
                   animate={{
                     opacity: 1,
-                    borderTopLeftRadius: rowCount === 3 ? 15 : 0,
-                    borderTopRightRadius: rowCount === 5 ? 15 : 0,
+                    borderTopLeftRadius: rowCount === firstOption ? 15 : 0,
+                    borderTopRightRadius: rowCount === lastOption ? 15 : 0,
                   }}
                   exit={{ opacity: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}
                   transition={{ type: "spring", damping: 70, stiffness: 1000 }}
