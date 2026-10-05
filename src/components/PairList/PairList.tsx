@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useCallback, useRef, useMemo } from "react";
+import { useEffect, useLayoutEffect, useCallback, useRef, useMemo } from "react";
 import { LazyMotion, m, AnimatePresence } from "framer-motion";
 
 import styles from "./PairList.module.css";
@@ -66,7 +66,9 @@ function PairList({
     dispatch({ type: "INCREMENT_LIST_KEY" });
   }, [numPairs, pairs, mixColumns, dispatch]);
 
-  initializeColumnsRef.current = initializeColumns;
+  useLayoutEffect(() => {
+    initializeColumnsRef.current = initializeColumns;
+  }, [initializeColumns]);
 
   const { processMatch } = useMatchProcessing({
     state,

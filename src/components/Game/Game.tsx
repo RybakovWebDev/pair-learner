@@ -21,16 +21,7 @@ import { usePersistentState, readPersisted, writePersisted } from "@/hooks/usePe
 
 const loadFeatures = () => import("../../featuresMax").then((res) => res.default);
 
-interface PairListProps {
-  numPairs: number;
-  isGameRunning: boolean;
-  refreshTrigger: number;
-  pairs: Pair[];
-  endlessMode: boolean;
-  showSparkles: boolean;
-  mixColumns: boolean;
-  fastAnimations: boolean;
-}
+const MemoizedPairList = memo(PairList);
 
 type GameState = {
   isLoading: boolean;
@@ -253,25 +244,25 @@ function Game() {
 
   const handleSparklesToggle = useCallback(() => {
     setShowSparkles((prev) => !prev);
-  }, []);
+  }, [setShowSparkles]);
 
   const handleEndlessToggle = useCallback(() => {
     setEndlessMode((prev) => !prev);
     dispatch({ type: "REFRESH_TRIGGER" });
-  }, []);
+  }, [setEndlessMode]);
 
   const handleMixToggle = useCallback(() => {
     setMixColumns((prev) => !prev);
     dispatch({ type: "REFRESH_TRIGGER" });
-  }, []);
+  }, [setMixColumns]);
 
   const handleAnimationSpeedToggle = useCallback(() => {
     setFastAnimations((prev) => !prev);
-  }, []);
+  }, [setFastAnimations]);
 
   const handleMistakesToggle = useCallback(() => {
     setShowMistakes((prev) => !prev);
-  }, []);
+  }, [setShowMistakes]);
 
   const handlePairSolved = useCallback(() => {
     dispatch({ type: "INCREMENT_SOLVED_PAIRS" });
@@ -294,29 +285,6 @@ function Game() {
       dispatch({ type: "REFRESH_TRIGGER" });
     }
   }, [state.isGameRunning]);
-
-  const MemoizedPairListWrapper = useMemo(() => {
-    const MemoizedComponent = memo<PairListProps>(
-      ({ numPairs, isGameRunning, refreshTrigger, pairs, endlessMode, showSparkles, mixColumns, fastAnimations }) => {
-        return (
-          <PairList
-            numPairs={numPairs}
-            isGameRunning={isGameRunning}
-            refreshTrigger={refreshTrigger}
-            pairs={pairs}
-            onPairSolved={handlePairSolved}
-            onPairMistake={handlePairMistake}
-            endlessMode={endlessMode}
-            showSparkles={showSparkles}
-            mixColumns={mixColumns}
-            fastAnimations={fastAnimations}
-          />
-        );
-      },
-    );
-    MemoizedComponent.displayName = "MemoizedPairListWrapper";
-    return MemoizedComponent;
-  }, [handlePairSolved, handlePairMistake]);
 
   const areControlsDisabled = state.isGameRunning || filteredPairs.length < 5;
 
@@ -346,11 +314,13 @@ function Game() {
               </Link>
             </m.div>
           ) : (
-            <MemoizedPairListWrapper
+            <MemoizedPairList
               numPairs={state.rowCount}
               isGameRunning={state.isGameRunning}
               refreshTrigger={state.refreshTrigger}
               pairs={filteredPairs}
+              onPairSolved={handlePairSolved}
+              onPairMistake={handlePairMistake}
               endlessMode={endlessMode}
               showSparkles={showSparkles}
               mixColumns={mixColumns}

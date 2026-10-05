@@ -144,7 +144,7 @@ function EditWords() {
 
       setTags(updatedTagsData as (Tag & { tempId?: string })[]);
 
-      fetchError && setFetchError(false);
+      setFetchError(false);
     } catch (error) {
       console.error("Unexpected error:", error);
     }
@@ -262,6 +262,7 @@ function EditWords() {
 
     scrollToSearch();
 
+    // eslint-disable-next-line react-hooks/purity -- runs in a click handler, not during render
     const tempId = "temp-" + Date.now();
     const newPair: Pair & { tempId: string } = {
       id: tempId,
