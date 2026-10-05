@@ -19,13 +19,6 @@ export interface Tag {
   tempId?: string;
 }
 
-export interface UserCategory {
-  id: string;
-  user_id: string;
-  category: string;
-  created_at?: string;
-}
-
 export const authOptions = ["Login", "Register", "Magic Link"];
 
 export const DEMO_PAIRS = [

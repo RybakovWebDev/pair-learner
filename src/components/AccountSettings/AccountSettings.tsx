@@ -154,13 +154,8 @@ function AccountSettings() {
           .eq("user_id", user.id);
         if (error) throw error;
       } else {
-        // Delete from both tables to clean up legacy data
-        const [tagsResult, categoriesResult] = await Promise.all([
-          supabase.from("tags").delete().eq("user_id", user.id),
-          supabase.from("pair-categories").delete().eq("user_id", user.id),
-        ]);
-        if (tagsResult.error) throw tagsResult.error;
-        if (categoriesResult.error) throw categoriesResult.error;
+        const { error } = await supabase.from("tags").delete().eq("user_id", user.id);
+        if (error) throw error;
       }
 
       setDeleteAllSuccess(`All ${label} have been deleted.`);
