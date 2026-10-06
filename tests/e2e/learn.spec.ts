@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { boardWords, expectBoardReady, isMatched, matchWords, partnerOf, turnOn, waitForBoardToSettle, wordCells } from "./helpers";
+import { boardWords, cell, expectBoardReady, isMatched, matchWords, partnerOf, turnOn, waitForBoardToSettle, wordCells } from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/learn");
@@ -117,4 +117,24 @@ test("changing the row count resizes the board", async ({ page }) => {
   await expectBoardReady(page, 7);
   await page.getByRole("button", { name: "5", exact: true }).click();
   await expectBoardReady(page, 5);
+});
+
+// KNOWN BUG (2026-10-06): skipped until the rendering rewrite (stage 3). It reproduces the endless-mode freeze (about 4 runs in 5):
+// a slot's <AnimatePresence mode="wait"> exit sometimes never finishes, so the old cell stays on screen forever.
+test.fixme("endless mode survives quick back-to-back matches", async ({ page }) => {
+  await turnOn(page, "Endless mode");
+  await page.reload();
+  await expectBoardReady(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  // Start each match as soon as the board stops changing, with no human-like pauses.
+  for (let i = 0; i < 4; i++) {
+    await waitForBoardToSettle(page);
+    const { left } = await boardWords(page);
+    let word = left[0];
+    for (const w of left) if (!(await isMatched(page, w))) { word = w; break; }
+    await cell(page, word).click({ timeout: 3000 });
+    await cell(page, partnerOf(word)).click({ timeout: 3000 });
+  }
+  await expect(page.getByText("Matches:").locator("..")).toContainText("4");
 });
