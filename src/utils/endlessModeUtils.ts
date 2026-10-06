@@ -67,8 +67,8 @@ export function processEndlessMode({
         (currentPairs.some(
           (p) => p.id === newPair!.id || currentWords.has(newPair!.word1) || currentWords.has(newPair!.word2),
         ) ||
-          newPair.word1 === replacedLeftWord ||
-          newPair.word2 === replacedRightWord)
+          // Either word may end up on either side with mix columns, so check both.
+          [newPair.word1, newPair.word2].some((w) => w === replacedLeftWord || w === replacedRightWord))
       );
       return newPair;
     };
@@ -102,9 +102,11 @@ export function processEndlessMode({
         id: newRightId,
       };
 
-      updatedRoundPairs = updatedRoundPairs.filter(
-        (p) => p.word1 !== replacedLeftWord && p.word2 !== replacedRightWord,
-      );
+      // Remove the replaced pairs by id, since mix columns can show either word on either side.
+      // Cell ids are the pair id, or `${pairId}_${suffix}` for refilled cells.
+      const replacedLeftPairId = updatedLeftColumn[leftPosition].id.split("_")[0];
+      const replacedRightPairId = updatedRightColumn[rightPosition].id.split("_")[0];
+      updatedRoundPairs = updatedRoundPairs.filter((p) => p.id !== replacedLeftPairId && p.id !== replacedRightPairId);
       updatedRoundPairs.push({
         ...newPair,
         id: newPair.id,

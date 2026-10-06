@@ -50,7 +50,7 @@ const startVariants: Variants = {
   },
 };
 
-function gameReducer(state: GameState, action: any): GameState {
+export function gameReducer(state: GameState, action: any): GameState {
   switch (action.type) {
     case "INITIALIZE_DATA":
       return {

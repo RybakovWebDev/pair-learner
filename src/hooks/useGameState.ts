@@ -24,7 +24,7 @@ type Action =
   | { type: "SET_INITIAL_OPACITY"; payload: number }
   | { type: "INCREMENT_LIST_KEY" };
 
-function gameReducer(state: GameState, action: Action): GameState {
+export function gameReducer(state: GameState, action: Action): GameState {
   switch (action.type) {
     case "INITIALIZE_COLUMNS":
       return {
