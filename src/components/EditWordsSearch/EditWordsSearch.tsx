@@ -77,7 +77,7 @@ const EditWordsSearch = ({
               .eq("user_id", user.id)
               .or(
                 `word1.ilike.%${query}%,word2.ilike.%${query}%${
-                  matchingTagIds.length > 0 ? `,tag_ids.cs.{${matchingTagIds.join(",")}}` : ""
+                  matchingTagIds.length > 0 ? `,tag_ids.ov.{${matchingTagIds.join(",")}}` : ""
                 }`
               )
               .order("created_at", { ascending: false });

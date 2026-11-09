@@ -11,6 +11,31 @@ import Spinner from "../Spinner";
 import { Tag, Pair } from "@/constants";
 import { supabase } from "@/utils/supabase/client";
 
+// Strips a deleted tag's id from every pair that still has it, including pairs not loaded on the page. Each pair gets
+// its own update of just `tag_ids` (an upsert would re-create a pair deleted meanwhile), a few at a time.
+async function removeTagFromAllPairs(userId: string, tagId: string) {
+  const { data, error } = await supabase
+    .from("word-pairs")
+    .select("id, tag_ids")
+    .eq("user_id", userId)
+    .contains("tag_ids", [tagId]);
+  if (error) throw error;
+
+  const BATCH_SIZE = 10;
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const results = await Promise.all(
+      data.slice(i, i + BATCH_SIZE).map((pair) =>
+        supabase
+          .from("word-pairs")
+          .update({ tag_ids: (pair.tag_ids as string[]).filter((id) => id !== tagId) })
+          .eq("id", pair.id),
+      ),
+    );
+    const failed = results.find((result) => result.error);
+    if (failed) throw failed.error;
+  }
+}
+
 interface EditWordsTagsSectionProps {
   user: any;
   tags: (Tag & { tempId?: string })[];
@@ -182,20 +207,15 @@ const EditWordsTagsSection: React.FC<EditWordsTagsSectionProps> = ({
           }));
           setPairs(updatedPairs);
 
-          supabase
-            .from("word-pairs")
-            .upsert(updatedPairs)
-            .then(({ error: updateError }) => {
-              if (updateError) {
-                console.error("Error updating pairs after tag deletion:", updateError);
-              }
-            });
+          removeTagFromAllPairs(user.id, realId).catch((updateError) => {
+            console.error("Error updating pairs after tag deletion:", updateError);
+          });
 
           setErrors({});
         }
       }, 300);
     },
-    [tags, setTags, pairs, setPairs]
+    [tags, setTags, pairs, setPairs, user]
   );
 
   const handleCancelDeleteTag = useCallback(() => {

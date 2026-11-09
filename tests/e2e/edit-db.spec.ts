@@ -7,8 +7,8 @@ import * as XLSX from "xlsx";
 import { cleanupE2EData, E2E_PREFIX, testAccountClient } from "./helpers";
 
 // Word Editor database tests: each one drives /edit like a user, then checks the rows Supabase actually holds.
-// They pin today's behaviour so the Word Editor can be refactored safely. Known bugs are pinned as they are, with a
-// `test.fail` twin describing the intended behaviour (it starts passing, and so fails, once the bug is fixed).
+// They pin the current behaviour so the Word Editor can be refactored safely. Intended changes that haven't landed yet
+// are marked `test.fail`.
 
 type PairRow = {
   id: string;
@@ -326,41 +326,60 @@ test.describe("tags", () => {
 });
 
 test.describe("deleting a tag", () => {
+  const collectConsoleErrors = (page: Page) => {
+    const errors: string[] = [];
+    page.on("console", (msg) => msg.type() === "error" && errors.push(msg.text()));
+    return errors;
+  };
+
+  async function deleteTagInEditor(page: Page, name: string) {
+    await openTags(page);
+    await tagRow(page, name).getByRole("button", { name: "Delete", exact: true }).click();
+    await tagRow(page, name).getByRole("button", { name: "Confirm delete" }).click();
+    await expect.poll(() => tagsNamed(name)).toHaveLength(0);
+  }
+
   // One tagged pair is new (on the first page), one is old (beyond the 30 loaded pairs), with 30 untagged pairs between.
-  async function deleteTagUsedByPairs(page: Page) {
-    const tag = await seedTag(uid("t"));
+  test("removes the tag's id from every pair, loaded or not, and keeps their other tags", async ({ page }) => {
+    const [tag, otherTag] = [await seedTag(uid("t")), await seedTag(uid("t"))];
     const [oldPair] = await seedPairs([{ word1: uid("old"), tag_ids: [tag.id], created_at: "2001-01-01T00:00:00Z" }]);
     await seedPairs(Array.from({ length: 30 }, () => ({ word1: uid("fill") })));
-    const [newPair] = await seedPairs([{ word1: uid("new"), tag_ids: [tag.id] }]);
-
-    const consoleErrors: string[] = [];
-    page.on("console", (msg) => msg.type() === "error" && consoleErrors.push(msg.text()));
+    const [newPair, otherPair] = await seedPairs([
+      { word1: uid("new"), tag_ids: [tag.id, otherTag.id] },
+      { word1: uid("other"), tag_ids: [otherTag.id] },
+    ]);
+    const consoleErrors = collectConsoleErrors(page);
 
     await openEditor(page);
     await expect(pairRow(page, newPair.id)).toHaveCount(1);
     await expect(pairRow(page, oldPair.id)).toHaveCount(0);
-    await openTags(page);
-    await tagRow(page, tag.name).getByRole("button", { name: "Delete", exact: true }).click();
-    await tagRow(page, tag.name).getByRole("button", { name: "Confirm delete" }).click();
+    await deleteTagInEditor(page, tag.name);
 
-    await expect.poll(() => tagsNamed(tag.name)).toHaveLength(0);
-    await settle(page);
-    return { tag, oldPair, newPair, consoleErrors };
-  }
-
-  test("removes the tag row but leaves its id on every pair (current behaviour, bug)", async ({ page }) => {
-    const { tag, oldPair, newPair, consoleErrors } = await deleteTagUsedByPairs(page);
-
-    // The follow-up upsert of the loaded pairs fails, and the error only goes to the console.
-    expect(consoleErrors.join("\n")).toContain("Error updating pairs after tag deletion");
-    expect((await pairById(newPair.id))?.tag_ids).toEqual([tag.id]);
-    expect((await pairById(oldPair.id))?.tag_ids).toEqual([tag.id]);
+    await expect.poll(async () => (await pairById(oldPair.id))?.tag_ids).toEqual([]);
+    await expect.poll(async () => (await pairById(newPair.id))?.tag_ids).toEqual([otherTag.id]);
+    expect(await pairById(otherPair.id)).toEqual(otherPair);
+    expect(await pairById(newPair.id)).toEqual({ ...newPair, tag_ids: [otherTag.id] });
+    expect(await tagsNamed(otherTag.name)).toEqual([otherTag]);
+    expect(consoleErrors.join("\n")).not.toContain("Error updating pairs after tag deletion");
   });
 
-  test.fail("removes the tag's id from every pair, loaded or not (intended)", async ({ page }) => {
-    const { oldPair, newPair } = await deleteTagUsedByPairs(page);
-    expect((await pairById(newPair.id))?.tag_ids).toEqual([]);
-    expect((await pairById(oldPair.id))?.tag_ids).toEqual([]);
+  // A pair added in this session keeps a "temp-" id on the page; the old cleanup choked on it.
+  test("also cleans a pair added and tagged in the same session", async ({ page }) => {
+    const tag = await seedTag(uid("t"));
+    const word = uid("fresh");
+    const consoleErrors = collectConsoleErrors(page);
+
+    await openEditor(page);
+    await page.getByRole("button", { name: "Add word pair" }).click(); // a new pair opens its tag list
+    await page.locator('input[id^="word1-temp-"]').fill(word);
+    await page.locator('input[id^="word2-temp-"]').fill("uno");
+    await page.locator("main li").filter({ has: page.locator('input[id^="word1-temp-"]') }).getByText(tag.name).click();
+    await page.getByRole("button", { name: "Confirm edit" }).click();
+    await expect.poll(async () => (await pairsWhere("word1", word))[0]?.tag_ids).toEqual([tag.id]);
+
+    await deleteTagInEditor(page, tag.name);
+    await expect.poll(async () => (await pairsWhere("word1", word))[0]?.tag_ids).toEqual([]);
+    expect(consoleErrors.join("\n")).not.toContain("Error updating pairs after tag deletion");
   });
 });
 
@@ -406,12 +425,10 @@ test.describe("paging", () => {
     await expectEveryPairOnceNewestFirst(page);
   });
 
-  // An import inserts all its pairs in one statement, so they share one created_at. Paging orders by created_at only,
-  // and Postgres doesn't keep ties in the same order between the `range` queries, so pages overlap and skip pairs
-  // (bug, found 2026-11-10: 73 rows shown, 64 distinct). Remove `.fail` once the order has a tie-breaker.
-  test.fail("pairs that share a created_at (like one import) page without duplicates or gaps (intended)", async ({
-    page,
-  }) => {
+  // An import inserts all its pairs in one statement, so they share one created_at. Ordering by created_at alone let
+  // Postgres order the ties differently per `range` query, so pages overlapped and skipped pairs (fixed 2026-11-10 with
+  // an `id` tie-breaker; before that, 65 tied pairs showed 73 rows with only 64 distinct).
+  test("pairs that share a created_at (like one import) page without duplicates or gaps", async ({ page }) => {
     await seedPairs(Array.from({ length: 65 }, () => ({ word1: uid("same") })));
     await openEditor(page);
     await loadAllPages(page);
@@ -449,31 +466,19 @@ test.describe("search", () => {
     await expect(word1Inputs(page)).toHaveCount(1);
   });
 
-  // The tag ids go into one `tag_ids.cs.{a,b}` filter, which means "has all of them".
-  test("when the query matches two tags, only pairs with both tags are found (current behaviour, bug)", async ({
-    page,
-  }) => {
+  // All matching tag ids go into one `tag_ids.ov.{a,b}` filter ("has any of them"; it was `cs`, "has all", until 2026-11-10).
+  test("when the query matches two tags, pairs with either tag are found", async ({ page }) => {
     const [tagA, tagB] = [await seedTag(`${E2E_PREFIX}${run}qa`), await seedTag(`${E2E_PREFIX}${run}qb`)];
-    const [onlyA, both] = await seedPairs([
+    const [onlyA, onlyB, both] = await seedPairs([
       { word1: uid("onlya"), tag_ids: [tagA.id] },
+      { word1: uid("onlyb"), tag_ids: [tagB.id] },
       { word1: uid("both"), tag_ids: [tagA.id, tagB.id] },
+      { word1: uid("none") },
     ]);
     await openEditor(page);
     await search(page, `${run}q`);
-    await expect(pairRow(page, both.id)).toHaveCount(1);
-    await expect(pairRow(page, onlyA.id)).toHaveCount(0);
-  });
-
-  test.fail("when the query matches two tags, pairs with either tag are found (intended)", async ({ page }) => {
-    const [tagA, tagB] = [await seedTag(`${E2E_PREFIX}${run}ra`), await seedTag(`${E2E_PREFIX}${run}rb`)];
-    const [onlyA, onlyB] = await seedPairs([
-      { word1: uid("onlya"), tag_ids: [tagA.id] },
-      { word1: uid("onlyb"), tag_ids: [tagB.id] },
-    ]);
-    await openEditor(page);
-    await search(page, `${run}r`);
-    await expect(pairRow(page, onlyA.id)).toHaveCount(1, { timeout: 5000 });
-    await expect(pairRow(page, onlyB.id)).toHaveCount(1, { timeout: 5000 });
+    await expect(word1Inputs(page)).toHaveCount(3);
+    expect((await shownPairIds(page)).sort()).toEqual([onlyA.id, onlyB.id, both.id].sort());
   });
 
   test("no results shows a message, and clearing the search brings the first page back", async ({ page }) => {

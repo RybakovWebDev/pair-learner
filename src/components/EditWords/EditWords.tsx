@@ -109,6 +109,7 @@ function EditWords() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
+        .order("id", { ascending: false }) // tie-breaker: pairs from one import share a created_at
         .range(0, LIMIT - 1);
 
       if (pairsError) {
@@ -528,6 +529,7 @@ function EditWords() {
         .select("*")
         .eq("user_id", user.id)
         .order("created_at", { ascending: false })
+        .order("id", { ascending: false }) // must match the first page's order, or pages overlap
         .range(offset, offset + LIMIT - 1);
 
       if (pairsError) {
