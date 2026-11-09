@@ -23,6 +23,26 @@ const loadFeatures = () => import("../../featuresMax").then((res) => res.default
 
 const MemoizedPairList = memo(PairList);
 
+// The API returns at most 2,000 rows per request, so load the player's pairs in batches. A stable order (id breaks
+// created_at ties) keeps the batches from overlapping. A batch shorter than PAIRS_BATCH_SIZE is the last one.
+const PAIRS_BATCH_SIZE = 1000;
+
+async function fetchAllPairs(userId: string) {
+  const pairs: Pair[] = [];
+  for (let from = 0; ; from += PAIRS_BATCH_SIZE) {
+    const { data, error } = await supabase
+      .from("word-pairs")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, from + PAIRS_BATCH_SIZE - 1);
+    if (error) return { data: null, error };
+    pairs.push(...data);
+    if (data.length < PAIRS_BATCH_SIZE) return { data: pairs, error: null };
+  }
+}
+
 type GameState = {
   isLoading: boolean;
   pairs: Pair[];
@@ -142,7 +162,7 @@ function Game() {
     fetchDataRef.current = true;
     try {
       const [pairsResponse, tagsResponse] = await Promise.all([
-        supabase.from("word-pairs").select("*").eq("user_id", user.id),
+        fetchAllPairs(user.id),
         supabase.from("tags").select("*").eq("user_id", user.id),
       ]);
 

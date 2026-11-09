@@ -481,6 +481,32 @@ test.describe("search", () => {
     expect((await shownPairIds(page)).sort()).toEqual([onlyA.id, onlyB.id, both.id].sort());
   });
 
+  // The search text goes into a PostgREST `or` filter, where , ( ) " and \ have a meaning of their own.
+  test("finds words containing commas, parentheses and quotes", async ({ page }) => {
+    const [comma, parens, quote] = await seedPairs([
+      { word1: uid("c"), word2: `to be, or ${run}` },
+      { word1: uid("p"), word2: `pan (${run})` },
+      { word1: uid("q"), word2: `say "${run}"` },
+    ]);
+    await openEditor(page);
+    for (const [query, pair] of [
+      [`be, or ${run}`, comma],
+      [`(${run})`, parens],
+      [`"${run}"`, quote],
+    ] as const) {
+      await search(page, query);
+      await expect(word1Inputs(page)).toHaveCount(1);
+      expect(await shownPairIds(page), query).toEqual([pair.id]);
+    }
+  });
+
+  test("a search with special characters and no matches shows the message and keeps the controls", async ({ page }) => {
+    await openEditor(page);
+    await search(page, `${run},(nomatch)`);
+    await expect(page.getByText("No word pairs match your search.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Add word pair" })).toBeVisible();
+  });
+
   test("no results shows a message, and clearing the search brings the first page back", async ({ page }) => {
     await openEditor(page);
     const firstPage = await shownPairIds(page);

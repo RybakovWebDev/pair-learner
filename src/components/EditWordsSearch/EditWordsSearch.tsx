@@ -9,6 +9,10 @@ import { Pair } from "@/constants";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/utils/supabase/client";
 
+// Values inside a PostgREST `or(...)` filter must be double-quoted when they contain , ( or ), with " and \ escaped by a
+// backslash. Unquoted, a comma in the search text split the filter and the request failed.
+const quoteFilterValue = (value: string) => `"${value.replace(/["\\]/g, "\\$&")}"`;
+
 interface EditWordsSearchProps {
   user: User | null;
   tagsLoading: boolean;
@@ -66,6 +70,7 @@ const EditWordsSearch = ({
 
             if (tagError) {
               console.error("Error searching tags:", tagError);
+              setIsSearching(false);
               return;
             }
 
@@ -76,7 +81,7 @@ const EditWordsSearch = ({
               .select("*")
               .eq("user_id", user.id)
               .or(
-                `word1.ilike.%${query}%,word2.ilike.%${query}%${
+                `word1.ilike.${quoteFilterValue(`%${query}%`)},word2.ilike.${quoteFilterValue(`%${query}%`)}${
                   matchingTagIds.length > 0 ? `,tag_ids.ov.{${matchingTagIds.join(",")}}` : ""
                 }`
               )
@@ -84,6 +89,7 @@ const EditWordsSearch = ({
 
             if (error) {
               console.error("Error searching pairs:", error);
+              setIsSearching(false);
               return;
             }
 

@@ -9,15 +9,12 @@ import { makePairs } from "./board";
 
 const db = vi.hoisted(() => ({ pairs: [] as unknown[] }));
 
-vi.mock("@/utils/supabase/client", () => ({
-  supabase: {
-    from: (table: string) => ({
-      select: () => ({
-        eq: async () => ({ data: table === "word-pairs" ? db.pairs : [], error: null }),
-      }),
-    }),
-  },
-}));
+vi.mock("@/utils/supabase/client", async () => {
+  const { mockQuery } = await import("./supabaseMock");
+  return {
+    supabase: { from: (table: string) => ({ select: () => mockQuery(table === "word-pairs" ? db.pairs : []) }) },
+  };
+});
 vi.mock("@/contexts/UserContext", () => ({
   useUserContext: () => ({ user: { id: "u" }, loading: false, setUser: () => {} }),
 }));
