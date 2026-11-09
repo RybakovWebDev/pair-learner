@@ -1,18 +1,18 @@
 "use client";
-import { useEffect, useLayoutEffect, useCallback, useRef, useMemo } from "react";
-import { LazyMotion, m, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import { LazyMotion, m } from "framer-motion";
 
 import styles from "./PairList.module.css";
 
-import PairListStatic from "../PairListStatic";
 import Spinner from "../Spinner";
-import PairListColumns from "../PairListColumns";
+import PairListColumns, { type SlotView } from "../PairListColumns";
+import FadeOutSwap from "../FadeOutSwap";
 
 import { Pair } from "@/constants";
 import { AnimateChangeInHeight } from "@/utils/helpers";
-import { useGameState } from "@/hooks/useGameState";
-import { useMatchProcessing } from "@/hooks/useMatchProcessing";
-import { getRandomUniquePairs, initializePairListColumns } from "@/utils/gameUtils";
+import { useGameBoard } from "@/hooks/useGameBoard";
+import { leavesAt, type BoardState, type Side } from "@/game/engine";
+import { FADE } from "@/game/animation";
 
 const loadFeatures = () => import("../../features").then((res) => res.default);
 
@@ -30,6 +30,36 @@ interface PairListProps {
   onPairMistake?: () => void;
 }
 
+function slotViews(state: BoardState, side: Side): SlotView[] {
+  return state[side].map((cell) => {
+    const res = state.resolutions.find((r) => r.leftKey === cell.key || r.rightKey === cell.key);
+    const resolving = res !== undefined;
+    return {
+      key: cell.key,
+      word: cell.word,
+      isSelected: state.selected[side] === cell.key,
+      matchResult: res ? (res.correct ? "correct" : "incorrect") : null,
+      isMatched: cell.matched,
+      isAnimating: resolving,
+      leavesAt: leavesAt(state, cell),
+    };
+  });
+}
+
+/** Spinner placeholders in the shape of the board, until the first deal (the homepage renders them on the server). */
+function loadingViews(side: Side, rows: number): SlotView[] {
+  return Array.from({ length: rows }, (_, i) => ({
+    key: `loading-${side}-${i}`,
+    word: "",
+    isSelected: false,
+    matchResult: null,
+    isMatched: false,
+    isAnimating: false,
+    leavesAt: null,
+    loading: true,
+  }));
+}
+
 function PairList({
   numPairs = 5,
   isGameRunning,
@@ -43,135 +73,61 @@ function PairList({
   onPairSolved,
   onPairMistake,
 }: PairListProps) {
-  const { state, dispatch } = useGameState();
-  const currentRoundPairs = useRef<Pair[]>([]);
-  const initializeColumnsRef = useRef<(() => void) | null>(null);
-
-  const initializeColumns = useCallback(() => {
-    if (pairs.length < numPairs) {
-      console.error("Not enough pairs available");
-      dispatch({ type: "INITIALIZE_COLUMNS", payload: { left: [], right: [] } });
-      return;
-    }
-
-    const selectedPairs = getRandomUniquePairs(pairs, numPairs);
-    currentRoundPairs.current = selectedPairs;
-
-    const { left, right } = initializePairListColumns(selectedPairs, mixColumns);
-
-    dispatch({
-      type: "INITIALIZE_COLUMNS",
-      payload: { left, right },
-    });
-    dispatch({ type: "INCREMENT_LIST_KEY" });
-  }, [numPairs, pairs, mixColumns, dispatch]);
-
-  useLayoutEffect(() => {
-    initializeColumnsRef.current = initializeColumns;
-  }, [initializeColumns]);
-
-  const { processMatch } = useMatchProcessing({
-    state,
-    dispatch,
-    currentRoundPairs,
+  const { state, selectWord } = useGameBoard({
+    pairs,
+    numPairs,
+    isGameRunning,
     endlessMode,
     mixColumns,
     fastAnimations,
-    pairs,
+    refreshTrigger,
     onPairSolved,
     onPairMistake,
-    initializeColumns: () => initializeColumnsRef.current?.(),
   });
 
+  // The first board appears without fading in; later boards fade in.
+  const [initialOpacity, setInitialOpacity] = useState(1);
   useEffect(() => {
-    const timer = setTimeout(() => dispatch({ type: "SET_INITIAL_OPACITY", payload: 0 }), 2000);
+    const timer = setTimeout(() => setInitialOpacity(0), 2000);
     return () => clearTimeout(timer);
-  }, [dispatch]);
+  }, []);
 
-  useEffect(() => {
-    dispatch({ type: "SET_LOADING", payload: true });
-    if (pairs.length >= numPairs) {
-      initializeColumns();
-    } else {
-      dispatch({ type: "INITIALIZE_COLUMNS", payload: { left: [], right: [] } });
-    }
-    dispatch({ type: "SET_LOADING", payload: false });
-  }, [pairs, initializeColumns, refreshTrigger, numPairs, dispatch]);
+  const left = useMemo(() => (state ? slotViews(state, "left") : loadingViews("left", numPairs)), [state, numPairs]);
+  const right = useMemo(() => (state ? slotViews(state, "right") : loadingViews("right", numPairs)), [state, numPairs]);
 
-  useEffect(() => {
-    dispatch({ type: "CHANGE_MODE", payload: endlessMode });
-    initializeColumns();
-  }, [endlessMode, initializeColumns, dispatch]);
+  // The first deal takes over from the loading board in place (same content key), so the board doesn't fade out and
+  // back in. In development React runs effects twice, so the first deal seen may not be deal 1.
+  const [firstDealId, setFirstDealId] = useState<number | null>(null);
+  if (state && firstDealId === null) setFirstDealId(state.dealId);
 
-  useEffect(() => {
-    if (!isGameRunning) {
-      dispatch({ type: "RESET_GAME" });
-    }
-  }, [isGameRunning, dispatch]);
-
-  const handleSelectWord = useCallback(
-    (word: string, id: string, column: "left" | "right") => {
-      if (!isGameRunning || state.isAnyIncorrectAnimating || state.isAnyCorrectAnimating) return;
-
-      const wordState = (column === "left" ? state.leftColumn : state.rightColumn).find((w) => w.id === id);
-      if (wordState?.isMatched) return;
-
-      dispatch({ type: "SELECT_WORD", payload: { word, id, column } });
-    },
-    [
-      isGameRunning,
-      state.leftColumn,
-      state.rightColumn,
-      state.isAnyIncorrectAnimating,
-      state.isAnyCorrectAnimating,
-      dispatch,
-    ]
-  );
-
-  useEffect(() => {
-    const completePairs = state.selectedPairs.filter((pair) => pair.left && pair.right && pair.matchResult === null);
-
-    if (completePairs.length > 0) {
-      completePairs.forEach((pair) => processMatch(pair));
-    }
-  }, [state.selectedPairs, processMatch]);
-
-  const memoizedLeftColumn = useMemo(() => state.leftColumn, [state.leftColumn]);
-  const memoizedRightColumn = useMemo(() => state.rightColumn, [state.rightColumn]);
-
-  if (state.isLoading && !emojis) {
+  if (!state && !emojis) {
     return <Spinner margin='5vh 0 0 0' />;
   }
 
-  const shouldRenderColumns =
-    emojis || (memoizedLeftColumn.length >= numPairs && memoizedRightColumn.length >= numPairs);
+  const isFirstDeal = !state || state.dealId === (firstDealId ?? state.dealId);
+  const contentKey = isFirstDeal ? "first-deal" : left.length > 0 ? `deal-${state.dealId}` : "no-pairs";
 
   return (
     <LazyMotion features={loadFeatures}>
       <AnimateChangeInHeight className={styles.ulWrapper} enterDuration={0.2} exitDuration={0.2}>
-        <AnimatePresence mode='wait'>
-          {state.isLoading && emojis ? (
-            <PairListStatic key='static-list' />
-          ) : shouldRenderColumns ? (
+        <FadeOutSwap contentKey={contentKey} durationMs={FADE.boardOut}>
+          {left.length > 0 ? (
             <PairListColumns
-              key={state.listKey}
-              leftColumn={memoizedLeftColumn}
-              rightColumn={memoizedRightColumn}
-              selectedPairs={state.selectedPairs}
-              isAnyIncorrectAnimating={state.isAnyIncorrectAnimating}
-              isAnyCorrectAnimating={state.isAnyCorrectAnimating}
+              leftColumn={left}
+              rightColumn={right}
               isGameRunning={isGameRunning}
-              initialOpacity={state.initialOpacity}
+              initialOpacity={initialOpacity}
               showSparkles={showSparkles}
               emojis={emojis}
-              onSelectWord={handleSelectWord}
+              fastAnimations={fastAnimations}
+              onSelectWord={selectWord}
             />
           ) : (
-            <m.div key='no-pairs' initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               <p>Not enough pairs available. Please add more pairs or adjust your settings.</p>
             </m.div>
           )}
-        </AnimatePresence>
+        </FadeOutSwap>
       </AnimateChangeInHeight>
     </LazyMotion>
   );

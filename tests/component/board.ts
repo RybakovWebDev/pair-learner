@@ -51,19 +51,24 @@ export async function renderBoard(overrides: Partial<BoardProps> = {}) {
   return {
     onPairSolved,
     onPairMistake,
-    async update(changes: Partial<BoardProps>) {
+    /** Re-renders with new props. By default waits 1s, long enough for a re-deal's 0.3s fade-out to finish. */
+    async update(changes: Partial<BoardProps>, waitMs = 1000) {
       props = { ...props, ...changes };
       view.rerender(createElement(PairList, props));
-      // A re-deal fades the old board out (0.3s) before the new one appears.
-      await advance(1000);
+      await advance(waitMs);
     },
   };
 }
 
-export const advance = (ms: number) =>
-  act(async () => {
-    await vi.advanceTimersByTimeAsync(ms);
-  });
+// Moves fake time forward in small steps, letting React re-render (and set its next timer) between them. One big jump
+// would skip timers that only get scheduled after an earlier timer in the same jump has fired.
+export async function advance(ms: number) {
+  for (let left = ms; left > 0; left -= 10) {
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(Math.min(10, left));
+    });
+  }
+}
 
 // Board cells are the only buttons with aria-pressed. Left column first, then right.
 export const cells = () => [...document.querySelectorAll<HTMLButtonElement>("button[aria-pressed]")];

@@ -1,21 +1,25 @@
 "use client";
-import { useRef, useEffect, useState, ReactNode } from "react";
+import { useRef, useEffect, useState, useContext, ReactNode } from "react";
 import { m } from "framer-motion";
 
 import styles from "./WordCell.module.css";
 import Sparkles from "../Sparkles";
+import { LeavingContext } from "../FadeOutSwap";
 
 interface WordCellProps {
   isSelected?: boolean;
   matchResult: "correct" | "incorrect" | null;
   isMatched: boolean;
   isAnimating: boolean;
-  isAnyIncorrectAnimating: boolean;
-  isAnyCorrectAnimating: boolean;
+  /** Unused by the game board (only the old PairsDemo passes these); kept so that file still compiles. */
+  isAnyIncorrectAnimating?: boolean;
+  isAnyCorrectAnimating?: boolean;
   isGameRunning: boolean;
   callback?: () => void;
   isEmoji?: boolean;
   enableSparkles?: boolean;
+  /** Fade the word in when the cell mounts (the homepage board taking over from its loading spinners). */
+  fadeInContent?: boolean;
   children: ReactNode;
 }
 
@@ -24,14 +28,17 @@ function WordCell({
   matchResult,
   isMatched,
   isAnimating,
-  isAnyIncorrectAnimating,
-  isAnyCorrectAnimating,
+  isAnyIncorrectAnimating = false,
+  isAnyCorrectAnimating = false,
   isGameRunning,
   callback,
   isEmoji,
   enableSparkles = true,
+  fadeInContent = false,
   children,
 }: WordCellProps) {
+  // Inside a board that's fading out: looks the same, but can't be clicked or focused and isn't announced.
+  const ghost = useContext(LeavingContext);
   const [fontSize, setFontSize] = useState(isEmoji ? 24 : 14);
   const [showSparkles, setShowSparkles] = useState(false);
   const textRef = useRef<HTMLDivElement>(null);
@@ -106,7 +113,7 @@ function WordCell({
     <Sparkles isActive={showSparkles}>
       <m.button
         className={styles.mainWrapper}
-        style={{ pointerEvents: isGameRunning ? "auto" : "none" }}
+        style={{ pointerEvents: isGameRunning && !ghost ? "auto" : "none" }}
         animate={{
           backgroundColor,
           borderColor,
@@ -128,20 +135,25 @@ function WordCell({
               }
             : {}
         }
-        onClick={callback}
-        aria-pressed={isSelected}
+        onClick={ghost ? undefined : callback}
+        tabIndex={ghost ? -1 : undefined}
+        aria-hidden={ghost || undefined}
+        aria-pressed={ghost ? undefined : isSelected}
         aria-disabled={!isGameRunning || isMatched}
-        aria-label={`${children} ${isMatched ? "matched" : ""} ${isSelected ? "selected" : ""}`}
+        aria-label={ghost ? undefined : `${children} ${isMatched ? "matched" : ""} ${isSelected ? "selected" : ""}`}
       >
-        <div
+        <m.div
           ref={textRef}
           style={{
             fontSize: `${fontSize}px`,
             fontWeight: isMatched ? 400 : 600,
           }}
+          initial={fadeInContent ? { opacity: 0 } : false}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
         >
           {children}
-        </div>
+        </m.div>
       </m.button>
     </Sparkles>
   );

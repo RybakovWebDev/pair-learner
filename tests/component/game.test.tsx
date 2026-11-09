@@ -73,15 +73,14 @@ describe("Learn screen limits", () => {
     expect(rowOptions()).toEqual([3, 4, 5]);
   });
 
-  // KNOWN BUG (found 2026-10-06): a saved row count above what's allowed (e.g. after deleting pairs, or filtering by a
-  // tag with fewer pairs) leaves the board stuck on "Not enough pairs available", even though the row options are
-  // capped. The row count should drop to the highest allowed value. Flip to it() when fixed.
-  it.fails("lowers a saved row count that's too high (normal mode)", async () => {
+  // Regression tests: a saved row count above what's allowed (after deleting pairs, or filtering by a tag) used to
+  // leave the board stuck on "Not enough pairs available" (fixed 2026-10-06).
+  it("lowers a saved row count that's too high (normal mode)", async () => {
     await renderGame(6, { "pl-row-count": 8 });
     await waitFor(() => expect(boardRows()).toBe(6), { timeout: 2000 });
   });
 
-  it.fails("lowers a saved row count that's too high (endless mode)", async () => {
+  it("lowers a saved row count that's too high (endless mode)", async () => {
     await renderGame(6, { "pl-endless-mode": true, "pl-row-count": 8 });
     await waitFor(() => expect(boardRows()).toBe(5), { timeout: 2000 });
   });

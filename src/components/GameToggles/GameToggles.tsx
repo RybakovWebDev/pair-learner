@@ -38,19 +38,19 @@ function GameToggles({
     <m.div className={styles.mainWrapper} variants={controlsVariants} animate={isDisabled ? "disabled" : "enabled"}>
       <ul>
         <li className={styles.toggleWrapper}>
-          <Toggle labelText='Show sparkles' checked={showSparkles} onChange={onSparklesToggle} />
+          <Toggle labelText='Show sparkles' checked={showSparkles} onChange={onSparklesToggle} disabled={isDisabled} />
         </li>
         <li className={styles.toggleWrapper}>
-          <Toggle labelText='Endless mode' checked={endless} onChange={onEndlessToggle} />
+          <Toggle labelText='Endless mode' checked={endless} onChange={onEndlessToggle} disabled={isDisabled} />
         </li>
         <li className={styles.toggleWrapper}>
-          <Toggle labelText='Mix columns' checked={mixColumns} onChange={onMixToggle} />
+          <Toggle labelText='Mix columns' checked={mixColumns} onChange={onMixToggle} disabled={isDisabled} />
         </li>
         <li className={styles.toggleWrapper}>
-          <Toggle labelText='Fast animations' checked={fastAnimations} onChange={onAnimationSpeedToggle} />
+          <Toggle labelText='Fast animations' checked={fastAnimations} onChange={onAnimationSpeedToggle} disabled={isDisabled} />
         </li>
         <li className={styles.toggleWrapper}>
-          <Toggle labelText='Show mistake count' checked={showMistakes} onChange={onMistakeToggle} />
+          <Toggle labelText='Show mistake count' checked={showMistakes} onChange={onMistakeToggle} disabled={isDisabled} />
         </li>
       </ul>
     </m.div>

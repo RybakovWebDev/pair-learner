@@ -54,6 +54,13 @@ export async function boardWords(page: Page) {
   return { left: words.slice(0, half), right: words.slice(half) };
 }
 
+/** Left-column words that can still be picked (endless mode keeps matched pairs on the board while they fade out). */
+export async function openLeftWords(page: Page) {
+  const labels = await wordCells(page).evaluateAll((els) => els.map((e) => e.getAttribute("aria-label") || ""));
+  const { left } = await boardWords(page);
+  return left.filter((_, i) => !labels[i].includes("matched"));
+}
+
 export const cell = (page: Page, word: string) =>
   wordCells(page).filter({ hasText: new RegExp(`^\\s*${word}\\s*$`) });
 
@@ -74,8 +81,8 @@ export async function turnOn(page: Page, label: string) {
   await expect(box).toBeChecked();
 }
 
-// Waits until the board stops changing (same words and match states 500ms apart). Endless-mode refills swap cells
-// in place about a second after a match, so the cell count alone can't tell an old board from a new one.
+// Waits until the board stops changing (same words and match states 500ms apart). Endless mode replaces cells in
+// place, so the cell count alone can't tell an old board from a new one.
 export async function waitForBoardToSettle(page: Page) {
   const snapshot = () =>
     wordCells(page).evaluateAll((els) => els.map((e) => `${e.textContent?.trim()}:${e.getAttribute("aria-label")}`).join("|"));

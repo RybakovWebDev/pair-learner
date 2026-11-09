@@ -144,17 +144,16 @@ describe("matching", () => {
     expect(onPairMistake).toHaveBeenCalledTimes(1);
     expect(onPairSolved).not.toHaveBeenCalled();
 
-    // Still locked just before 700ms...
+    // The two flashing words are locked just before 700ms...
     await advance(699);
-    click(left[1]);
-    expect(isSelected(left[1])).toBe(false);
+    click(left[0]);
+    expect(isSelected(left[0])).toBe(false);
     // ...and playable right after, with nothing matched or selected.
     await advance(1);
     expect(isMatched(left[0])).toBe(false);
     expect(isMatched(wrong)).toBe(false);
-    expect(isSelected(left[0])).toBe(false);
-    click(left[1]);
-    expect(isSelected(left[1])).toBe(true);
+    click(left[0]);
+    expect(isSelected(left[0])).toBe(true);
   });
 
   it("releases a wrong pair after 400ms with fast animations", async () => {
@@ -162,21 +161,53 @@ describe("matching", () => {
     const { left, right } = columns();
     clickPair(left[0], right.find((r) => r !== partnerOf(left[0]))!);
     await advance(399);
-    click(left[1]);
-    expect(isSelected(left[1])).toBe(false);
+    click(left[0]);
+    expect(isSelected(left[0])).toBe(false);
     await advance(1);
-    click(left[1]);
-    expect(isSelected(left[1])).toBe(true);
+    click(left[0]);
+    expect(isSelected(left[0])).toBe(true);
   });
 
-  it("ignores clicks while a correct match is animating", async () => {
+  // Changed 2026-11-09: clicks used to be ignored on the whole board while any pick was flashing.
+  it("lets the player pick other words while a pick is flashing", async () => {
+    const { onPairSolved, onPairMistake } = await renderBoard();
+    const { left, right } = columns();
+    clickPair(left[0], partnerOf(left[0]));
+    await advance(100);
+    click(left[1]);
+    expect(isSelected(left[1])).toBe(true);
+    click(partnerOf(left[1]));
+    expect(onPairSolved).toHaveBeenCalledTimes(2);
+    // A wrong pick during the second flash, too.
+    await advance(100);
+    clickPair(left[2], right.find((r) => r !== partnerOf(left[2]) && r !== partnerOf(left[0]) && r !== partnerOf(left[1]))!);
+    expect(onPairMistake).toHaveBeenCalledTimes(1);
+    // Each flash ends on its own time: the first at 500ms, the second at 600ms, the wrong one at 900ms.
+    await advance(299); // 499ms
+    expect(isMatched(left[0])).toBe(false);
+    await advance(1); // 500ms
+    expect(isMatched(left[0])).toBe(true);
+    expect(isMatched(left[1])).toBe(false);
+    await advance(100); // 600ms
+    expect(isMatched(left[1])).toBe(true);
+    // The wrong pick's words are still locked until 900ms, then playable again.
+    click(left[2]);
+    expect(isSelected(left[2])).toBe(false);
+    await advance(300);
+    click(left[2]);
+    expect(isSelected(left[2])).toBe(true);
+    expect(isMatched(left[2])).toBe(false);
+  });
+
+  it("locks the flashing words, but not the rest", async () => {
     await renderBoard();
     const { left } = columns();
     clickPair(left[0], partnerOf(left[0]));
     await advance(250);
-    click(left[1]);
-    expect(isSelected(left[1])).toBe(false);
-    await advance(250);
+    click(left[0]);
+    expect(isSelected(left[0])).toBe(false);
+    click(partnerOf(left[0]));
+    expect(isSelected(partnerOf(left[0]))).toBe(false);
     click(left[1]);
     expect(isSelected(left[1])).toBe(true);
   });
@@ -259,18 +290,32 @@ describe("re-dealing", () => {
   });
 });
 
+describe("switching boards", () => {
+  // Regression test: the old board used to be remounted when it started fading out, which replayed its own fade-in
+  // and showed as a pause halfway through the fade.
+  it("fades the old board out in place, without rebuilding it", async () => {
+    const board = await renderBoard();
+    const before = document.querySelector("section");
+    await board.update({ endlessMode: true }, 10);
+    expect(document.querySelector("section")).toBe(before);
+    await advance(300);
+    expect(document.querySelector("section")).not.toBe(before);
+    expectValidBoard(5);
+  });
+});
+
 describe("stopping", () => {
   it("clears the current selection", async () => {
     const board = await renderBoard();
     const [w] = columns().left;
     click(w);
+    expect(isSelected(w)).toBe(true);
     await board.update({ isGameRunning: false });
-    expect(isSelected(w)).toBe(false);
+    expect(cells().filter((c) => c.getAttribute("aria-pressed") === "true")).toHaveLength(0);
   });
 
-  // INTENDED CHANGE (2026-10-06): Stop should deal a fresh board. Today matched cells stay matched (and unclickable)
-  // until Refresh. Flip to it() when the rewrite lands.
-  it.fails("deals a fresh board", async () => {
+  // Changed 2026-10-06: Stop used to leave matched cells matched (and unclickable) until Refresh.
+  it("deals a fresh board", async () => {
     const board = await renderBoard();
     const [w] = columns().left;
     clickPair(w, partnerOf(w));
@@ -280,13 +325,106 @@ describe("stopping", () => {
   });
 });
 
-describe("endless mode (Duolingo-style, not built yet)", () => {
-  it.todo("a matched pair flashes, then fades to two blank slots without shifting the layout");
-  it.todo("about 1s after each match (0.6s with fast animations) a new pair appears in a random blank left and right slot");
-  it.todo("the player can keep matching while blanks are waiting to be refilled");
-  it.todo("never deals a pair that's on screen or matched and still waiting to be refilled");
-  it.todo("with rows + 1 pairs there is always a pair to deal");
-  it.todo("the board stays valid over a long fast game (no freeze)");
+describe("endless mode (Duolingo Match Madness style)", () => {
+  // Left-column words that can still be picked.
+  const open = () => columns().left.filter((w) => !isMatched(w));
+
+  it("a matched pair stays on the board as matched, then is replaced 5s after its flash", async () => {
+    const { onPairSolved } = await renderBoard({ endlessMode: true });
+    const [w] = open();
+    clickPair(w, partnerOf(w));
+    expect(onPairSolved).toHaveBeenCalledTimes(1);
+    await advance(500);
+    expect(isMatched(w)).toBe(true);
+    expect(cells()).toHaveLength(10);
+    await advance(4999);
+    expect(isMatched(w)).toBe(true);
+    await advance(1);
+    expect(words()).not.toContain(w);
+    expect(matchedCount()).toBe(0);
+    expectValidBoard(5);
+  });
+
+  it("a matched pair can't be picked while it fades out", async () => {
+    const { onPairSolved } = await renderBoard({ endlessMode: true });
+    const [w] = open();
+    clickPair(w, partnerOf(w));
+    await advance(500);
+    clickPair(w, partnerOf(w));
+    await advance(500);
+    expect(onPairSolved).toHaveBeenCalledTimes(1);
+  });
+
+  it("replaces a pair matched while another fades together with it, at the first one's time", async () => {
+    await renderBoard({ endlessMode: true });
+    const [a] = open();
+    clickPair(a, partnerOf(a));
+    await advance(3000);
+    const [b] = open();
+    clickPair(b, partnerOf(b));
+    await advance(2499); // 5.5s after the first match is 1ms away
+    expect(isMatched(a)).toBe(true);
+    expect(isMatched(b)).toBe(true);
+    await advance(1);
+    expect(words()).not.toContain(a);
+    expect(words()).not.toContain(b);
+    expect(matchedCount()).toBe(0);
+  });
+
+  it("replaces all matched pairs together 1s (0.6s fast) after half the board is matched", async () => {
+    for (const fast of [false, true]) {
+      await renderBoard({ endlessMode: true, fastAnimations: fast });
+      const flash = fast ? 250 : 500;
+      const gone: string[] = [];
+      for (let i = 0; i < 3; i++) {
+        const [w] = open();
+        gone.push(w);
+        clickPair(w, partnerOf(w));
+        if (i < 2) await advance(flash);
+      }
+      await advance((fast ? 600 : 1000) - 1);
+      expect(matchedCount()).toBe(6);
+      await advance(1);
+      expect(matchedCount()).toBe(0);
+      for (const w of gone) expect(words()).not.toContain(w);
+      expectValidBoard(5);
+      cleanup();
+    }
+  });
+
+  it("never deals a pair that's on screen, and prefers one that isn't leaving", async () => {
+    // 6 pairs, 5 rows: the only fresh pair is the one that wasn't on the board.
+    const pairs = PAIRS.slice(0, 6);
+    await renderBoard({ endlessMode: true, pairs });
+    const offBoard = pairs.find((p) => !words().includes(p.word1))!;
+    const [w] = open();
+    clickPair(w, partnerOf(w));
+    await advance(5500);
+    expect(words()).toContain(offBoard.word1);
+    expect(words()).toContain(offBoard.word2);
+    expect(words()).not.toContain(w);
+  });
+
+  it("stays valid through a long, fast game", async () => {
+    const { onPairSolved } = await renderBoard({ endlessMode: true, fastAnimations: true });
+    let made = 0;
+    for (let i = 0; i < 60; i++) {
+      const [w] = open();
+      if (w) {
+        clickPair(w, partnerOf(w));
+        made++;
+      }
+      await advance(260); // just past the 250ms flash, then straight into the next pick
+      const { left: l, right: r } = columns();
+      expect(l.length).toBe(r.length);
+      for (const word of l) expect(r).toContain(partnerOf(word));
+      expect(new Set(words()).size).toBe(words().length);
+    }
+    expect(onPairSolved).toHaveBeenCalledTimes(made);
+    await advance(6000);
+    expectValidBoard(5);
+    expect(matchedCount()).toBe(0);
+  });
 });
 
 // Keep the helper import used even if tests above change.

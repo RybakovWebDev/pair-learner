@@ -68,11 +68,10 @@ export function gameReducer(state: GameState, action: any): GameState {
     case "SET_ROUND_LENGTH":
       return { ...state, roundLength: action.payload, timeRemaining: action.payload };
     case "SET_GAME_RUNNING":
-      return {
-        ...state,
-        isGameRunning: action.payload,
-        timeRemaining: action.payload ? state.roundLength : state.timeRemaining,
-      };
+      // Starting a game also zeroes the counters: a timed round that runs out ends without going through Stop.
+      return action.payload
+        ? { ...state, isGameRunning: true, timeRemaining: state.roundLength, solvedPairs: 0, mistakePairs: 0 }
+        : { ...state, isGameRunning: false };
     case "SET_TIME_REMAINING":
       return { ...state, timeRemaining: action.payload };
     case "REFRESH_TRIGGER":
@@ -133,12 +132,10 @@ function Game() {
     [filteredPairs.length, maxRowCount],
   );
 
-  useEffect(() => {
-    if (state.isLoading || filteredPairs.length < 5) return;
-    if (state.rowCount > maxRowCount) {
-      dispatch({ type: "SET_ROW_COUNT", payload: Math.max(rowCountOptions[0], maxRowCount) });
-    }
-  }, [maxRowCount, state.rowCount, state.isLoading, filteredPairs.length]);
+  // The board uses the player's chosen row count, capped at what the available pairs allow (endless mode keeps one
+  // spare pair for refills). The choice itself is kept, so it comes back when more pairs are available again.
+  const rowCount =
+    filteredPairs.length < 5 ? state.rowCount : Math.min(state.rowCount, Math.max(rowCountOptions[0], maxRowCount));
 
   const fetchData = useCallback(async () => {
     if (!user || fetchDataRef.current) return;
@@ -152,9 +149,11 @@ function Game() {
       if (pairsResponse.error || tagsResponse.error) {
         console.error("Error fetching data:", pairsResponse.error || tagsResponse.error);
       } else {
+        // tag_ids is nullable in the database; treat null as "no tags" so the tag filter can't crash.
+        const pairs = pairsResponse.data.map((p: Pair) => ({ ...p, tag_ids: p.tag_ids ?? [] }));
         dispatch({
           type: "INITIALIZE_DATA",
-          payload: { pairs: pairsResponse.data, tags: tagsResponse.data },
+          payload: { pairs, tags: tagsResponse.data },
         });
       }
     } catch (error) {
@@ -315,7 +314,7 @@ function Game() {
             </m.div>
           ) : (
             <MemoizedPairList
-              numPairs={state.rowCount}
+              numPairs={rowCount}
               isGameRunning={state.isGameRunning}
               refreshTrigger={state.refreshTrigger}
               pairs={filteredPairs}
@@ -418,7 +417,7 @@ function Game() {
           />
 
           <GameRowCountSelector
-            rowCount={state.rowCount}
+            rowCount={rowCount}
             rowCountOptions={availableRowCountOptions}
             isDisabled={areControlsDisabled}
             onRowCountChange={handleRowCountChange}

@@ -1,6 +1,17 @@
 import { expect, test } from "@playwright/test";
 
-import { boardWords, cell, expectBoardReady, isMatched, matchWords, partnerOf, turnOn, waitForBoardToSettle, wordCells } from "./helpers";
+import {
+  boardWords,
+  cell,
+  expectBoardReady,
+  isMatched,
+  matchWords,
+  openLeftWords,
+  partnerOf,
+  turnOn,
+  waitForBoardToSettle,
+  wordCells,
+} from "./helpers";
 
 test.beforeEach(async ({ page }) => {
   await page.goto("/learn");
@@ -58,33 +69,53 @@ test("a timed round shows a countdown that disappears on stop", async ({ page })
   await expect(page.getByText(/^00:\d\d$/)).toBeHidden();
 });
 
-test("endless mode replaces matched pairs after every second match", async ({ page }) => {
+test("endless mode fades a lone matched pair out over 5s, then replaces it without shifting the layout", async ({ page }) => {
   await turnOn(page, "Endless mode");
   // Toggling re-deals the board; reload (the setting is saved) so we start from a settled board.
   await page.reload();
   await expectBoardReady(page);
-  await expect(page.getByRole("checkbox", { name: "Endless mode" })).toBeChecked();
   await page.getByRole("button", { name: "Start" }).click();
+  const columnHeights = () =>
+    page.locator("section ul").evaluateAll((uls) => uls.map((ul) => ul.getBoundingClientRect().height));
+  const heights = await columnHeights();
 
-  const before = await boardWords(page);
-  for (const word of before.left.slice(0, 2)) {
-    await matchWords(page, word, partnerOf(word));
-    await page.waitForTimeout(900);
-  }
+  const [matched] = await openLeftWords(page);
+  await matchWords(page, matched, partnerOf(matched));
 
-  // Board stays full, nothing is left matched, and the two matched pairs were swapped for others.
+  // The pair stays on the board as matched (and unclickable) while it fades out.
+  await expect.poll(() => isMatched(page, matched)).toBe(true);
+  await page.waitForTimeout(3000);
+  expect(await isMatched(page, matched)).toBe(true);
+  expect(await columnHeights()).toEqual(heights);
+
+  // About 5s after its flash, a different pair takes its place.
+  await expect(cell(page, matched)).toHaveCount(0);
   await expectBoardReady(page);
-  await expect
-    .poll(async () => (await wordCells(page).evaluateAll((els) => els.map((e) => e.getAttribute("aria-label")))).join())
-    .not.toContain("matched");
+  expect(await columnHeights()).toEqual(heights);
   const after = await boardWords(page);
-  expect(after.left.filter((w, i) => w !== before.left[i])).toHaveLength(2);
   for (const word of after.left) expect(after.right).toContain(partnerOf(word));
 });
 
-// FIXME (2026-10-05): skipped while investigating. In endless + mix columns, a click on a cell sometimes hangs, because
-// Playwright sees the cell as still moving (cells offset by about 1px), and sometimes the previous match doesn't register.
-// It happens before the endless-mode fix too. Once settled, the board is correct and nothing moves.
+test("endless mode replaces all matched pairs together once half the board is matched", async ({ page }) => {
+  await turnOn(page, "Endless mode");
+  await page.reload();
+  await expectBoardReady(page);
+  await page.getByRole("button", { name: "Start" }).click();
+
+  // Three of five rows: the third match triggers the replacement about a second later.
+  const gone: string[] = [];
+  for (let i = 0; i < 3; i++) {
+    const [word] = await openLeftWords(page);
+    gone.push(word);
+    await matchWords(page, word, partnerOf(word));
+    await expect.poll(() => isMatched(page, word)).toBe(true);
+  }
+  await expect
+    .poll(async () => (await boardWords(page)).left.some((w) => gone.includes(w)), { timeout: 2000 })
+    .toBe(false);
+  await expectBoardReady(page);
+});
+
 test("endless mode with mixed columns keeps the board consistent across refills", async ({ page }) => {
   await turnOn(page, "Endless mode");
   await turnOn(page, "Mix columns");
@@ -92,25 +123,40 @@ test("endless mode with mixed columns keeps the board consistent across refills"
   await expectBoardReady(page);
   await page.getByRole("button", { name: "Start" }).click();
 
-  // Four matches → two refills. Match whatever unmatched pair is on the left each time.
-  for (let i = 0; i < 4; i++) {
-    await waitForBoardToSettle(page);
-    const { left } = await boardWords(page);
-    let word = left[0];
-    for (const w of left) if (!(await isMatched(page, w))) { word = w; break; }
-    // Play at a human pace. Starting the next match right as the previous one finishes can freeze the game in
-    // endless mode, a known app bug (see the guide). This test checks board consistency, not that race.
+  // Eight matches at a human pace: a few batch replacements of several pairs at once.
+  for (let i = 0; i < 8; i++) {
+    await expect.poll(async () => (await openLeftWords(page)).length).toBeGreaterThan(0);
+    const [word] = await openLeftWords(page);
     await matchWords(page, word, partnerOf(word), { pauseMs: 300 });
-    await page.waitForTimeout(1500);
+    // The pair flashes green for 500ms before it counts as matched; wait for that before picking the next one.
+    await expect.poll(async () => (await cell(page, word).count()) === 0 || (await isMatched(page, word))).toBe(true);
+    await page.waitForTimeout(400);
   }
-  await expect(page.getByText("Matches:").locator("..")).toContainText("4");
-  await waitForBoardToSettle(page);
+  await expect(page.getByText("Matches:").locator("..")).toContainText("8");
 
-  await expectBoardReady(page);
+  // Once everything is replaced, the board is full and consistent.
+  await expect.poll(async () => (await openLeftWords(page)).length, { timeout: 10_000 }).toBe(5);
   const { left, right } = await boardWords(page);
   expect(new Set([...left, ...right]).size).toBe(10);
   for (const word of left) expect(right).toContain(partnerOf(word));
 });
+
+for (const endless of [false, true]) {
+  test(`picks the next pair while the previous one is still flashing (${endless ? "endless" : "normal"} mode)`, async ({ page }) => {
+    if (endless) {
+      await turnOn(page, "Endless mode");
+      await page.reload();
+      await expectBoardReady(page);
+    }
+    await page.getByRole("button", { name: "Start" }).click();
+    const [a, b] = await openLeftWords(page);
+    // No pauses: the second pick starts well inside the first pick's 500ms flash.
+    await matchWords(page, a, partnerOf(a));
+    await matchWords(page, b, partnerOf(b));
+    await expect(page.getByText("Matches:").locator("..")).toContainText("2");
+    await expect.poll(async () => (await isMatched(page, a)) && (await isMatched(page, b))).toBe(true);
+  });
+}
 
 test("changing the row count resizes the board", async ({ page }) => {
   await page.getByRole("button", { name: "7", exact: true }).click();
@@ -119,9 +165,9 @@ test("changing the row count resizes the board", async ({ page }) => {
   await expectBoardReady(page, 5);
 });
 
-// KNOWN BUG (2026-10-06): skipped until the rendering rewrite (stage 3). It reproduces the endless-mode freeze (about 4 runs in 5):
-// a slot's <AnimatePresence mode="wait"> exit sometimes never finishes, so the old cell stays on screen forever.
-test.fixme("endless mode survives quick back-to-back matches", async ({ page }) => {
+// Regression test for the endless-mode freeze (fixed 2026-10-06): a slot used to wait for <AnimatePresence mode="wait">
+// exit animations, which sometimes never finished, leaving the old cell on screen forever.
+test("endless mode survives quick back-to-back matches", async ({ page }) => {
   await turnOn(page, "Endless mode");
   await page.reload();
   await expectBoardReady(page);
